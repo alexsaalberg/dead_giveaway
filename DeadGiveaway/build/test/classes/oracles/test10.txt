@@ -1,0 +1,45 @@
+Connection Established
+Please enter your desired username
+Please select a difficulty
+1 - Easy
+2 - Medium
+3 - Hard
+Enter 's' to start the game.
+randall has joined the game.
+Dead Giveaway has started.
+Your clue cards are
+1 - Poseidon's Ocean
+2 - Dionysius
+3 - Phoebe's Moon
+4 - Athena's Forest
+It is your turn. Please select an action card or accuse.
+	1 - Suggestion-Any
+	2 - Suggestion-Any
+Please enter 1, 2, or accuse
+Please select a destination.
+1 - Athena's Forest
+2 - Athens
+3 - Atlas's Sky
+4 - Dionysius's Vineyard
+5 - Hade's Underworld
+6 - Hephaestus's Volcano
+7 - Mount Olympus
+8 - Phoebe's Moon
+9 - Poseidon's Ocean
+Please select a suspect.
+1 - Aphrodite
+2 - Ares
+3 - Artemis
+4 - Dionysius
+5 - Hera
+6 - Hermes
+Please select a vehicle.
+1 - Apollo's Chariot
+2 - Athena's Horse
+3 - Ero's Wings
+4 - Hades' Dogs
+5 - Hermes' Winged Sandals
+6 - Poseidon's Ship
+Your accusation was incorrect.
+You can no longer make a move but you must  respond to other players' moves.
+Enter anything to contiue

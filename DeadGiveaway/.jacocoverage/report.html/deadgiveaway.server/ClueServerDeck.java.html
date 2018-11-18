@@ -1,0 +1,455 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ClueServerDeck.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCoverage analysis of project &quot;DeadGiveaway&quot; (powered by JaCoCo from EclEmma)</a> &gt; <a href="index.html" class="el_package">deadgiveaway.server</a> &gt; <span class="el_source">ClueServerDeck.java</span></div><h1>ClueServerDeck.java</h1><pre class="source lang-java linenums">/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package deadgiveaway.server;
+
+import deadgiveaway.ActionCard;
+import deadgiveaway.Card;
+import deadgiveaway.LocationCard;
+import deadgiveaway.SuspectCard;
+import deadgiveaway.VehicleCard;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Random;
+
+/**
+ * Contains deck information for a ClueServer.
+ * @author alexsaalberg
+ * @version 2.0
+ */
+public class ClueServerDeck
+{
+<span class="fc" id="L23">    protected static final int kSuspects = SuspectCard.Name.values().length;</span>
+    /**
+     * kVehicles - number of unique Vehicle cards.
+     */
+<span class="fc" id="L27">    protected static final int kVehicles = VehicleCard.Type.values().length;</span>
+    /**
+     * kLocations - number of unique Location cards.
+     */
+<span class="fc" id="L31">    protected static final int kLocations = LocationCard.Title.values().length;</span>
+    /**
+     * kNumSUGGESTALL - number of suggest all cards in the actioncard deck.
+     */
+    protected static final int kNumSUGGESTALL = 10;
+    /**
+     * kNumSUGGESTCUR - number of suggest current cards in the actioncard deck.
+     */
+    protected static final int kNumSUGGESTCUR = 9;
+    /**
+     * kNumSNOOP - number of snoop cards in the actioncard deck.
+     */
+    protected static final int kNumSNOOP = 4;
+    /**
+     * kNumALLSNOOP - number of all snoop cards in the actioncard deck.
+     */
+    protected static final int kNumALLSNOOP = 2;
+    /**
+     * kSuspects - number of unique Suspect cards.
+     */
+    
+    /**
+     * list of LocationCards used to assign locations to the players.
+     */
+    private final ArrayList&lt;LocationCard&gt; locations;
+    /**
+     * solution - arraylist of the solution cluecards.
+     */
+    protected ArrayList&lt;Card&gt; solution;
+    /**
+     * deck of all action cards not in discard or a player's hand.
+     */
+    private final ArrayList&lt;ActionCard&gt; actionCards;
+    /**
+     * actionDiscards - deck of all discarded action cards.
+     */
+    private final ArrayList&lt;ActionCard&gt; actionDiscards;
+    /**
+     * clueCards - deck of all clue cards not dealt or in solution.
+     */
+    private final ArrayList&lt;Card&gt; clueCards;
+    /**
+     * random - a Random used for any RNG. (Shuffling)
+     */
+    private Random random;
+    /**
+     * clueServerHelper - User for printing.
+     */
+    private final ClueServerHelper clueServerHelper;
+    
+    /**
+     * Only constructor for ClueServerDeck. 
+     * Should only be called by a ClueServer
+     * @param random Random for RNG
+     * @param clueServerHelper ClueServerHelper for printing
+     * @author Alex Saalberg
+     */
+    public ClueServerDeck(Random random, ClueServerHelper clueServerHelper)
+<span class="fc" id="L89">    {</span>
+<span class="fc" id="L90">        this.random = random;</span>
+<span class="fc" id="L91">        locations = new ArrayList&lt;LocationCard&gt;();</span>
+        //solution - The solution to the clues.
+<span class="fc" id="L93">        solution = new ArrayList&lt;Card&gt;();</span>
+        //actionCards - Deck of actionCards. This is the main deck.
+<span class="fc" id="L95">        actionCards = new ArrayList&lt;ActionCard&gt;();</span>
+        //actionDiscards - Deck of used cards. Used to reshuffle deck.
+<span class="fc" id="L97">        actionDiscards = new ArrayList&lt;ActionCard&gt;();</span>
+        //clueCards - Deck of cluecards. Used to setup game
+<span class="fc" id="L99">        clueCards = new ArrayList&lt;Card&gt;();</span>
+
+        //CALL initLocationMarkets to initiliaze the location markets.
+<span class="fc" id="L102">        initLocationMarkers();</span>
+        //CALL initActionCards to initialize the action cards
+<span class="fc" id="L104">        initActionCards();</span>
+        //CALL initClueCards to initialize the clue cards
+<span class="fc" id="L106">        initClueCards();</span>
+        
+<span class="fc" id="L108">        this.clueServerHelper = clueServerHelper;</span>
+<span class="fc" id="L109">    }</span>
+
+    protected Player givePlayerLocationFromDeck(Player player, LocationCard card)
+    {
+        //IF locations contains messageCard
+<span class="nc bnc" id="L114" title="All 2 branches missed.">        if (locations.contains(card))</span>
+        {
+            //ADD messagePlayer's location to locations
+<span class="nc" id="L117">            locations.add(player.getLocation());</span>
+            //REMOVED messageCard from locations
+<span class="nc" id="L119">            locations.remove(player);</span>
+            //SET messagePlayer's location to messageCard
+<span class="nc" id="L121">            player.setLocation(card);</span>
+        }
+<span class="nc" id="L123">        return player;</span>
+    }
+    
+    /**
+     * Shuffles the location markers.
+     * @author Alex Saalberg
+     */
+    protected void shuffleLocationMarkets()
+    {
+        //SHUFFLE clueCards with random
+<span class="nc" id="L133">        Collections.shuffle(locations, random);</span>
+<span class="nc" id="L134">    }</span>
+    
+    /**
+     * Shuffles the Clue Card deck.
+     * @author Alex Saalberg
+     */
+    protected void shuffleClueCards()
+    {
+        //SHUFFLE clueCards with random
+<span class="nc" id="L143">        Collections.shuffle(clueCards, random);</span>
+<span class="nc" id="L144">    }</span>
+    
+    /**
+     * Reshuffles the action deck.
+     * @author Alex Saalberg
+     */
+    protected void reshuffleActionDeck()
+    {
+        //PRINT using printToConsole; &quot;Server: Deck Reshuffled&quot;
+<span class="nc" id="L153">        clueServerHelper.printToConsole(&quot;Server: Deck Reshuffled&quot;);</span>
+        
+        //Add all cards from actionDiscards to actionCards
+<span class="nc" id="L156">        actionCards.addAll(actionDiscards);</span>
+        //Shuffle actionCards
+<span class="nc" id="L158">        Collections.shuffle(actionCards, random);</span>
+        //Clear actionDiscards
+<span class="nc" id="L160">        actionDiscards.clear();</span>
+<span class="nc" id="L161">    }</span>
+    
+    /**
+     * Prints all the cards from clueCards to all the Players in players
+     * &quot;Clockwise,&quot; one at a time.
+     * @param players list of all players in game
+     * @return ArrayList list of players in the game
+     * @author Alex Saalberg
+     * @author Austin Sparks
+     */
+    protected ArrayList&lt;Player&gt; dealAllClueCards(ArrayList&lt;Player&gt; players)
+    {
+        //curCard - card being dealt.
+        Card curCard;
+
+        //idx - index of current player
+<span class="fc" id="L177">        int idx = 0;</span>
+
+        //WHILE clueCards list is not empty LOOP
+<span class="fc bfc" id="L180" title="All 2 branches covered.">        while (!clueCards.isEmpty())</span>
+        {
+            // REMOVE a clue card from list
+<span class="fc" id="L183">            curCard = clueCards.remove(0);</span>
+            // ADD card to next player
+<span class="fc" id="L185">            players.get(idx++).addCard(curCard);</span>
+
+            //IF idx  at the end of player list
+<span class="fc bfc" id="L188" title="All 2 branches covered.">            if (idx == ClueServerHelper.kMaxPlayers)</span>
+            {
+                //SET idx to 0
+<span class="fc" id="L191">                idx = 0;</span>
+            } // ENDIF
+        } //ENDWHILE
+        
+<span class="fc" id="L195">        return players;</span>
+    }
+    
+    protected ArrayList&lt;Player&gt; dealActionCards(ArrayList&lt;Player&gt; players)
+    {
+        //FOR each Player player in players LOOP
+<span class="fc bfc" id="L201" title="All 2 branches covered.">        for (Player player : players)</span>
+        {
+            //DRAW a card, add it to player's hand
+<span class="fc" id="L204">            player.addCard(drawActionCard()[0]);</span>
+<span class="fc" id="L205">        } //ENDFOR   </span>
+<span class="fc" id="L206">        return players;</span>
+    }
+
+    /**
+     * For each player, removes a location from the location deck and gives it
+     * to the player.
+     * @param players list of players in the game
+     * @return ArrayList list of players in the game
+     * @author Alex Saalberg
+     */
+    protected ArrayList&lt;Player&gt; initPlayerLocations(ArrayList&lt;Player&gt; players)
+    {
+        //FOR each Player player in players
+<span class="fc bfc" id="L219" title="All 2 branches covered.">        for(Player player : players)</span>
+        {
+            //REMOVE a location from locations, give it to player.
+<span class="fc" id="L222">            player.setLocation(locations.remove(0));</span>
+<span class="fc" id="L223">        }</span>
+        
+<span class="fc" id="L225">        return players;</span>
+    }
+    
+    /**
+     * Initializes all 9 location markers.
+     * @author Alex Saalberg
+     */
+    protected void initLocationMarkers()
+    {
+        
+        //FOR each LocationCard.Title
+<span class="fc bfc" id="L236" title="All 2 branches covered.">        for (LocationCard.Title loc : LocationCard.Title.values())</span>
+        {
+            //ADD the location to locations
+<span class="fc" id="L239">            locations.add(new LocationCard(loc));</span>
+        } //ENDFOR
+<span class="fc" id="L241">    }</span>
+    
+    /**
+     * Initializes the solution
+     * @author Alex Saalberg
+     */
+    protected void initSolution()
+    {
+<span class="fc" id="L249">        int idx = 0;</span>
+        //SET idx to a random int from 0 to kLocations
+<span class="fc" id="L251">        idx = random.nextInt(kLocations);</span>
+        //REMOVE from clueCards at location idx and add it to a solution
+<span class="fc" id="L253">        solution.add(clueCards.remove(idx));</span>
+
+        //SET idx to a random int from 0 to kSuspects
+<span class="fc" id="L256">        idx = random.nextInt(kSuspects);</span>
+        //REMOVE from clueCards at location idx + kLocations - 1
+        //and add it to solution
+<span class="fc" id="L259">        solution.add(clueCards.remove(idx + kLocations - 1));</span>
+
+        //SET idx to a random int from 0 to kVehicles
+<span class="fc" id="L262">        idx = random.nextInt(kVehicles);</span>
+        //REMOVE from clueCards at location idx + kLocations + kSuspects - 2
+        //and add it to solution
+<span class="fc" id="L265">        solution.add(clueCards.remove(idx + kLocations + kSuspects - 2));</span>
+           
+        //PRINT using printToDebug; &quot;Server: The solution is &lt;X&gt;&quot;
+<span class="fc" id="L268">        clueServerHelper.printToDebug(&quot;The solution is &quot;</span>
+<span class="fc" id="L269">                    + ((LocationCard) solution.get(0)).getTitle() + &quot;, &quot;</span>
+<span class="fc" id="L270">                    + ((SuspectCard) solution.get(1)).getName() + &quot;, &quot;</span>
+<span class="fc" id="L271">                    + ((VehicleCard) solution.get(2)).getModel());</span>
+<span class="fc" id="L272">    }</span>
+
+    /**
+     * Private helper method to fill the deck
+     *
+     * @author Austin Sparks
+     * @author Alex Saalberg
+     */
+    protected void initClueCards()
+    {
+        //FOR EACH Title title IN Title.values()
+<span class="fc bfc" id="L283" title="All 2 branches covered.">        for (LocationCard.Title title : LocationCard.Title.values())</span>
+        {
+            //ADD a locationCard of title type to clueCards
+<span class="fc" id="L286">            clueCards.add(new LocationCard(title));</span>
+        } //ENDFOR
+
+        //FOR EACH Name name IN Name.values()
+<span class="fc bfc" id="L290" title="All 2 branches covered.">        for (SuspectCard.Name name : SuspectCard.Name.values())</span>
+        {
+            //ADD a suspectCard of name type to clueCards
+<span class="fc" id="L293">            clueCards.add(new SuspectCard(name));</span>
+        } //ENDFOR
+        
+        //FOR EACH Model model IN Model.values()
+<span class="fc bfc" id="L297" title="All 2 branches covered.">        for (VehicleCard.Model model : VehicleCard.Model.values())</span>
+        {
+            //ADD a vehicleCard of model type to vehicleCards
+<span class="fc" id="L300">            clueCards.add(new VehicleCard(model));</span>
+        } //ENDFOR
+<span class="fc" id="L302">    }</span>
+    
+    /**
+     * Initializes the action card deck.
+     * @author Alex Saalberg
+     */
+    protected void initActionCards()
+    {
+        // ADD kNumSUGGESTALL (10) suggest from any destination
+<span class="fc bfc" id="L311" title="All 2 branches covered.">        for (int idx = 0; idx &lt; kNumSUGGESTALL; idx++)</span>
+        {
+<span class="fc" id="L313">            actionCards.add(new ActionCard(ActionCard.Type.SUGGESTALL));</span>
+        }
+
+        // ADD kNumSUGGESTCUR (9) suggest from current destination
+<span class="fc bfc" id="L317" title="All 2 branches covered.">        for (int idx = 0; idx &lt; kNumSUGGESTCUR; idx++)</span>
+        {
+<span class="fc" id="L319">            actionCards.add(new ActionCard(ActionCard.Type.SUGGESTCUR));</span>
+        }
+
+        // ADD kNumSNOOP (4) snoop
+<span class="fc bfc" id="L323" title="All 2 branches covered.">        for (int idx = 0; idx &lt; kNumSNOOP; idx++)</span>
+        {
+<span class="fc" id="L325">            actionCards.add(new ActionCard(ActionCard.Type.SNOOP));</span>
+        }
+
+        // ADD kNumALLSNOOP (2) all snoop left and right
+<span class="fc bfc" id="L329" title="All 2 branches covered.">        for (int idx = 0; idx &lt; kNumALLSNOOP; idx++)</span>
+        {
+<span class="fc" id="L331">            actionCards.add(new ActionCard(ActionCard.Type.ALLSNOOPLEFT));</span>
+<span class="fc" id="L332">            actionCards.add(new ActionCard(ActionCard.Type.ALLSNOOPRIGHT));</span>
+        }
+
+        //FOR EACH Type type IN Type.values()
+<span class="fc bfc" id="L336" title="All 2 branches covered.">        for (ActionCard.Type type : ActionCard.Type.values())</span>
+        {
+<span class="fc" id="L338">            ActionCard tempCard = new ActionCard(type);</span>
+
+            // IF type.title() is equal to &quot;Super Sleuth&quot;
+<span class="fc bfc" id="L341" title="All 2 branches covered.">            if (tempCard.title().equals(&quot;Super Sleuth&quot;))</span>
+            {
+                //ADD a new actionCard of Type type to actionCards
+<span class="fc" id="L344">                actionCards.add(tempCard);</span>
+            }
+            // ELSEIF type.title() is equal to &quot;Private Tip&quot;
+<span class="fc bfc" id="L347" title="All 2 branches covered.">            else if (tempCard.title().equals(&quot;Private Tip&quot;))</span>
+            {
+                //ADD a new actionCard of Type type to actionCards
+<span class="fc" id="L350">                actionCards.add(tempCard);</span>
+            } //ENDIF
+        } //ENDFOR
+<span class="fc" id="L353">    }</span>
+    
+    /**
+     * Adds card to discards.
+     * @param card Card to be discarded
+     * @author Alex Saalberg
+     */
+    protected void discard(Card card)
+    {
+        //IF card is a ActionCard
+<span class="pc bpc" id="L363" title="1 of 2 branches missed.">        if(card instanceof ActionCard)</span>
+        {
+            //DISCARD
+<span class="fc" id="L366">            actionDiscards.add((ActionCard) card);</span>
+        } //ENDIF
+<span class="fc" id="L368">    }</span>
+    
+    /**
+     * Draws the next card from the top of action card deck. This means removing
+     * it from the arrayList and returning it. If the deck is empty return null
+     * it will reshuffle it and then draw. If the deck is empty and the discard
+     * pile is empty, returns null.
+     * @return Card[] array of action cards drawn
+     * @author Alex Saalberg
+     */
+    protected Card[] drawActionCard()
+    {
+        //Card[] returnCardArray - Array to be returned. Will contain the
+        //drawn card at index 0 and be of size 1.
+<span class="fc" id="L382">        Card[] returnCardArray = new Card[1];</span>
+
+        //IF actionCards is empty
+<span class="pc bpc" id="L385" title="1 of 2 branches missed.">        if (actionCards.isEmpty())</span>
+        {
+            //RESHUFFLE actionCards using reshuffleDeck()
+<span class="nc" id="L388">            reshuffleActionDeck();</span>
+        } //ENDIF
+
+        //DRAW the top card from actionCards
+<span class="fc" id="L392">        returnCardArray[0] = actionCards.remove(0);</span>
+
+        //RETURN the drawn card
+<span class="fc" id="L395">        return returnCardArray;</span>
+    }
+    
+    /**
+     * Returns solution
+     * @return The solution
+     */
+    protected ArrayList&lt;Card&gt; getSolution()
+    {
+        //returnList - list that will be returned
+<span class="fc" id="L405">        ArrayList&lt;Card&gt; returnList = new ArrayList&lt;Card&gt;();</span>
+
+        //FOR each Card card in solution
+<span class="fc bfc" id="L408" title="All 2 branches covered.">        for (Card card : solution)</span>
+        {
+            //TRY
+            try
+            {
+<span class="fc" id="L413">                returnList.add((Card) card.clone());</span>
+            }
+            //CATCH CloneNotSupportedException e
+<span class="nc" id="L416">            catch (CloneNotSupportedException ex)</span>
+            {
+<span class="nc" id="L418">                System.out.println(ex);</span>
+<span class="nc" id="L419">                ex.printStackTrace();</span>
+<span class="fc" id="L420">            }</span>
+<span class="fc" id="L421">        } //ENDFOR</span>
+
+        //RETURN a deep copy of players.
+<span class="fc" id="L424">        return returnList;</span>
+    }
+    
+    /**
+     * Returns the action deck.
+     * @return Deep copy of the action deck.
+     */
+    protected ArrayList&lt;ActionCard&gt; getActionDeck()
+    {
+        //returnList - list that will be returned
+<span class="fc" id="L434">        ArrayList&lt;ActionCard&gt; returnList = new ArrayList&lt;ActionCard&gt;();</span>
+
+        //FOR each Card card in actionCards
+<span class="fc bfc" id="L437" title="All 2 branches covered.">        for (Card card : actionCards)</span>
+        {
+            //TRY
+            try
+            {
+<span class="fc" id="L442">                returnList.add((ActionCard) card.clone());</span>
+            }
+            //CATCH CloneNotSupportedException e 
+<span class="nc" id="L445">            catch (CloneNotSupportedException e)</span>
+            {
+<span class="nc" id="L447">                System.out.println(e);</span>
+<span class="fc" id="L448">            }</span>
+<span class="fc" id="L449">        } //ENDFOR</span>
+
+        //RETURN a deep copy of players.
+<span class="fc" id="L452">        return returnList;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>

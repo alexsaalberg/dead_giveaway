@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+System Test 10 - Player Lost
+-->
+
+
+<project>
+    <!-- pre-init target to set properties the script will use -->
+    <target name="-pre-init">
+        <!-- Create a timestamp for Ant to use in javadoc title -->
+        <tstamp/>
+        <!-- Create a property for javadoc special parameters -->
+        <property name="systemtest.dir" value="system"/>
+        <property name="client.class" value="deadgiveaway.client.ClientApp"/>
+        <property name="server.class" value="deadgiveaway.server.ServerApp"/>
+        <property name="diffresults" value="${systemtest.dir}/diffresults.txt"/>
+        <property name="error.log" value="${systemtest.dir}/errorlog.txt"/>
+    </target>
+    
+<!--
+                =================
+                SYSTEM TEST SECTION
+                =================
+     -->
+    <target name="systest10" depends="-pre-init" description="Run console-based system tests.">
+        <!-- SYSTEM TEST 10 -->
+        <!-- Execute the game server with a known seed -->
+        <parallel>
+            <sequential>
+                <java classname="${server.class}"
+                    classpath="build/classes"
+                    output="${systemtest.dir}/server.out"
+                    fork="true"
+                    error="${error.log}">
+                    <arg line="-p 5557 -s 1"/>
+                </java>
+            </sequential>
+        <!-- Execute the console version of the app with test data -->
+            <sequential>
+                <sleep milliseconds="200"/>
+                <java classname="${client.class}"
+                    classpath="build/classes"
+                    fork="true"
+                    input="${systemtest.dir}/consoledata/test10.in"
+                    output="${systemtest.dir}/results/test10.out"
+                    error="${error.log}"
+                    append="false">
+                    <arg line="-h localhost -c -p 5557"/>
+                </java>
+            </sequential>
+        </parallel>
+        <exec dir="${systemtest.dir}" executable="/usr/bin/diff" osfamily="unix"
+              output="${diffresults}" append="true">
+            <arg line="-b results/test10.out oracles/test10.txt"/>
+        </exec>
+    </target>
+    
+</project>

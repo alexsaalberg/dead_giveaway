@@ -1,0 +1,2003 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ClueServer.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCoverage analysis of project &quot;DeadGiveaway&quot; (powered by JaCoCo from EclEmma)</a> &gt; <a href="index.html" class="el_package">deadgiveaway.server</a> &gt; <span class="el_source">ClueServer.java</span></div><h1>ClueServer.java</h1><pre class="source lang-java linenums">package deadgiveaway.server;
+
+import deadgiveaway.Message;
+import deadgiveaway.Message.*;
+import deadgiveaway.Card;
+import deadgiveaway.ActionCard;
+import deadgiveaway.LocationCard;
+import deadgiveaway.SuspectCard;
+import deadgiveaway.VehicleCard;
+import static deadgiveaway.server.ClueServerHelper.*;
+import ocsf.server.*;
+import java.util.ArrayList;
+import java.util.Random;
+import java.util.Collections;
+import java.util.Arrays;
+import java.io.IOException;
+import java.util.concurrent.Semaphore;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import deadgiveaway.fake.*;
+/**
+ * The ClueServer class provides methods and fields required to encapsulate a
+ * server running the clue game. This server interacts with at least two
+ * ClueClient s to carry out a game of the card game Clue.
+ *
+ * @author Alex Saalberg
+ * @version 2.0
+ */
+public class ClueServer extends AbstractServer
+{
+    /**
+     * clients - list of clients
+     */
+    private volatile ConnectionToClient[] connectionIndices;
+    /**
+     * clients - list of clients
+     */
+<span class="fc" id="L38">    private volatile ConnectionToClient[] clients = {null, null, </span>
+        null, null, null};
+    /**
+     * players - arraylist of all players in the game
+     */
+    protected ArrayList&lt;Player&gt; players;
+    /**
+     * waitingOn - list of players we are waiting for
+     */
+    protected ArrayList&lt;Player&gt; waitingOn;
+    /**
+     * suggestion - suggestion currently being waited on
+     */
+    protected Card[] suggestion;
+    /**
+     * random - A random number generator to be used when RNG is needed
+     */
+    private Random random;
+    /**
+     * turn - index of the player whose turn it is
+     */
+    private int turn;
+    /**
+     * mutex - number of messages the server is waiting on
+     */
+<span class="fc" id="L63">    private volatile int mutex = 0;</span>
+    /**
+     * playedCard - used for super sleuth and private tip cards to hold which
+     * type of card was played while waiting for a response
+     */
+    private Card playedCard;
+    /**
+     * gameStarted - whether the game has started
+     */
+    private volatile boolean gameStarted;
+    /**
+     * lobbyStarted - whether the lobby has been created
+     */
+    private boolean lobbyStarted;
+    /**
+     * numAccusations - Variable to track the number of accusations received
+     */
+<span class="fc" id="L80">    private volatile int numAccusations = 0;</span>
+    /**
+     * semaphore - Semaphore for limiting response handling
+     */
+    private final Semaphore semaphore;
+    /**
+     * clueServerHelper - A helper object used for printing
+     */
+    private ClueServerHelper clueServerHelper;
+    
+    private ArrayList&lt;Player&gt; connected;
+    
+    private ClueServerDeck clueServerDeck;
+    
+
+    /**
+     * Constructs a new ClueServer using a given port. Calls to the the
+     * superclass constructor, sets the turn to 0, and initializes a randomized
+     * list of locationCards, cluecards, actionCards, cluecards, and a blank
+     * list of players, waitingOn, solution, and locations.
+     *
+     * @param port The port this server will listen on.
+     * @param seed Seed for random object
+     * @param clueServerHelper ClueServerHelper for printing
+     *
+     * @author Alex Saalberg
+     * @version 2.0
+     */
+    public ClueServer(int port, Integer seed, ClueServerHelper clueServerHelper)
+    {
+<span class="fc" id="L110">        super(port);</span>
+        
+<span class="fc" id="L112">        connectionIndices = new ConnectionToClient[] { null, null, null,</span>
+            null, null};
+        //players - List of players
+<span class="fc" id="L115">        players = new ArrayList&lt;Player&gt;();</span>
+        //connected - list of connected players.
+<span class="fc" id="L117">        connected = new ArrayList&lt;Player&gt;();</span>
+        //waitingOn - List of players we are waiting for responses from.
+<span class="fc" id="L119">        waitingOn = new ArrayList&lt;Player&gt;();</span>
+        //playedCard - Card that we are waiting for responses to.
+<span class="fc" id="L121">        playedCard = null;</span>
+        //gameStarted - Whether the game is started or not.
+<span class="fc" id="L123">        gameStarted = false;</span>
+        //lobbyStarted - Whether the lobby is started or not.
+<span class="fc" id="L125">        lobbyStarted = false;</span>
+        //turn - The idx of the current player. Used as idx of host player until
+        //the game starts.
+<span class="fc" id="L128">        semaphore = new Semaphore(1);</span>
+        //clueServerHelper - A helper object for printing
+<span class="fc" id="L130">        this.clueServerHelper = clueServerHelper;</span>
+        
+        //SET turn to -1
+<span class="fc" id="L133">        turn = -1;</span>
+
+        
+        //IF seed parameter is not null
+<span class="pc bpc" id="L137" title="1 of 2 branches missed.">        if (seed != null)</span>
+        {
+            //INITIALIZE randomw with seed
+            //random - Random object used for RNG
+<span class="fc" id="L141">            random = new Random(seed);</span>
+        }
+        //ELSE
+        else
+        {
+            //INITIALIZE random with no seed
+            //random - Random object used for RNG
+<span class="nc" id="L148">            random = new Random();</span>
+        } //ENDIF
+        
+<span class="fc" id="L151">        clueServerDeck = new ClueServerDeck(random, clueServerHelper);</span>
+<span class="fc" id="L152">    }</span>
+
+    /**
+     * Have the server start running turns.
+     *
+     * @author Alex Saalberg
+     * @param shuffle Whether to shuffle or not
+     */
+    public void start(boolean shuffle)
+    {
+        //PRINT using printToConsole 
+        //&quot;Server: now starting with &quot;+getNumberOfClients()+&quot; clients&quot;
+<span class="fc" id="L164">        clueServerHelper.printToConsole(&quot;Server: Now starting with &quot;</span>
+                + getNumberOfClients() + &quot; clients&quot;);
+
+        //IF gameStarted or there are no clients, do nothing
+<span class="pc bpc" id="L168" title="1 of 4 branches missed.">        if (!gameStarted &amp;&amp; ClueServerHelper.getHumanPlayerCount(players) &gt; 0)</span>
+        {
+            //SET gameStarted to TRUE
+<span class="fc" id="L171">            gameStarted = true;</span>
+<span class="fc" id="L172">            players = ClueServerHelper.sortPlayers(players);</span>
+            
+            //CALL initSolution
+<span class="fc" id="L175">            clueServerDeck.initSolution();</span>
+
+            //IF shuffle
+<span class="pc bpc" id="L178" title="1 of 2 branches missed.">            if (shuffle)</span>
+            {
+                //SHUFFLE clueCards
+<span class="nc" id="L181">                clueServerDeck.shuffleClueCards();</span>
+<span class="nc" id="L182">                clueServerDeck.shuffleLocationMarkets();</span>
+
+                //CALL reshuffleDeck
+<span class="nc" id="L185">                reshuffleDeck();</span>
+            } //ENDIF
+            
+            
+            //CALL initRobotPlayers on clueServerHelper
+<span class="fc" id="L190">            players = ClueServerHelper.initRobotPlayers(players, random);</span>
+            
+            //REPLACE players with return from initPlayerLocations(players)
+<span class="fc" id="L193">            players = clueServerDeck.initPlayerLocations(players);</span>
+
+            //REPLACE players with return from dealAllCluerCards(players)
+<span class="fc" id="L196">            players = clueServerDeck.dealAllClueCards(players);</span>
+
+            //REPLACE players with return from dealActionCards(players)
+<span class="fc" id="L199">            players = clueServerDeck.dealActionCards(players);</span>
+
+            //REPLACE players with return from populateLists(players)
+<span class="fc" id="L202">            players = ClueServerHelper.populatePlayerInternalLists(players);</span>
+
+            //CALL startSendMessages
+<span class="fc" id="L205">            startSendMessages();</span>
+        } //ENDIF
+<span class="fc" id="L207">    }</span>
+
+    /**
+     * Establishes a new human player when a client connects.
+     *
+     * @param connection The connection to the client
+     * @author Alex Saalberg
+     */
+    @Override
+    public synchronized void clientConnected(ConnectionToClient connection)
+    {
+        //Fixed defect #421
+        //int idx - idx of connected player
+<span class="fc" id="L220">        int idx = 0;</span>
+        //WHILE clients[idx] is not null and idx &lt; 5
+<span class="pc bpc" id="L222" title="1 of 4 branches missed.">        while (clients[idx] != null &amp;&amp; idx &lt; 5)</span>
+        {
+            //increment idx
+<span class="fc" id="L225">            idx++;</span>
+        }
+        //IF idx is 5 (clients has no nulls)
+<span class="pc bpc" id="L228" title="1 of 2 branches missed.">        if (idx == 5)</span>
+        {
+            //TRY
+            try
+            {
+                //SEND a CONNECTIONREFUSED to connection
+<span class="nc" id="L234">                connection.sendToClient(new Message(null, null, null,</span>
+                    Move.CONNECTIONREFUSED, null, null));
+            } 
+<span class="nc" id="L237">            catch (IOException ex)</span>
+            {
+<span class="nc" id="L239">                System.out.println(ex);</span>
+<span class="nc" id="L240">            }</span>
+<span class="nc" id="L241">            return;</span>
+        }
+        
+        //CALL clientConnectedAddPlayer with connection and idx
+<span class="fc" id="L245">        clientConnectedAddPlayer(connection, idx);</span>
+<span class="fc" id="L246">    }</span>
+
+    /**
+     * Replaces a human player with a robot player when the former disconnects
+     *
+     * @param connection The connection that was lost
+     *
+     * @author Alex Saalberg
+     */
+    @Override
+    public void clientDisconnected(ConnectionToClient connection)
+    {
+        //robotPlayer - RobotPlayer to replace disconnected Player with
+        RobotPlayer robotPlayer;
+
+        //CALL getPlayerFromConnection with connection, set dcer to it
+<span class="fc" id="L262">        Player dcer = getPlayerFromConnection(connection);</span>
+
+        //dcerClueCards - Temporary storage for transferring clueCards
+        Card[] dcerClueCards;
+
+        //dcerActionCards - Temporary storage for transferring actionCards
+        Card[] dcerActionCards;
+
+        //CALL printToConsole with parameter 
+        //&quot;Server: &lt;IP&gt;&quot; disconnected.&quot;
+        //clueServerHelper.printToConsole(&quot;Server: &quot; + connection + &quot; disconnected&quot;);
+        
+        //IF the lobby OR game have started AND this is the last client.
+<span class="pc bpc" id="L275" title="2 of 6 branches missed.">        if ((lobbyStarted || gameStarted) &amp;&amp; this.getNumberOfClients() == 1)</span>
+        {
+            //CALL closeServer
+<span class="nc" id="L278">            closeServer();</span>
+        }
+        //IF game started
+<span class="fc bfc" id="L281" title="All 2 branches covered.">        else if (gameStarted)</span>
+        {
+<span class="fc" id="L283">            clientDisconnectedGameStarted(dcer);</span>
+        }
+        //ELSE IF lobby is started and game is not started and dcer is not null
+<span class="pc bpc" id="L286" title="2 of 6 branches missed.">        else if (lobbyStarted &amp;&amp; !gameStarted &amp;&amp; dcer != null)</span>
+        {
+<span class="fc" id="L288">            clientDisconnectedLobbyStarted(connection, dcer);</span>
+        } //ENDIF
+        
+        //FOR each Player player in connected
+<span class="fc bfc" id="L292" title="All 2 branches covered.">        for (Player player : connected)</span>
+        {
+            //IF current player is the disconnector
+<span class="fc bfc" id="L295" title="All 2 branches covered.">            if (clients[player.getID()] == connection)</span>
+            {
+                //SET returnPlayer to current player 
+<span class="fc" id="L298">                dcer = player;</span>
+<span class="fc" id="L299">                clients[player.getID()] = null;</span>
+            } //ENDIF
+<span class="fc" id="L301">        }</span>
+        //REMOVE dcer from connection
+<span class="fc" id="L303">        connected.remove(dcer);</span>
+        
+        //SEND a PLAYERADDED to every client.
+<span class="fc" id="L306">        deepCopyPlayers();</span>
+<span class="fc" id="L307">        sendToAllClients(new Message(dcer, null, players.toArray(new Player[0]),</span>
+                Message.Move.PLAYERADDED, null, null));
+<span class="fc" id="L309">    }</span>
+
+    /**
+     * Handles incoming data packets from clients. Processes the data and sends
+     * the results to the players.
+     *
+     * @param msg the incoming data packet
+     * @param client The connection to the client the handled message if from
+     * @author Alex Saalberg
+     */
+    @Override
+    protected void handleMessageFromClient(Object msg,
+            ConnectionToClient client)
+    {
+        //messageObj - Message object. Used to store msg
+        Message messageObj;
+
+        //IF msg is not instanceof Message
+<span class="fc bfc" id="L327" title="All 2 branches covered.">        if (!(msg instanceof Message))</span>
+        {
+            //THROW IllegalArgumentException
+<span class="fc" id="L330">            throw new IllegalArgumentException(&quot;msg is not a Message&quot;);</span>
+        } //ENDIF
+
+        //SET messageObj to msg
+<span class="fc" id="L334">        messageObj = (Message) msg;</span>
+        //IF message is from a robotPlayer (connection is null)
+<span class="pc bpc" id="L336" title="1 of 2 branches missed.">        if (client == null)</span>
+        {
+            //PRINT using printToDebug; &quot;Server: Message from Robot: messageObj&quot;
+<span class="nc" id="L339">            clueServerHelper.printToDebug(&quot;Server: Message from Robot: &quot; + messageObj);</span>
+        } 
+        //ELSE
+        else
+        {
+            //PRINT using printToDebug; &quot;Server: Message from &lt;IP&gt;: messageObj&quot;
+<span class="fc" id="L345">            clueServerHelper.printToDebug(</span>
+                    &quot;Server: Message from &quot; + client + &quot;: &quot; + messageObj);
+        } //ENDIF
+
+        //IF messageObj.getPlayers() is not NULL
+<span class="fc bfc" id="L350" title="All 2 branches covered.">        if (messageObj.getPlayers() != null)</span>
+        {
+            //SET players to messageObj's players list
+<span class="fc" id="L353">            players = new ArrayList&lt;Player&gt;(</span>
+                    Arrays.asList(messageObj.getPlayers()));
+
+            //PRINT using printToDebug; &quot;Server: Player list overwritten&quot;
+<span class="fc" id="L357">            clueServerHelper.printToDebug(&quot;Server: Player list overwritten&quot;);</span>
+        } //ENDIF
+
+        //IF game has started and not messageObj.player's turn (Response)
+<span class="fc bfc" id="L361" title="All 4 branches covered.">        if (gameStarted &amp;&amp; messageObj.getPlayer().getID() != turn)</span>
+        {
+            //IF playedCard is null
+<span class="pc bpc" id="L364" title="1 of 2 branches missed.">            if (playedCard == null)</span>
+            {
+                //THROW IllegalArgumentException
+<span class="fc" id="L367">                throw new IllegalArgumentException(&quot;playedCard is null. &quot;</span>
+                        + &quot;Turn is &quot; + turn + &quot;, but player's id is &quot;
+                        + messageObj.getPlayer().getID() + &quot;.&quot;);
+            }
+            //ELSEIF playedCard is super sleuth
+<span class="nc bnc" id="L372" title="All 2 branches missed.">            else if (&quot;Super Sleuth&quot;.equals(playedCard.toString()))</span>
+            {
+                //CALL handleSuperSleuthResponse with messageObj
+<span class="nc" id="L375">                handleSuperSleuthResponse(messageObj);</span>
+            }
+            //ELSEIF playedCard is suggestion
+<span class="nc bnc" id="L378" title="All 2 branches missed.">            else if (&quot;Suggestion&quot;.equals(playedCard.toString()))</span>
+            {
+                //CALL handleSuggestionResponse with messageObj
+<span class="nc" id="L381">                handleSuggestionResponse(messageObj);</span>
+            } //ENDIF
+        }
+        //ELSE
+        else
+        {
+<span class="fc" id="L387">            handleMessageMoveSwitch(messageObj, client);</span>
+        } //ENDIF
+<span class="fc" id="L389">    }</span>
+
+    /**
+     * Accessor method for players list
+     *
+     * @return the player list the server is using
+     * @author Alex Saalberg
+     */
+    public ArrayList&lt;Player&gt; getPlayers()
+    {
+        //returnList - list that will be returned
+<span class="fc" id="L400">        ArrayList&lt;Player&gt; returnList = players;</span>
+
+<span class="fc" id="L402">        deepCopyPlayers();</span>
+        
+        //RETURN a deep copy of players.
+<span class="fc" id="L405">        return returnList;</span>
+    }
+
+    /**
+     * Accessor method for the solution
+     *
+     * @return the solution chosen by the server
+     * @author Alex Saalberg
+     */
+    public ArrayList&lt;Card&gt; getSolution()
+    {
+<span class="fc" id="L416">        return clueServerDeck.getSolution();</span>
+    }
+
+    /**
+     * Accessor method for the deck
+     *
+     * @return the deck of actionCards used by the server
+     * @author Alex Saalberg
+     */
+    public ArrayList&lt;ActionCard&gt; getDeck()
+    {
+<span class="fc" id="L427">        return clueServerDeck.getActionDeck();</span>
+    }
+
+    /**
+     * Accessor method for turn
+     *
+     * @return Current turn idx
+     * @author Alex Saalberg
+     */
+    public int getTurn()
+    {
+<span class="fc" id="L438">        return turn;</span>
+    }
+
+    /**
+     * Accessor method for if the game is started
+     *
+     * @return true if the game has started, false otherwise
+     * @author Alex Saalberg
+     */
+    public boolean isStarted()
+    {
+<span class="fc" id="L449">        return gameStarted;</span>
+    }
+    
+    /**
+     * Send msg to all clients in connectionIndices.
+     * 
+     * @param msg  Message to send to all clients.
+     */
+    @Override
+    public void sendToAllClients(Object msg)
+    {
+        try
+        {
+<span class="fc" id="L462">            Thread[] threadArray = this.getClientConnections();</span>
+
+            //FOR each ConnectionToClient client in connectionIndices
+<span class="fc bfc" id="L465" title="All 2 branches covered.">            for (ConnectionToClient client : connectionIndices)</span>
+            {
+                //TRY
+                try
+                {
+                    //IF client is not null.
+<span class="fc bfc" id="L471" title="All 2 branches covered.">                    if (client != null)</span>
+                    {
+                        //SEND client msg
+<span class="fc" id="L474">                        client.sendToClient(msg);</span>
+                    }
+                }
+                //CATCH IOException ex
+<span class="nc" id="L478">                catch (IOException ex)</span>
+                {
+                    //PRINT using println
+<span class="nc" id="L481">                    System.out.println(ex);</span>
+<span class="fc" id="L482">                }</span>
+            }
+        }
+<span class="nc" id="L485">        catch (Exception ex)</span>
+        {
+<span class="nc" id="L487">            System.out.println(ex);</span>
+<span class="nc" id="L488">            ex.printStackTrace();</span>
+<span class="fc" id="L489">        }</span>
+<span class="fc" id="L490">    }</span>
+
+    /**
+     * Sends msg to player. If player is a robot, do nothing.
+     *
+     * @param player The player to send a message to.
+     * @param msg The message to send.
+     * @author Alex Saalberg
+     */
+    protected void sendToPlayer(Player player, Message msg)
+    {
+        //IF player is a humanPlayer
+<span class="fc bfc" id="L502" title="All 2 branches covered.">        if (!(player instanceof RobotPlayer))</span>
+        {
+            //Send message to client
+            try
+            {
+<span class="fc" id="L507">                ConnectionToClient cc = connectionIndices[player.getID()];</span>
+                // IF the connection exists
+<span class="pc bpc" id="L509" title="1 of 2 branches missed.">                if (cc != null)</span>
+                {
+<span class="fc" id="L511">                    cc.sendToClient(msg);</span>
+                }
+            }
+<span class="nc" id="L514">            catch (IOException ex)</span>
+            {
+<span class="nc" id="L516">                System.out.println(ex);</span>
+<span class="fc" id="L517">            }</span>
+        }
+<span class="fc" id="L519">    }</span>
+
+    /**
+     * Sends to every Player except player
+     * 
+     * @param player The player who does not get a message.
+     * @param msg The message to send.
+     * @author Alex Saalberg
+     */
+    private void sendToAllExceptPlayer(Player player, Message msg)
+    {
+        //FOR each Player loopPlayer in players
+<span class="fc bfc" id="L531" title="All 2 branches covered.">        for (Player loopPlayer : players)</span>
+        {
+            //IF loopPlayer is not player
+<span class="fc bfc" id="L534" title="All 2 branches covered.">            if (loopPlayer.getID() != player.getID())</span>
+            {
+                //SEND msg to loopPlayer
+<span class="fc" id="L537">                sendToPlayer(loopPlayer, msg);</span>
+            } //ENDIF
+<span class="fc" id="L539">        } //ENDFOR</span>
+<span class="fc" id="L540">    }</span>
+
+    /**
+     * Calls close() with exception handling
+     *
+     * @author Alex Saalberg
+     */
+    private void closeServer()
+    {
+        //TRY
+        try
+        {
+            //CALL close to close the server
+<span class="nc" id="L553">            Thread.sleep(5000);</span>
+<span class="nc" id="L554">            close();</span>
+        } //CATCH IOException
+<span class="nc" id="L556">        catch (IOException ex)</span>
+        {
+<span class="nc" id="L558">            System.out.println(ex);</span>
+        }
+<span class="nc" id="L560">        catch (InterruptedException ex)</span>
+        {
+<span class="nc" id="L562">            System.out.println(ex);</span>
+<span class="nc" id="L563">        }</span>
+<span class="nc" id="L564">    }</span>
+
+    /**
+     * Ends the game.
+     *
+     * @author Alex Saalberg
+     */
+    private void gameOver()
+    {
+        //SEND to everyone: Message(Player who made accusation, null, 
+        //Move.ACCUSATION, ‚ÄúGame Over‚Äù, null)
+<span class="nc" id="L575">        deepCopyPlayers();</span>
+<span class="nc" id="L576">        Message gameOverMessage = new Message(null, null,</span>
+                players.toArray(new Player[players.size()]),
+                Move.ACCUSATION, Type.INCORRECTACCUSATION, null);
+<span class="nc" id="L579">        sendToAllClients(gameOverMessage);</span>
+
+        //CLOSE the server
+<span class="nc" id="L582">        closeServer();</span>
+<span class="nc" id="L583">    }</span>
+
+    //Fixes defect 438
+    /**
+     * Creates a deep copy of all players in the player list.
+     * To be called before sending a message with an updated player list.
+     */
+    private void deepCopyPlayers()
+    {
+        //REPLACE players with deepCopyPlayers(players) on clueServerHelper.
+<span class="fc" id="L593">        players = ClueServerHelper.deepCopyPlayers(players);</span>
+<span class="fc" id="L594">    }</span>
+
+    /**
+     * Reshuffles the deck when all used up
+     *
+     * @author Alex Saalberg
+     */
+    private void reshuffleDeck()
+    {
+<span class="nc" id="L603">        clueServerDeck.reshuffleActionDeck();</span>
+<span class="nc" id="L604">    }</span>
+    
+    private void clientDisconnectedGameStarted(Player dcer)
+    {
+        Card[] dcerClueCards;
+        Card[] dcerActionCards;
+        RobotPlayer robotPlayer;
+
+        //IF the server is not closed THEN
+<span class="pc bpc" id="L613" title="1 of 2 branches missed.">        if (!isClosed())</span>
+        {
+<span class="fc" id="L615">            players = replacePlayerWithRobot(players, dcer, random);</span>
+            
+            //IF the player at dcer.id is not a RobotPlayer
+<span class="pc bpc" id="L618" title="1 of 2 branches missed.">            if (!(players.get(dcer.getID()) instanceof RobotPlayer))</span>
+            {
+<span class="nc" id="L620">                clueServerHelper.printToConsole(</span>
+                        &quot;Player wasn't replaced correctly&quot;);
+            }
+<span class="fc" id="L623">            robotPlayer = (RobotPlayer) players.get(dcer.getID());</span>
+
+            //SEND a message to all clients that the player has disconnected
+
+            //IF the player disconnected on their own turn
+<span class="pc bpc" id="L628" title="1 of 2 branches missed.">            if (turn == dcer.getID())</span>
+            {
+                //CALL nextTurn
+<span class="nc" id="L631">                nextTurn();</span>
+            } //ENDIF
+
+<span class="fc" id="L634">            removePlayerFromWaitingOn(dcer, robotPlayer);</span>
+        }
+<span class="fc" id="L636">    }</span>
+
+    private void clientDisconnectedLobbyStarted(ConnectionToClient connection, 
+            Player dcer)
+    {
+        //REMOVE the disconnected player from the player list
+<span class="fc bfc" id="L642" title="All 2 branches covered.">        for (int idx = players.size() - 1; idx &gt;= 0; idx--)</span>
+        {
+            //IF players.idx.idx is dcer.idx
+<span class="fc bfc" id="L645" title="All 2 branches covered.">            if (players.get(idx).getID() == dcer.getID())</span>
+            {
+                //REMOVE dcer from players
+<span class="fc" id="L648">                players.remove(dcer);</span>
+            }
+            //ELSE IF dcer's idx is less than players.idx.idx
+<span class="pc bpc" id="L651" title="1 of 2 branches missed.">            else if (dcer.getID() &lt; players.get(idx).getID())</span>
+            {
+                //SWAP positions in players with id-1
+<span class="fc" id="L654">                players.get(idx).setID(players.get(idx).getID() - 1);</span>
+            }
+        }
+        //removed - if a connecton has been removed.
+<span class="fc" id="L658">        boolean removed = false;</span>
+        //for each idx from 0 to connectionIndices.length
+<span class="fc bfc" id="L660" title="All 2 branches covered.">        for (int idx = 0; idx &lt; connectionIndices.length; idx++)</span>
+        {
+            //IF connectionIndices[idx] == connection
+<span class="fc bfc" id="L663" title="All 2 branches covered.">            if (connectionIndices[idx] == connection)</span>
+            {
+                //SET connectionIndices to null
+<span class="fc" id="L666">                connectionIndices[idx] = null;</span>
+                //SET removed to TRUE
+<span class="fc" id="L668">                removed = true;</span>
+            }
+            //ELSE IF removed is TRUE
+<span class="pc bpc" id="L671" title="1 of 2 branches missed.">            else if (removed)</span>
+            {
+                //SET connectionIndices[idx-1] to connectionIndices[idx]
+<span class="fc" id="L674">                connectionIndices[idx - 1] = connectionIndices[idx];</span>
+            }
+        }
+        //SET removed to FALSE
+<span class="fc" id="L678">        removed = false;</span>
+        //FOR idx from 0 to clients.length
+<span class="fc bfc" id="L680" title="All 2 branches covered.">        for (int idx = 0; idx &lt; clients.length; idx++)</span>
+        {
+            //IF clients[idx] is connection
+<span class="fc bfc" id="L683" title="All 2 branches covered.">            if (clients[idx] == connection)</span>
+            {
+                //SET clients[idx] to null
+<span class="fc" id="L686">                clients[idx] = null;</span>
+                //SET removed to TRUE
+<span class="fc" id="L688">                removed = true;</span>
+            }
+            //ELSE IF removed is TRUE
+<span class="pc bpc" id="L691" title="1 of 2 branches missed.">            else if (removed)</span>
+            {
+                //SET clients[idx-1] to clients[idx]
+<span class="fc" id="L694">                clients[idx - 1] = clients[idx];</span>
+            } //ENDIF
+        } //ENDFOR
+<span class="fc" id="L697">    }</span>
+
+    /**
+     * Adds a player from an id. Called exclusively from clientConnected
+     * 
+     * @param connection connection that connected
+     * @param idx id chosen for player
+     * @author Alex Saalberg
+     */
+    private void clientConnectedAddPlayer(ConnectionToClient connection, int idx)
+    {
+        
+        //Player player - used for player who connected
+<span class="fc" id="L710">        Player player = new Player(&quot;Player &quot; + idx, idx, null);</span>
+<span class="fc" id="L711">        connected.add(player);</span>
+
+        //PRINT using printToServer; &quot;Server: &lt;X&gt; connected.&quot; &lt;X&gt; = ip
+<span class="fc" id="L714">        clueServerHelper.printToConsole(&quot;Server: &quot; + connection + &quot; connected&quot;);</span>
+        
+        //ADD player to players
+        //players.add(player);
+        //ADD connection to clients[idx], the ConnectionToClient array
+<span class="fc" id="L719">        clients[idx] = connection;</span>
+        //CALL setInfo on connection with parameters &quot;ID&quot;, idx
+<span class="fc" id="L721">        connection.setInfo(&quot;ID&quot;, idx);</span>
+        //TRY
+        try
+        {
+            //IF lobbyStarted
+<span class="fc bfc" id="L726" title="All 2 branches covered.">            if (lobbyStarted)</span>
+            {
+                //SEND a CONNECTIONESTABLISHED message
+<span class="fc" id="L729">                connection.sendToClient(new Message(player, null,</span>
+                        players.toArray(new Player[0]),
+                        Move.CONNECTIONESTABLISHED, Message.Type.LOBBYEXISTS, null));
+            }
+            //ELSE
+            else
+            {
+                //SEND a CONNECTIONESTABLISHED message
+<span class="fc" id="L737">                connection.sendToClient(new Message(player, null,</span>
+                        null, Move.CONNECTIONESTABLISHED, null, null));
+            }
+        }
+        //CATCH IOException
+<span class="fc" id="L742">        catch (IOException ex)</span>
+        {
+<span class="fc" id="L744">            System.out.println(ex);</span>
+<span class="fc" id="L745">        }</span>
+
+        //IF gameStarted
+<span class="fc bfc" id="L748" title="All 2 branches covered.">        if (gameStarted)</span>
+        {
+            //TRY
+            try
+            {
+                //SEND a message to connection with every field null except
+                //for Move, which should be CONNECTIONREFUSED
+<span class="fc" id="L755">                connection.sendToClient(new Message(null, null, null,</span>
+                        Move.CONNECTIONREFUSED, null, null));
+            }
+            //CATCH IOException
+<span class="nc" id="L759">            catch (IOException ex)</span>
+            {
+<span class="nc" id="L761">                System.out.println(ex);</span>
+<span class="fc" id="L762">            }</span>
+
+            //TRY
+            try
+            {
+                //CLOSE the connection using close
+<span class="fc" id="L768">                connection.close();</span>
+            }
+            //CATCH IOException
+<span class="nc" id="L771">            catch (IOException ex)</span>
+            {
+<span class="nc" id="L773">                System.out.println(ex);</span>
+<span class="pc" id="L774">            }</span>
+        }
+        //ELSE
+        else
+        {
+            //PRINT using printToServer; &quot;Server: &lt;X&gt; connected to server.
+<span class="fc" id="L780">            clueServerHelper.printToConsole(&quot;Server: &quot; + player.getName() + &quot; added.&quot;);</span>
+        } //ENDIF
+<span class="fc" id="L782">    }</span>
+    
+    private void startSendMessages()
+    {
+        //playerIndex - index of Player player in players
+<span class="fc" id="L787">        int playerIndex = 0;</span>
+        //FOR each Player player in players
+<span class="fc bfc" id="L789" title="All 2 branches covered.">        for (Player player : players)</span>
+        {
+            //IF player is human
+<span class="fc bfc" id="L792" title="All 2 branches covered.">            if (!(player instanceof RobotPlayer))</span>
+            {
+                //SEND them a gameStarted message, include new players list
+<span class="fc" id="L795">                deepCopyPlayers();</span>
+                //IF clients[playersIndex] is != null
+<span class="fc bfc" id="L797" title="All 2 branches covered.">                if (clients[playerIndex] != null)</span>
+                {
+                    try
+                    {
+<span class="fc" id="L801">                        clients[playerIndex].sendToClient(</span>
+                                new Message(player, null,
+                                players.toArray(new Player[0]),
+                                Move.GAMESTARTED, null, null));
+                    }
+<span class="nc" id="L806">                    catch (IOException ex)</span>
+                    {
+<span class="nc" id="L808">                        System.out.println(ex);</span>
+<span class="fc" id="L809">                    }</span>
+                }
+            } //ENDIF
+<span class="fc" id="L812">            playerIndex++;</span>
+<span class="fc" id="L813">        } //ENDFOR</span>
+
+        //SET turn to 0
+<span class="fc" id="L816">        turn = 0;</span>
+<span class="fc" id="L817">        deepCopyPlayers();</span>
+        //SEND a YourTurn message to everyone, player field's idx is turn
+<span class="fc" id="L819">        Message yourTurnMessage = new Message(players.get(turn), null,</span>
+                players.toArray(new Player[players.size()]), Move.YOURTURN,
+                null, clueServerDeck.drawActionCard());
+<span class="fc" id="L822">        sendToAllClients(yourTurnMessage);</span>
+<span class="fc" id="L823">    }</span>
+    
+    /**
+     * If dcer is in waitingOn, removes them and handles their response with
+     * robotPlayer Only called from ClientDisconnected
+     *
+     * @author Alex Saalberg
+     * @param dcer Player who disconnected
+     * @param robotPlayer RobotPlayer who replaced dcer
+     */
+    private void removePlayerFromWaitingOn(Player dcer, RobotPlayer robotPlayer)
+    {
+        //card - Card used for suggestion
+<span class="fc" id="L836">        Card card = null;</span>
+
+        //FOR all players that the server is waiting to respond
+<span class="fc bfc" id="L839" title="All 2 branches covered.">        for (int idx = 0; idx &lt; waitingOn.size(); idx++)</span>
+        {
+            //IF dcer is player
+<span class="pc bpc" id="L842" title="1 of 2 branches missed.">            if (dcer.getID() == waitingOn.get(idx).getID())</span>
+            {
+                //IF playedCard is null
+<span class="pc bpc" id="L845" title="1 of 2 branches missed.">                if (playedCard == null)</span>
+                {
+                    
+                }
+                //ELSEIF playedCard is Super Sleuth
+<span class="pc bpc" id="L850" title="1 of 2 branches missed.">                else if (&quot;Super Sleuth&quot;.equals(playedCard.toString()))</span>
+                {
+                    //Fix defect #470: Super sleuth goes through proper method
+                    //FIND a card that can disprove the suggestion
+<span class="fc bfc" id="L854" title="All 2 branches covered.">                    for (Card playerCard : robotPlayer.getClueCards())</span>
+                    {
+                        //IF playersCard.matchesCard(playerCard, null)
+<span class="pc bpc" id="L857" title="1 of 2 branches missed.">                        if (((ActionCard)playedCard).matchesCard(playerCard, null))</span>
+                        {
+                            //SET card equal to playerCard
+<span class="nc" id="L860">                            card = playerCard;</span>
+                        } //ENDIF
+                    } //ENDFOR
+<span class="fc" id="L863">                    Card[] shown = new Card[1];</span>
+<span class="fc" id="L864">                    shown[0] = card;</span>
+                    //CREATE a super sleuth response from the new robot
+<span class="fc" id="L866">                    Message newMsg = new Message(robotPlayer, players.get(turn),</span>
+                            null, Message.Move.SHOWNCARDS, null, shown);
+<span class="fc" id="L868">                    handleSuperSleuthResponse(newMsg);</span>
+<span class="fc" id="L869">                } //ENDIF</span>
+                //ELSEIF playedCard is Suggestion
+<span class="nc bnc" id="L871" title="All 2 branches missed.">                else if (&quot;Suggestion&quot;.equals(playedCard.toString()))</span>
+                {
+                    //FIND a card that can disprove the suggestion
+<span class="nc bnc" id="L874" title="All 2 branches missed.">                    for (Card playerCard : dcer.getClueCards())</span>
+                    {
+                        //IF playedCard.matchesCard(playerCard, suggestion)
+<span class="nc bnc" id="L877" title="All 2 branches missed.">                        if (((ActionCard)playedCard).matchesCard(playerCard,</span>
+                                suggestion))
+                        {
+                            //SET card equal to playerCard
+<span class="nc" id="L881">                            card = playerCard;</span>
+                        } //ENDIF
+                    } //ENDFOR
+                    //shown - array of cards containing the disproving card
+<span class="nc" id="L885">                    Card[] shown = new Card[1];</span>
+<span class="nc" id="L886">                    shown[0] = card;</span>
+                    //CREATE a suggestion response from the new robot
+<span class="nc" id="L888">                    Message newMsg = new Message(robotPlayer, players.get(turn),</span>
+                            null, Message.Move.SUGGESTION, null, shown);
+<span class="nc" id="L890">                    handleSuggestionResponse(newMsg);</span>
+                } //ENDIF
+            } //ENDIF
+        } //ENDFOR
+<span class="fc" id="L894">    }</span>
+
+    /**
+     * Finds a non-RobotPlayer associated with connection.
+     *
+     * @param connection
+     * @return Player associated with connection, or null if none.
+     * @author Alex Saalberg
+     */
+    private Player getPlayerFromConnection(ConnectionToClient connection)
+    {
+        //returnPlayer - player associated with this connection.
+<span class="fc" id="L906">        Player returnPlayer = null;</span>
+
+        //FOR all players
+<span class="fc bfc" id="L909" title="All 2 branches covered.">        for (Player player : players)</span>
+        {
+            //IF current player is a Human player and is the disconnector
+<span class="pc bpc" id="L912" title="1 of 6 branches missed.">            if (!(player instanceof RobotPlayer)</span>
+                    &amp;&amp; (clients[player.getID()] == connection))
+            {
+                //SET returnPlayer to current player 
+                returnPlayer = player;
+<span class="fc" id="L917">            } //ENDIF</span>
+        } //ENDFOR
+<span class="fc" id="L919">        </span>
+        //return returnPLayer
+        return returnPlayer;
+<span class="fc" id="L922">    }</span>
+
+    /**
+     * Called when all responses are in. Resets playerCard to null and sends
+     * resume message to the player whose turn it is.
+     * 
+     * @author Alex Saalberg
+     */
+    private void doneWaitingOnResponses()
+    {
+        //IF waitingOn isn't empty
+        if (!waitingOn.isEmpty())
+<span class="pc bpc" id="L934" title="1 of 2 branches missed.">        {</span>
+            //PRINT using printToDebug; &quot;Clearing waitingOn..&quot;
+            clueServerHelper.printToDebug(&quot;Server: Clearing waitingOn unexpectedly&quot;);
+<span class="nc" id="L937">            //CALL clear ON waitingOn</span>
+            waitingOn.clear();
+<span class="nc" id="L939">        } //ENDIF</span>
+
+        //SET playedCard to null
+        playedCard = null;
+<span class="fc" id="L943">        sendResumeTurnMessage();</span>
+<span class="fc" id="L944">    }</span>
+<span class="fc" id="L945">    </span>
+    private void sendResumeTurnMessage()
+    {
+        //Fixes defect#468: Players weren't being updated after moving locations
+        //IF the player whose turn it is is a RobotPlayer
+        if (players.get(turn) instanceof RobotPlayer)
+<span class="pc bpc" id="L951" title="1 of 2 branches missed.">        {</span>
+            //SEND a YOURACCUSATION message to RobotPlayer
+<span class="nc bnc" id="L953" title="All 2 branches missed.">            ((RobotPlayer) players.get(turn)).selectAction(</span>
+                    new Message(players.get(turn), null,
+                    players.toArray(new Player[0]),
+                    Message.Move.YOURACCUSATION, null, null), this);
+        }
+        //ELSE (player whose turn it is is a human)
+<span class="nc" id="L959">        else</span>
+        {
+            //SEND a RESUMETURN message to the player using sendToPlayer.
+            sendToPlayer(players.get(turn),
+<span class="nc" id="L963">                    new Message(players.get(turn), null,</span>
+                    players.toArray(new Player[0]),
+                    Message.Move.RESUMETURN, null, null));
+        } //ENDIF
+    }
+
+    /**
+     * Finds the next non-out player and tells everyone it is their turn If
+     * every player is out, end the game.
+<span class="fc" id="L972">     *</span>
+     * @author Alex Saalberg
+     */
+    private void nextTurn()
+    {
+<span class="fc" id="L977">        //idx - int used to find idx of who should have the next turn.</span>
+        int idx;
+
+        //player - player who will take a turn after this method
+        Player player;
+
+        //SET idx to turn
+        idx = turn;
+
+        //DO
+        do
+        {
+            //SET idx to the next CW idx
+            idx = (idx + 1) % players.size();
+        }
+        //WHILE idx is not turn and the player
+        while (idx != turn &amp;&amp; players.get(idx).getOut());
+<span class="fc" id="L994"></span>
+        //SET turn to idx
+        turn = idx;
+
+        //SET player to current playing player
+        player = players.get(turn);
+<span class="fc" id="L1000"></span>
+        //SEND to everyone: Message(player who‚Äôs turn it is, null, players, 
+        //Move.YOURTURN, ‚ÄúYour Turn‚Äù, next card to be drawn)
+<span class="pc bpc" id="L1003" title="2 of 4 branches missed.">        deepCopyPlayers();</span>
+        Message yourTurnMessage = new Message(player, null, players.toArray(
+                new Player[players.size()]), Move.YOURTURN, null,
+<span class="fc" id="L1006">                clueServerDeck.drawActionCard());</span>
+        sendToAllClients(yourTurnMessage);
+
+<span class="fc" id="L1009">        //PRINT using printToConsole</span>
+        //&quot;-Turn Starting: &lt;X&gt; is starting their turn.-&quot;
+        clueServerHelper.printToConsole(&quot;-Turn Starting: &quot;
+                + player.getName() + &quot; is starting their turn.-&quot;);
+<span class="fc" id="L1013"></span>
+<span class="fc" id="L1014">        //PRINT playerlist using printPlayers, which will use printToDebug</span>
+        clueServerHelper.printPlayers(players);
+        
+<span class="fc" id="L1017">        //IF the current player (turn) is a robotPlayer</span>
+        if (player instanceof RobotPlayer)
+        {
+            //SELECT an action for the robot player
+<span class="fc" id="L1021">            RobotPlayer robotPlayer = (RobotPlayer) player;</span>
+            robotPlayer.selectAction(yourTurnMessage, this);
+        } //ENDIF
+    }
+<span class="fc" id="L1025"></span>
+    /**
+     * Sends a YOURACCUSATION method to the passed in robotPlayer
+<span class="pc bpc" id="L1028" title="1 of 2 branches missed.">     * </span>
+     * @param robotPlayer 
+     * @author Alex Saalberg
+<span class="nc" id="L1031">     */</span>
+<span class="nc" id="L1032">    private void tellRobotToEndTurn(RobotPlayer robotPlayer)</span>
+    {
+<span class="fc" id="L1034">        robotPlayer.selectAction(new Message(players.get(turn), null, null,</span>
+                Message.Move.YOURACCUSATION, null, null), this);
+    }
+
+
+    
+
+    
+
+    /**
+<span class="fc" id="L1044">     * Handles the Move switch formerly within handleMessageFromClient. Should</span>
+     * only be called by handleMessageFromClient
+<span class="fc" id="L1046">     *</span>
+     * @author Alex Saalberg
+     * @param msg Message from client
+     * @param client the client that sent the message
+     */
+    private void handleMessageMoveSwitch(Message msg, ConnectionToClient client)
+    {
+        //move - Move from msg
+        Move move = msg.getMove();
+        
+        //PRINT playerlist using printPlayers, which will use printToDebug
+        clueServerHelper.printPlayers(players);
+        
+        //CASE move OF
+        switch (move)
+        {
+            //GAMESTARTED: CALL handleGameStarted
+            case GAMESTARTED:
+<span class="fc" id="L1064">                handleGameStarted(msg);</span>
+                break;
+            
+<span class="fc" id="L1067">            //PLAYERADDED: CALL handlePlayerAdded</span>
+            case PLAYERADDED:
+                handlePlayerAdded(msg, client);
+<span class="pc bpc" id="L1070" title="2 of 8 branches missed.">                break;</span>
+            //ENDTURN: CALL nextTurn
+            case ENDTURN:
+                //IF it is player's turn
+<span class="nc" id="L1074">                if (msg.getPlayer().getID() == turn)</span>
+<span class="nc" id="L1075">                {</span>
+                    //CALL nextTurn
+                    nextTurn();
+                } //ENDIF
+<span class="fc" id="L1079">                break;</span>
+<span class="fc" id="L1080">            //PLAYERMOVED: CALL handlePlayerMoved with msg</span>
+            case PLAYERMOVED:
+                handlePlayerMoved(msg);
+                break;
+<span class="fc bfc" id="L1084" title="All 2 branches covered.">            //ACCUSATION: CALL handleAccusation with msg</span>
+            case ACCUSATION:
+                handleAccusation(msg);
+<span class="fc" id="L1087">                break;</span>
+            //SUGGESTION: CALL handleSuggestion with msg
+            case SUGGESTION:
+                
+                break;
+<span class="fc" id="L1092">            //ACTION: CALL handleMessageTypeSwitch with msg</span>
+<span class="fc" id="L1093">            case ACTION:</span>
+                //CASE type OF
+                handleMessageTypeSwitch(msg);
+<span class="fc" id="L1096">                break;</span>
+<span class="fc" id="L1097">            //default: PRINT the message using printToDebug</span>
+            default:
+                clueServerHelper.printToDebug(&quot;Server: Unexpected message: &quot; + msg);
+                break;
+<span class="nc" id="L1101">        }</span>
+    }
+
+    /**
+<span class="fc" id="L1105">     * Handles the Type switch from handleMessageMoveSwitch. Should only be</span>
+<span class="fc" id="L1106">     * called by handleMessageMoveSwitch</span>
+     *
+     * @author Alex Saalberg
+<span class="fc" id="L1109">     * @param msg Message from client</span>
+     */
+    private void handleMessageTypeSwitch(Message msg)
+<span class="fc" id="L1112">    {</span>
+        Type type = msg.getType();
+        
+        Card[] msgCards = msg.getCards();
+        Card firstMsgCard = msgCards[0];
+        
+        //CASE type OF
+        switch (type)
+        {
+            //ALLSNOOPLEFT: CALL handleAllSnoopLeft with msg
+            case ALLSNOOPLEFT:
+<span class="fc" id="L1123">                clueServerDeck.discard(firstMsgCard);</span>
+                handleAllSnoopLeft(msg);
+<span class="fc" id="L1125">                break;</span>
+<span class="fc" id="L1126">            //ALLSNOOPRIGHT: CALL handleAllSnoopRight with msg</span>
+            case ALLSNOOPRIGHT:
+                clueServerDeck.discard(firstMsgCard);
+<span class="pc bpc" id="L1129" title="1 of 7 branches missed.">                handleAllSnoopRight(msg);</span>
+                break;
+            //SUPERSLEUTH: CALL handleAllSnoopRight with msg
+            case SUPERSLEUTH:
+<span class="fc" id="L1133">                clueServerDeck.discard(firstMsgCard);</span>
+<span class="fc" id="L1134">                handleSuperSleuth(msg);</span>
+<span class="fc" id="L1135">                break;</span>
+            //PRIVATETIP: CALL handlePrivateTip with msg
+            case PRIVATETIP:
+<span class="fc" id="L1138">                clueServerDeck.discard(firstMsgCard);</span>
+<span class="fc" id="L1139">                handlePrivateTip(msg);</span>
+<span class="fc" id="L1140">                break;</span>
+            //SNOOP: CALL handleSnoop with msg
+            case SNOOP:
+<span class="fc" id="L1143">                clueServerDeck.discard(firstMsgCard);</span>
+<span class="fc" id="L1144">                handleSnoop(msg);</span>
+<span class="fc" id="L1145">                break;</span>
+            //SNOOP: CALL handleSnoop with msg
+            case SUGGESTION:
+<span class="fc" id="L1148">                clueServerDeck.discard(msgCards[3]);</span>
+<span class="fc" id="L1149">                handleSuggestion(msg);</span>
+<span class="fc" id="L1150">                break;</span>
+            //default: PRINT the message using printToDebug
+            default:
+<span class="fc" id="L1153">                clueServerHelper.printToDebug(</span>
+<span class="fc" id="L1154">                        &quot;Server: Unexpected ACTION message: &quot; + msg);</span>
+<span class="fc" id="L1155">                break;</span>
+        }
+    }
+<span class="fc" id="L1158"></span>
+<span class="fc" id="L1159">    /**</span>
+<span class="fc" id="L1160">     * Calls start</span>
+     * 
+     * @param msg The message from handleMessageMoveSwitch 
+<span class="nc" id="L1163">     * @author Alex Saalberg</span>
+     */
+    private void handleGameStarted(Message msg)
+    {
+<span class="fc" id="L1167">        try</span>
+        {
+            start(clueServerHelper.shuffle);
+        }
+        catch (Exception ex)
+        {
+            ex.printStackTrace();
+        }
+    }
+    
+    /**
+     * Handles a player added message.
+<span class="nc" id="L1179">     * </span>
+     * @param msg The message from handleMessageMoveSwitch
+<span class="nc" id="L1181">     * @param client the client that sent the message</span>
+     * @author Alex Saalberg
+<span class="nc" id="L1183">     */</span>
+<span class="nc" id="L1184">    private void handlePlayerAdded(Message msg, ConnectionToClient client)</span>
+<span class="nc" id="L1185">    {</span>
+        //Fixed defect 407
+        //IF lobbyStarted
+        if (lobbyStarted)
+        {
+            //SET player to Player at ID index in players
+            if (msg.getPlayer().getID() &lt; players.size())
+            {
+                players.add(msg.getPlayer().getID(), msg.getPlayer());
+            }
+            else
+            {
+                players.add(msg.getPlayer());
+<span class="fc bfc" id="L1198" title="All 2 branches covered.">            }</span>
+            
+            connectionIndices[msg.getPlayer().getID()] = client;
+<span class="fc bfc" id="L1201" title="All 2 branches covered."></span>
+            //SEND an update message with players
+<span class="fc" id="L1203">            Message updateMessage = new Message(msg.getPlayer(), null, players</span>
+                    .toArray(new Player[0]), Move.PLAYERADDED, null, null);
+            sendToAllClients(updateMessage);
+        }
+<span class="fc" id="L1207">        //ELSE</span>
+        else
+        {
+<span class="fc" id="L1210">            lobbyStarted = true;</span>
+            
+            connectionIndices[msg.getPlayer().getID()] = client;
+<span class="fc" id="L1213">            //SET player to Player at ID index in players</span>
+            players.add(msg.getPlayer());
+<span class="fc" id="L1215">            //Fixed defect 427</span>
+<span class="fc" id="L1216">            Message lobbyMessage = new Message(msg.getPlayer(), null, null,</span>
+                    Move.LOBBYSTARTED,
+                    Type.LOBBYEXISTS, null);
+
+<span class="fc" id="L1220">            Message hostLobbyMessage = new Message(msg.getPlayer(), null,</span>
+                    null, Move.LOBBYSTARTED,
+<span class="fc" id="L1222">                    null, null);</span>
+            try
+<span class="fc" id="L1224">            {</span>
+                //SEND hostLobbyMessage to client
+<span class="fc" id="L1226">                client.sendToClient(hostLobbyMessage);</span>
+                //FOR ConnectionToClient clnt in clients
+                for (ConnectionToClient clnt : clients)
+                {
+<span class="fc" id="L1230">                    //IF clnt is not null AND clnt is not equal to client</span>
+                    if (clnt != null &amp;&amp; !clnt.equals(client))
+                    {
+                        //SEND lobbyMessage to clnt
+                        clnt.sendToClient(lobbyMessage);
+                    }
+<span class="fc" id="L1236">                }</span>
+            }
+<span class="fc bfc" id="L1238" title="All 2 branches covered.">            catch (IOException ex)</span>
+            {
+                System.out.println(ex);
+<span class="fc bfc" id="L1241" title="All 4 branches covered.">                ex.printStackTrace();</span>
+            }
+            //SEND an update message with players
+<span class="fc" id="L1244">            Message updateMessage = new Message(msg.getPlayer(), null, players</span>
+                    .toArray(new Player[0]), Move.PLAYERADDED, null, null);
+            sendToAllClients(updateMessage);
+
+<span class="nc" id="L1248">        }</span>
+    }
+<span class="nc" id="L1250">    </span>
+<span class="nc" id="L1251">    /**</span>
+<span class="fc" id="L1252">     * Handles a player changing locations</span>
+     *
+<span class="fc" id="L1254">     * @msg Message from handleMessageMoveSwitch</span>
+     * @author Alex Saalberg
+<span class="fc" id="L1256">     */</span>
+    private void handlePlayerMoved(Message msg)
+    {
+<span class="fc" id="L1259">        //messagePlayer - subject of the message</span>
+        Player messagePlayer = msg.getPlayer();
+
+        LocationCard messageCard = (LocationCard) msg.getCards()[0];
+
+        //IF location is not the current one
+        if (!(messagePlayer.getLocation().equals(messageCard)))
+        {
+            //Fixes defect #459
+            players = ClueServerHelper.movePlayer(players, messagePlayer,
+                    messageCard);
+<span class="fc" id="L1270">        }</span>
+
+<span class="fc" id="L1272">        sendToAllClients(new Message(messagePlayer, null,</span>
+                players.toArray(new Player[0]), Message.Move.PLAYERMOVED, null,
+                new Card[]{messageCard}));
+<span class="pc bpc" id="L1275" title="1 of 2 branches missed.">        sendResumeTurnMessage();</span>
+
+        return;
+<span class="nc" id="L1278">    }</span>
+
+    /**
+     * Handles accusation messages from client.
+<span class="fc" id="L1282">     *</span>
+     * @msg Message from handleMessageMoveSwitch
+     * @author Alex Saalberg
+<span class="fc" id="L1285">     */</span>
+    private void handleAccusation(Message msg)
+<span class="fc" id="L1287">    {</span>
+        //EXPECTED: From Client - Message(player making accusation, null, 
+        //players, Move.ACCUSATION, null, cards)
+        
+        //solution - solution from ClueServerDeck.
+        ArrayList&lt;Card&gt; solution = clueServerDeck.getSolution();
+            
+        //correct - whether the accusation is correct
+        boolean correct = solution.get(0).equals(msg.getCards()[0])
+                &amp;&amp; solution.get(1).equals(msg.getCards()[1])
+                &amp;&amp; solution.get(2).equals(msg.getCards()[2]);
+
+        //PRINT using printToConsole; &quot;Accusation: [X] made an accusation of [Y]&quot;
+        clueServerHelper.printToConsole(&quot;Accusation: X made an accusation&quot;);
+
+<span class="fc" id="L1302">        numAccusations++;</span>
+
+        //IF msg.getCards() is null THEN
+<span class="pc bpc" id="L1305" title="5 of 6 branches missed.">        if (msg.getCards() == null)</span>
+        {
+            throw new IllegalArgumentException(
+                    &quot;Accusation message has no cards&quot;);
+        }
+<span class="fc" id="L1310">        //IF the accusation is correct</span>
+        else if (correct)
+<span class="fc" id="L1312">        {</span>
+            handleCorrectAccusation(msg);
+        }
+<span class="pc bpc" id="L1315" title="1 of 2 branches missed.">        else //ELSE (if the accusation is incorrect)</span>
+        {
+<span class="nc" id="L1317">            //SET the accuser as &quot;out&quot; using player.setOut()</span>
+            players.get(msg.getPlayer().getID()).setOut();
+
+            deepCopyPlayers();
+<span class="pc bpc" id="L1321" title="1 of 2 branches missed.">            //SEND to accuser: Message(accuser, null, players, </span>
+            //Move.YOURACCUSATION, ‚ÄúLost‚Äù, null)
+<span class="nc" id="L1323">            Message yourLoseMessage = new Message(msg.getPlayer(), null,</span>
+                    players.toArray(new Player[players.size()]),
+                    Message.Move.YOURACCUSATION, Type.INCORRECTACCUSATION,
+                    msg.getCards());
+
+<span class="fc" id="L1328">            //SEND to everyone but accuser: Message(player who made accusation, </span>
+            //null, Move.ACCUSATION, ‚ÄúLost‚Äù, null)
+<span class="fc" id="L1330">            Message loseMessage = new Message(msg.getPlayer(), null,</span>
+                    players.toArray(new Player[players.size()]),
+                    Message.Move.ACCUSATION, Type.INCORRECTACCUSATION,
+<span class="fc" id="L1333">                    msg.getCards());</span>
+
+
+            //SEND accuser yourLoseMessage
+            sendToPlayer(msg.getPlayer(), yourLoseMessage);
+
+            //SEND everyone else loseMessage
+<span class="fc" id="L1340">            sendToAllExceptPlayer(msg.getPlayer(), loseMessage);</span>
+
+            //IF numAccusations is equal to the size of players
+            if (numAccusations == players.size())
+            {
+                gameOver();
+                return;
+<span class="fc" id="L1347">            }</span>
+        } //ENDIF
+
+<span class="fc" id="L1350">        //CALL nextTurn</span>
+        nextTurn();
+    }
+<span class="pc bpc" id="L1353" title="1 of 2 branches missed."></span>
+    /**
+<span class="nc" id="L1355">     * Used to shorten handleAccusation because it was 52 lines long (50 is</span>
+<span class="nc" id="L1356">     * max).</span>
+     *
+     * @msg Message from handleMessageMoveSwitch
+     * @author Alex Saalberg
+     */
+<span class="fc" id="L1361">    private void handleCorrectAccusation(Message msg)</span>
+<span class="fc" id="L1362">    {</span>
+        deepCopyPlayers();
+        //SEND to the accuser: Message(player who made accusation, null,
+        //players, Move.YOURACCUSATION, ‚ÄúWon‚Äù, null)
+        Message yourWinMessage = new Message(msg.getPlayer(), null, players
+                .toArray(new Player[0]), Move.YOURACCUSATION,
+                Type.CORRECTACCUSATION, null);
+
+        //SEND to everyone else: Message(player who made accusation, null, 
+        //players, Move.ACCUSATION, ‚ÄúWon‚Äù, null)
+        Message winMessage = new Message(msg.getPlayer(), null, players
+<span class="nc" id="L1373">                .toArray(new Player[0]), Move.ACCUSATION,</span>
+                Type.CORRECTACCUSATION, msg.getCards());
+
+<span class="nc" id="L1376">        //SEND accuser yourWinMessage</span>
+        sendToPlayer(msg.getPlayer(), yourWinMessage);
+
+        //SEND everyone else winMessage
+        sendToAllExceptPlayer(msg.getPlayer(), winMessage);
+
+<span class="nc" id="L1382">        //CLOSE the server</span>
+        try
+        {
+            close();
+            return;
+<span class="nc" id="L1387">        }</span>
+        catch (IOException ex)
+        {
+<span class="nc" id="L1390">            System.out.println(ex);</span>
+            ex.printStackTrace();
+        }
+    }
+
+<span class="nc" id="L1395">    /**</span>
+<span class="nc" id="L1396">     * Handles all snoop left messages from client.</span>
+     *
+<span class="nc" id="L1398">     * @msg Message from handleMessageMoveSwitch</span>
+     * @author Alex Saalberg
+<span class="nc" id="L1400">     */</span>
+<span class="nc" id="L1401">    private void handleAllSnoopLeft(Message msg)</span>
+    {
+<span class="nc" id="L1403">        //EXPECTED: From Client - new Message(players.get(thisPlayer), </span>
+        //players.get((thisPlayer + 1) % players.size()), players, 
+        //Message.Move.ACTION, &quot;All Snoop Left&quot;, action);
+
+        //SEND to everyone: Message(player who used card, null, players, 
+        //Move.UPDATELOG, Type.ALLSNOOPRIGHT, null)
+        deepCopyPlayers();
+        Message updateMessage = new Message(msg.getPlayer(), null, players
+                .toArray(new Player[0]), Move.UPDATELOG, Type.ALLSNOOPLEFT,
+                msg.getCards());
+        sendToAllClients(updateMessage);
+
+        //PRINT using printToConsole; &quot;[Action Card: X] used an All Snoop Left.&quot;
+        clueServerHelper.printToConsole(&quot;Action Card: &lt;PLAYER&gt; used an all snoop&quot;);
+
+        //FOR each player in players
+<span class="fc" id="L1419">        for (int idx = 0; idx &lt; players.size(); idx++)</span>
+<span class="fc" id="L1420">        {</span>
+            //player - the player at this index
+            Player player = players.get(idx);
+<span class="fc" id="L1423">            //GET a random card from the next clockwise player</span>
+            //nextPlayer - next player in the list
+            Player nextPlayer = players.get((idx + 1) % players.size());
+<span class="fc" id="L1426"></span>
+            //IF player is not out of the game
+            if (!player.getOut())
+<span class="fc bfc" id="L1429" title="All 2 branches covered.">            {</span>
+                //IF the player is robot
+                if (player instanceof RobotPlayer)
+<span class="fc" id="L1432">                {</span>
+                    //robot - the player, cast to a robot
+                    RobotPlayer robot = (RobotPlayer) player;
+<span class="fc" id="L1435">                    //SHOW robot a random clue card from nextPlayer</span>
+                    robot.showCard(clueServerHelper
+                            .getRandomClueCard(nextPlayer, random)[0]);
+<span class="fc bfc" id="L1438" title="All 2 branches covered.">                }</span>
+                //ELSE (the player is a human)
+                else
+<span class="fc bfc" id="L1441" title="All 2 branches covered.">                {</span>
+                    //SEND to player: Message(card user, null, players, 
+                    //Move.SHOWNCARDS, null, random card)
+<span class="fc" id="L1444">                    deepCopyPlayers();</span>
+                    Message showCardMessage = new Message(msg.getPlayer(),
+<span class="fc" id="L1446">                            nextPlayer, </span>
+                            players.toArray(new Player[players.size()]),
+<span class="fc" id="L1448">                            Move.SHOWNCARDS, Type.ALLSNOOPLEFT,</span>
+                            getRandomClueCard(nextPlayer, random));
+                    sendToPlayer(player, showCardMessage);
+                } //ENDIF
+            } //ENDIF
+        } //ENDFOR
+<span class="fc" id="L1454"></span>
+<span class="fc" id="L1455">        //IF player a robot</span>
+        if (msg.getPlayer() instanceof RobotPlayer)
+        {
+            tellRobotToEndTurn((RobotPlayer) msg.getPlayer());
+        } //ENDIF
+<span class="fc" id="L1460">        else </span>
+        {
+            //Fixes defect #457: sends a resume turn to players after a snoop
+            sendToPlayer(msg.getPlayer(), new Message(msg.getPlayer(), null,
+                    null, Message.Move.RESUMETURN, null, null));
+        }
+<span class="fc bfc" id="L1466" title="All 2 branches covered.">    }</span>
+
+<span class="fc" id="L1468">    /**</span>
+     * Handles all snoop right messages from client.
+     *
+     * @msg Message from handleMessageMoveSwitch
+     * @author Alex Saalberg
+<span class="fc" id="L1473">     */</span>
+    private void handleAllSnoopRight(Message msg)
+    {
+<span class="fc" id="L1476">        //EXPECTED: Message(players.get(thisPlayer), </span>
+        //players.get((thisPlayer - 1 + players.size()) % players.size()), 
+        //players, Message.Move.ACTION, &quot;All Snoop Right&quot;, action);
+
+        //SEND to everyone: Message(player who used card, null, players, 
+        //Move.UPDATELOG, Type.ALLSNOOPRIGHT, null)
+        deepCopyPlayers();
+        Message updateMessage = new Message(msg.getPlayer(), null, players
+                .toArray(new Player[0]), Move.UPDATELOG, Type.ALLSNOOPRIGHT,
+                msg.getCards());
+        sendToAllClients(updateMessage);
+
+        //PRINT using printToConsole; &quot;Action Card: [X] used an All Snoop Right.&quot;
+        clueServerHelper.printToConsole(&quot;Action Card: &lt;PLAYER&gt; used an all right snoop&quot;);
+
+        //FOR each player in players
+<span class="fc" id="L1492">        for (int idx = 0; idx &lt; players.size(); idx++)</span>
+<span class="fc" id="L1493">        {</span>
+            //player - the player at this index
+            Player player = players.get(idx);
+<span class="fc" id="L1496">            //GET a random card from the next clockwise player</span>
+            //nextPlayer - next player in the list
+            Player nextPlayer = players.get((idx - 1 + players.size()) % players
+<span class="fc" id="L1499">                    .size());</span>
+
+            //IF player is not out of the game
+<span class="fc bfc" id="L1502" title="All 2 branches covered.">            if (!player.getOut())</span>
+            {
+                //IF the player is robot
+<span class="fc" id="L1505">                if (player instanceof RobotPlayer)</span>
+                {
+                    //robot - the player, cast to a robot
+<span class="fc" id="L1508">                    RobotPlayer robot = (RobotPlayer) player;</span>
+                    //SHOW robot a random clue card from nextPlayer
+                    robot.showCard(getRandomClueCard(nextPlayer, random)[0]);
+                }
+<span class="fc bfc" id="L1512" title="All 2 branches covered.">                //ELSE (the player is a human</span>
+                else
+                {
+<span class="fc bfc" id="L1515" title="All 2 branches covered.">                    //SEND to player: Message(card user, null, players, </span>
+                    //Move.SHOWNCARDS, null, random card)
+                    deepCopyPlayers();
+<span class="fc" id="L1518">                    Message showCardMessage = new Message(msg.getPlayer(),</span>
+                            nextPlayer, 
+<span class="fc" id="L1520">                            players.toArray(new Player[players.size()]),</span>
+<span class="fc" id="L1521">                            Move.SHOWNCARDS, Type.ALLSNOOPRIGHT,</span>
+                            getRandomClueCard(nextPlayer, random));
+                    sendToPlayer(player, showCardMessage);
+                } //ENDIF
+            } //ENDIF
+        } //ENDFOR
+<span class="fc" id="L1527"></span>
+<span class="fc" id="L1528">        //IF player a robot</span>
+        if (msg.getPlayer() instanceof RobotPlayer)
+        {
+            //CALL tellRobotToEndTurn WITH the robot
+            tellRobotToEndTurn((RobotPlayer) msg.getPlayer());
+<span class="fc" id="L1533">        } //ENDIF</span>
+        else 
+        {
+            //Fixes defect #457: sends a resume turn to players after a snoop
+            sendToPlayer(msg.getPlayer(), new Message(msg.getPlayer(), null,
+                    null, Message.Move.RESUMETURN, null, null));
+<span class="fc bfc" id="L1539" title="All 2 branches covered.">        }</span>
+    }
+
+<span class="fc" id="L1542">    /**</span>
+     * Handles snoop message from client.
+     *
+     * @msg Message from handleMessageMoveSwitch
+     * @author Alex Saalberg
+<span class="fc" id="L1547">     */</span>
+    private void handleSnoop(Message msg)
+    {
+<span class="fc" id="L1550">        //EXPECTED: Message(players.get(thisPlayer), target, players, </span>
+        //Message.Move.ACTION, &quot;Snoop&quot;, null);
+
+        //Fixes defect #456: Added the target to the updatelog message.
+        //SEND to everyone: Message(player who used card, target, players, 
+        //Move.UPDATELOG, Type.SNOOP, null)
+        deepCopyPlayers();
+        Message updateMessage = new Message(msg.getPlayer(), msg.getTarget(),
+                players.toArray(new Player[0]), Move.UPDATELOG, Type.SNOOP,
+                msg.getCards());
+        sendToAllClients(updateMessage);
+
+        //player - subject of the message
+        Player player = msg.getPlayer();
+        //target - target of the message
+        Player target = msg.getTarget();
+<span class="fc" id="L1566">        playedCard = msg.getCards()[0];</span>
+<span class="fc" id="L1567">        //IF the player is a RobotPlayer</span>
+        if (player instanceof RobotPlayer)
+        {
+<span class="fc" id="L1570">            ((RobotPlayer) player)</span>
+                    .showCard(getRandomClueCard(target, random)[0]);
+        }
+<span class="fc" id="L1573">        //ELSE (the player is a HumanPlayer)</span>
+        else
+<span class="fc" id="L1575">        {</span>
+<span class="fc" id="L1576">            //SEND to player who used card: Message(null, msg.target(), players, </span>
+            //Message.Move.SHOWNCARDS, null, random card from msg.target()
+<span class="fc bfc" id="L1578" title="All 2 branches covered.">            deepCopyPlayers();</span>
+            Message showCardMessage = new Message(player, target, players
+<span class="fc" id="L1580">                    .toArray(new Player[players.size()]), Move.SHOWNCARDS,</span>
+                    Type.SNOOP, getRandomClueCard(target, random));
+            sendToPlayer(player, showCardMessage);
+        } //ENDIF
+
+
+        //IF player a robot
+        if (player instanceof RobotPlayer)
+<span class="fc" id="L1588">        {</span>
+<span class="fc" id="L1589">            //CALL tellRobotToEndTurn WITH the robot</span>
+            tellRobotToEndTurn((RobotPlayer) player);
+        } 
+<span class="fc" id="L1592">        //ELSE tell the player to resume their turn.</span>
+        else 
+        {
+            //Fixes defect #457: sends a resume turn to players after a snoop
+            sendToPlayer(player, new Message(player, null, null,
+<span class="fc bfc" id="L1597" title="All 2 branches covered.">                    Message.Move.RESUMETURN, null, null));</span>
+        }
+    }
+<span class="fc" id="L1600"></span>
+    /**
+     * Handles Super Sleuth messages.
+     *
+     * @msg Message from handleMessageMoveSwitch
+     * @author Alex Saalberg
+<span class="fc" id="L1606">     */</span>
+    private void handleSuperSleuth(Message msg)
+    {
+<span class="fc" id="L1609">        //EXPECTED: From Client - Message(players.get(thisPlayer), null, </span>
+        //players, Message.Move.ACTION, Messave.Type.SUPERSLEUTH, card)
+
+        //SEND to everyone: Message(player who used card, null, players, 
+        //Move.UPDATELOG, Type.SUPERSLEUTH, card)
+        deepCopyPlayers();
+        Message updateMessage = new Message(msg.getPlayer(), null, players
+                .toArray(new Player[0]), Move.UPDATELOG, Type.SUPERSLEUTH,
+                msg.getCards());
+        sendToAllClients(updateMessage);
+
+        //player - subject of this message
+        Player messagePlayer = msg.getPlayer();
+        //card - the super sleuth card
+        Card card = msg.getCards()[0];
+<span class="fc" id="L1624">        //message - message used to notify players of super sleuth</span>
+<span class="fc" id="L1625">        Message message;</span>
+        //cardList - array containing the super sleuth card
+        Card[] cardList = new Card[1];
+<span class="fc" id="L1628">        //response - array containing a selected card from the other player</span>
+        Card[] response = new Card[1];
+        boolean shown = false;
+<span class="fc" id="L1631">        </span>
+        //SET cardList[0] to card
+<span class="fc" id="L1633">        cardList[0] = card;</span>
+        //SET playedCard to card
+        playedCard = card;
+
+<span class="fc" id="L1637">        //player - player at a given index</span>
+        Player player;
+<span class="fc" id="L1639"></span>
+<span class="fc" id="L1640">        //Fixes defect #447</span>
+        //FOR idx 0 to players.size()-1
+        for (int idx = 0; idx &lt; players.size(); idx++)
+<span class="fc" id="L1643">        {</span>
+            //SET player to players.get(idx)
+<span class="fc" id="L1645">            player = players.get(idx);</span>
+            //IF player.id is not messagePlayer.id 
+                    //AND player can response to super sleuth
+            if (player.getID() != messagePlayer.getID()
+                    &amp;&amp; ClueServerHelper.canRespondToSuperSleuth(player, card) &gt;= 0)
+            {
+                mutex++;
+<span class="fc bfc" id="L1652" title="All 2 branches covered.">                shown = true;</span>
+            }
+        }
+<span class="fc" id="L1655">        handleSuperSleuthSendMessages(messagePlayer, card, cardList);</span>
+        //Fixes defect #448
+        //IF mutex is 0
+<span class="fc bfc" id="L1658" title="All 4 branches covered.">        if (mutex == 0 &amp;&amp; !shown)</span>
+        {
+            //Fixes defect #452
+<span class="fc" id="L1661">            sendToPlayer(messagePlayer, new Message(messagePlayer, null,</span>
+<span class="fc" id="L1662">                            null, Move.SHOWNCARDS, null, null));</span>
+            //CALL doneWaitingOnResponses
+            doneWaitingOnResponses();
+<span class="fc" id="L1665">        } //ENDIF</span>
+    }
+
+<span class="pc bpc" id="L1668" title="3 of 4 branches missed.">    /**</span>
+     * Handles players responding to superSleuths.
+     *
+<span class="nc" id="L1671">     * @msg Message from handleMessageMoveSwitch</span>
+     * @author Alex Saalberg
+     */
+<span class="nc" id="L1674">    private void handleSuperSleuthSendMessages(Player messagePlayer, Card card,</span>
+            Card[] cardList)
+<span class="fc" id="L1676">    {</span>
+        Player player;
+        Message message;
+        Card[] response = new Card[1];
+        
+        //GO through all players
+        for (int idx = 0; idx &lt; players.size(); idx++)
+        {
+            player = players.get(idx);
+
+            //IF not the current player and can respond
+            if (player.getID() != messagePlayer.getID()
+                    &amp;&amp; ClueServerHelper.canRespondToSuperSleuth(player, card) &gt;= 0)
+<span class="fc" id="L1689">            {</span>
+
+                message = new Message(player, messagePlayer, null,
+<span class="fc bfc" id="L1692" title="All 2 branches covered.">                        Message.Move.ACTION, null,</span>
+                        cardList);
+<span class="fc" id="L1694">                //IF player is a robot</span>
+                if (player instanceof RobotPlayer)
+                {
+<span class="fc bfc" id="L1697" title="All 4 branches covered.">                    response[0] = player.getClueCards()[clueServerHelper</span>
+                            .canRespondToSuperSleuth(player, card)];
+                    message = new Message(player, messagePlayer,
+                            null, Message.Move.ACTION,
+<span class="fc" id="L1701">                            null, response);</span>
+                    handleMessageFromClient(message, null);
+                }
+                //ELSE (player is ahuman)
+<span class="pc bpc" id="L1705" title="1 of 2 branches missed.">                else</span>
+                {
+<span class="nc" id="L1707">                    sendToPlayer(player, message);</span>
+                    waitingOn.add(player);
+<span class="nc" id="L1709">                } //ENDIF</span>
+            } //ENDFOR
+        } //ENDFOR
+<span class="nc" id="L1712">    }</span>
+    
+    private void handleSuperSleuthResponse(Message msg)
+    {
+        //Expected: Message(player who responded to super sleuth, 
+<span class="fc" id="L1717">        //player who played supersleuth, Move.SHOWNCARDS, null, card chosen)</span>
+<span class="fc" id="L1718"></span>
+        //player - subject of the message
+        Player player = msg.getPlayer();
+        //target - player whose turn it is
+<span class="fc" id="L1722">        Player target = players.get(turn);</span>
+
+        //PRINT using printToConsole; &quot;[Player] responded [Player]'s 
+        //Super Sleuth with [Card]&quot;
+        clueServerHelper.printToConsole(
+                &quot;Response: &quot; + target.getName() + &quot; reponsed to &quot; + player
+                .getName() + &quot; with &quot; + msg.getCards()[0]);
+
+<span class="fc" id="L1730">        //shownCardList - list of cards containing the shown card</span>
+        ArrayList&lt;Card&gt; shownCardList = new ArrayList&lt;Card&gt;();
+<span class="fc" id="L1732"></span>
+        //the shown card from the msg
+        shownCardList.add(msg.getCards()[0]);
+
+<span class="fc" id="L1736">        //IF the target is robot</span>
+        if (players.get(turn) instanceof RobotPlayer)
+        {
+            //SHOW the robot their card
+            ((RobotPlayer) players.get(turn)).showCard(msg.getCards()[0]);
+<span class="fc" id="L1741">        }</span>
+        //ELSE (the target is human)
+        else
+<span class="fc" id="L1744">        {</span>
+            //SEND a SHOWNCARDS message to that player with the card.
+            sendToPlayer(players.get(turn), new Message(target, player,
+<span class="pc bpc" id="L1747" title="1 of 2 branches missed.">                    null, Move.SHOWNCARDS, null,</span>
+                    shownCardList.toArray(new Card[1])));
+        } //ENDIF
+<span class="nc" id="L1750"></span>
+        //DECREMENT mutex
+        mutex--;
+
+        //Fixes defect #454: Don't use for each loops when modifying things.
+        //FOR each Player player in waitingOn
+<span class="fc" id="L1756">        for (int idx = waitingOn.size() - 1; idx &gt;= 0; idx--)</span>
+        {
+            //IF this message is from that player, REMOVE that player
+            if (msg.getPlayer().getID() == waitingOn.get(idx).getID())
+            {
+                //REMOVE player from waitingOn
+<span class="fc" id="L1762">                waitingOn.remove(waitingOn.get(idx));</span>
+            } //ENDIF
+        } //ENDFOR
+
+<span class="fc bfc" id="L1766" title="All 2 branches covered.">        //IF mutex is 0</span>
+        if (mutex == 0)
+        {
+<span class="pc bpc" id="L1769" title="1 of 2 branches missed.">            //CALL doneWaitingOnResponses</span>
+            doneWaitingOnResponses();
+        } //ENDIF
+<span class="fc" id="L1772">    }</span>
+    
+    /**
+     * Handles players playing a private tip
+     *
+<span class="pc bpc" id="L1777" title="1 of 2 branches missed.">     * @param msg the Message used to initiate this handler</span>
+     * @author Alex Saalberg
+     */
+<span class="fc" id="L1780">    private void handlePrivateTip(Message msg)</span>
+    {
+<span class="fc" id="L1782">        //EXPECTED: Message(players.get(thisPlayer), target, players, </span>
+        //Message.Move.ACTION, Message.Type.PRIVATETIP, action card, null);
+
+
+        //PRINT using printToConsole; &quot;Action Card: [X] used a Private Tip.&quot;
+        clueServerHelper.printToConsole(&quot;Action Card: private tip&quot;);
+
+        Card[] msgCards = msg.getCards();
+        Card foundCard = null;
+        ArrayList&lt;Card&gt; foundCards = new ArrayList&lt;Card&gt;();
+        ActionCard privateTipCard = (ActionCard)msgCards[0];
+        
+        Player player = msg.getPlayer();
+        Player target = msg.getTarget();
+        
+<span class="fc" id="L1797">        //SEND to everyone: Message(player who used card, target, players,</span>
+        //Move.UPDATELOG, null, null, &quot;&lt;X&gt; targeted &lt;Y&gt; with a private tip&quot;)
+<span class="fc" id="L1799">        Message privateTipMessage = new Message(player, target, null,</span>
+<span class="fc" id="L1800">                Move.UPDATELOG, Type.PRIVATETIP, msg.getCards());</span>
+<span class="fc" id="L1801">        sendToAllClients(privateTipMessage);</span>
+<span class="fc" id="L1802"></span>
+
+<span class="fc" id="L1804">        //FOR all cards in target's clue cards</span>
+<span class="fc" id="L1805">        for(Card card : target.getClueCards())</span>
+        {
+            
+            //IF PrivateTipCard.matchesCard(card, private tip card)
+<span class="fc" id="L1809">            if(privateTipCard.matchesCard(card, null))</span>
+            {
+<span class="fc" id="L1811">                //ADD the card to the list</span>
+                foundCard = card;
+                foundCards.add(card);
+            }
+<span class="fc bfc" id="L1815" title="All 2 branches covered.">        }</span>
+        
+        //Fixes defect #467
+        if (privateTipCard.getType() == ActionCard.Type.PTDESTINATION ||
+<span class="fc bfc" id="L1819" title="All 2 branches covered.">                privateTipCard.getType() == ActionCard.Type.PTSUSPECT ||</span>
+                privateTipCard.getType() == ActionCard.Type.PTVEHICLE)
+        {
+<span class="fc" id="L1822">            //IF the player is a robot</span>
+<span class="fc" id="L1823">            if (player instanceof RobotPlayer)</span>
+            {
+                //CAST the player to a robot
+                RobotPlayer robotPlayer = (RobotPlayer) player;
+
+<span class="pc bpc" id="L1828" title="5 of 6 branches missed.">                //SHOW the robot the card</span>
+                robotPlayer.showCard(foundCard);
+            }
+            else
+            {
+<span class="pc bpc" id="L1833" title="1 of 2 branches missed.">                sendToPlayer(player, new Message(player, target, null, </span>
+                        Message.Move.SHOWNCARDS, null,
+                        foundCards.toArray(new Card[0])));
+<span class="nc" id="L1836">            }</span>
+        }
+        else 
+<span class="nc" id="L1839">        {</span>
+<span class="nc" id="L1840">            //IF the player is a robot</span>
+            if (player instanceof RobotPlayer)
+            {
+<span class="fc" id="L1843">                //CAST the player to a robot</span>
+                RobotPlayer robotPlayer = (RobotPlayer) player;
+
+                //SHOW the robot the card
+                robotPlayer.showCard(foundCard);
+            }
+            else
+            {
+<span class="nc bnc" id="L1851" title="All 2 branches missed.">                sendToPlayer(player, new Message(player, target, null, </span>
+                        Message.Move.SHOWNCARDS, null, new Card[] {foundCard}));
+            }
+<span class="nc" id="L1854">        }</span>
+        
+        //Send end turn messages
+<span class="nc" id="L1857">        doneWaitingOnResponses();</span>
+<span class="nc" id="L1858">    }</span>
+
+    
+<span class="nc" id="L1861">    /**</span>
+     * Handles players making suggestions.
+     *
+     * @author Alex Saalberg
+     * @param msg Message from client
+     */
+<span class="fc" id="L1867">    private void handleSuggestion(Message msg)</span>
+<span class="fc" id="L1868">    {</span>
+        //EXPECTED: Message(players.get(thisPlayer), target if card is swapped 
+        //or null otherwise, players, Message.Move.ACTION, 
+        //Message.Type.SUGGESTION, suggestion cards)  
+        
+        //SEND to everyone: Message(player who used card, null, players, 
+        //Move.UPDATELOG, Type.SUGGESTION, null)
+        //SET player equal to msg.getPlayer();
+        Player player = players.get(msg.getPlayer().getID());
+        
+        //IF player is a Robotplayer
+        if (player instanceof RobotPlayer)
+        {
+            //MOVE player to msg.getCards()[0]
+            players = clueServerHelper.movePlayer(players, player,
+                    (LocationCard) msg.getCards()[0]);
+        }
+
+<span class="fc" id="L1886">        deepCopyPlayers();</span>
+        Message updateMessage = new Message(msg.getPlayer(), null, 
+                players.toArray(new Player[0]), Move.UPDATELOG, 
+<span class="pc bpc" id="L1889" title="1 of 2 branches missed.">                Type.SUGGESTION, msg.getCards());</span>
+        sendToAllClients(updateMessage);
+
+<span class="nc" id="L1892">        handleSuggestionBody(msg, player);</span>
+        
+    }
+    
+<span class="fc" id="L1896">    private void handleSuggestionBody(Message msg, Player player)</span>
+<span class="fc" id="L1897">    {</span>
+        //SET nextPlayer equal to players.get((player.getID()+1)%players.size())
+        Player nextPlayer = players.get((player.getID() + 1) % players.size());
+<span class="fc" id="L1900">        //SET suggestion equal to msg.getCards()</span>
+        this.suggestion = msg.getCards();
+<span class="fc" id="L1902">        playedCard = msg.getCards()[3];</span>
+        //disproved - whether the suggestion has been disproved
+<span class="fc" id="L1904">        boolean disproved = false;</span>
+
+        //WHILE nextPlayer is not equal to player
+        while (nextPlayer.getID() != player.getID() &amp;&amp; !disproved)
+        {
+<span class="fc" id="L1909">            //IF the nextplayer can disprove the suggestion</span>
+            if (ClueServerHelper.canDisproveSuggestion(nextPlayer, suggestion))
+<span class="fc" id="L1911">            {</span>
+<span class="fc" id="L1912">                disproved = true;</span>
+                //IF nextPlayer is a RobotPlayer
+<span class="fc" id="L1914">                if (nextPlayer instanceof RobotPlayer)</span>
+                {
+                    //SelectAction for the robotPlayer
+<span class="fc bfc" id="L1917" title="All 4 branches covered.">                    Message newMsg;</span>
+                    //crd - card the player can use to disprove, if any
+                    Card crd = null;
+<span class="fc bfc" id="L1920" title="All 2 branches covered."></span>
+                    crd = findCardThatDisprovesSuggestion(nextPlayer
+<span class="fc" id="L1922">                            .getClueCards(), suggestion);</span>
+                    //shown - the card used to disprove the suggestion
+<span class="pc bpc" id="L1924" title="1 of 2 branches missed.">                    Card[] shown = new Card[1];</span>
+                    shown[0] = crd;
+                    deepCopyPlayers();
+                    newMsg = new Message(nextPlayer, player, players.toArray(
+                            new Player[players.size()]),
+<span class="fc" id="L1929">                            Message.Move.SHOWNCARDS, null, shown);</span>
+                    handleSuggestionResponse(newMsg);
+<span class="fc" id="L1931">                }</span>
+                //ELSE (Player is a human)
+                else
+<span class="fc" id="L1934">                {</span>
+<span class="fc" id="L1935">                    //ADD the player to the waitingOn list</span>
+<span class="fc" id="L1936">                    waitingOn.add(nextPlayer);</span>
+<span class="fc" id="L1937">                    //SEND nextplayer: Message {client, target, players,</span>
+                    //DISPROVESUGGESTION, &quot;&quot;, msg.getCards()}
+                    deepCopyPlayers();
+<span class="fc" id="L1940">                    sendToPlayer(nextPlayer, new Message(player, nextPlayer,</span>
+<span class="fc" id="L1941">                            players.toArray(new Player[players.size()]),</span>
+                            Move.DISPROVESUGGESTION, null, suggestion));
+                } //ENDIF
+            } //ENDIF
+            //Increment nextPlayer
+<span class="nc" id="L1946">            nextPlayer = players.get((nextPlayer.getID() + 1) % players.size());</span>
+        } //ENDWHILE
+
+<span class="nc" id="L1949">        //IF not disproved and player is a robot</span>
+<span class="nc" id="L1950">        if (!disproved)</span>
+        {
+            //Fixes defect #452
+            sendToPlayer(player, new Message(player, null,
+                            null, Move.SHOWNCARDS, null, null));
+            //CALL doneWaitingOnResponses
+<span class="fc" id="L1956">            doneWaitingOnResponses();</span>
+        }
+    }
+
+<span class="fc bfc" id="L1960" title="All 2 branches covered.">    /**</span>
+     * Handles players responding to suggestions.
+     *
+<span class="fc" id="L1963">     * @author Alex Saalberg</span>
+     */
+    private void handleSuggestionResponse(Message msg)
+<span class="fc" id="L1966">    {</span>
+        //Expected: Message(players.get(thisPlayer), player making suggestion, 
+<span class="fc" id="L1968">        //players, Message.Move.SHOWNCARDS, null, clueCard</span>
+
+        //player - subject of the message
+        Player player = msg.getPlayer();
+        //suggester - the player making the suggestion
+        Player suggester = players.get(turn);
+
+        //PRINT using printToConsole; &quot;[Player] responded to [Player]'s 
+        //Suggestion of [CARDS] with [Card]&quot;
+        /*clueServerHelper.printToConsole(
+                &quot;Response: &quot; + player.getName() + &quot; responded to &quot; + suggester
+                .getName() + &quot;'s suggestion with &quot; + msg.getCards()[0]);*/
+
+<span class="fc" id="L1981">        //REMOVE player from waitingOn</span>
+        //Fixes defect #448
+<span class="fc" id="L1983">        waitingOn.clear();</span>
+        
+        //IF suggester is a human
+        if (!(suggester instanceof RobotPlayer))
+        {
+            //SEND to suggester: Message(null, player showing the card, players, 
+            //Move.SHOWNCARDS, null, shown card);
+            sendToPlayer(suggester, new Message(suggester, player, null,
+                    Move.SHOWNCARDS, null, msg.getCards()));
+        }
+<span class="fc" id="L1993">        else</span>
+        {
+            //SHOW the card to the robot
+<span class="pc bpc" id="L1996" title="1 of 2 branches missed.">            ((RobotPlayer) suggester).showCard(msg.getCards()[0]);</span>
+        }
+
+        //CALL doneWaitingOnResponses
+<span class="fc" id="L2000">        doneWaitingOnResponses();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>

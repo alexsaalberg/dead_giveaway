@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>VehicleCard.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCoverage analysis of project &quot;DeadGiveaway&quot; (powered by JaCoCo from EclEmma)</a> &gt; <a href="index.html" class="el_package">deadgiveaway</a> &gt; <span class="el_source">VehicleCard.java</span></div><h1>VehicleCard.java</h1><pre class="source lang-java linenums">package deadgiveaway;
+
+/**
+ * The VehicleCard class provides implementation methods to simulate the
+ * properties of a vehicle card in the game.
+ * @author Austin Sparks
+ * @version 2.0
+ */
+public class VehicleCard extends Card 
+{
+    /**
+     * Enumerator designating the color of the vehicleCard, Red or Blue
+     */
+<span class="pc" id="L14">    public enum Color </span>
+    {
+        /** COLOR1 - Red */
+<span class="fc" id="L17">        COLOR1, </span>
+        /** COLOR2 - Blue */
+<span class="fc" id="L19">        COLOR2;</span>
+        
+        /**
+         * Returns the color of this Color as a string. Set to 1=Red, 2=Blue in
+         * this version.
+         * @return the color this Color represents.
+         */
+        @Override
+        public String toString() 
+        {
+            //GET the color - red then blue
+<span class="nc" id="L30">            String color = &quot;&quot;;</span>
+            
+            //SWITCH on this
+<span class="nc bnc" id="L33" title="All 3 branches missed.">            switch (this)</span>
+            {
+                case COLOR1:
+<span class="nc" id="L36">                    color = &quot;Red&quot;;</span>
+<span class="nc" id="L37">                    break;</span>
+                case COLOR2:
+<span class="nc" id="L39">                    color = &quot;Blue&quot;;</span>
+<span class="nc" id="L40">                    break;</span>
+                default :
+<span class="nc" id="L42">                    color = &quot;INVALIDCOLOR&quot;;</span>
+                    break;
+            }
+            
+<span class="nc" id="L46">            return color;</span>
+        }
+        
+        /** Array to get the vehicle color based on the model */
+<span class="fc" id="L50">        public static final Color[] kFromModel = {COLOR2, COLOR2, COLOR2, COLOR1,</span>
+            COLOR1, COLOR1};
+    }
+    
+    /**
+     * Enumerator designating the type of the Card
+     */
+<span class="pc" id="L57">    public enum Type </span>
+    {
+        /** TYPE1 - Flying */
+<span class="fc" id="L60">        TYPE1,</span>
+        /** TYPE2 - Ground */
+<span class="fc" id="L62">        TYPE2;</span>
+        
+        /**
+         * Returns the type of this card. Valid types in this version are
+         * flying and ground.
+         * @return The type of this card.
+         */
+        @Override
+        public String toString() 
+        {
+<span class="nc" id="L72">            String type = &quot;&quot;;</span>
+            
+            //CASE a switch on the type enum OF
+<span class="nc bnc" id="L75" title="All 3 branches missed.">            switch (this)</span>
+            {
+                // condition TYPE1 : &quot;Flying&quot;
+                case TYPE1:
+<span class="nc" id="L79">                    type = &quot;Flying&quot;;</span>
+<span class="nc" id="L80">                    break;</span>
+                // condition TYPE2 : &quot;Ground&quot;
+                case TYPE2:
+<span class="nc" id="L83">                    type = &quot;Ground&quot;;</span>
+<span class="nc" id="L84">                    break;</span>
+                default :
+<span class="nc" id="L86">                    type = &quot;INVALIDTYPE&quot;;</span>
+                    break;
+            } //ENDCASE
+            
+<span class="nc" id="L90">            return type;</span>
+        }
+        
+        /** Array to get the type based on the model */
+<span class="fc" id="L94">        public static final Type[] kFromModel = {TYPE1, TYPE2, TYPE1, TYPE2,</span>
+                                                 TYPE1, TYPE2};
+    }
+    
+    /**
+     * Enumerator for vehicle model
+     */
+<span class="pc" id="L101">    public enum Model </span>
+    {
+        
+        /** MODEL1 - Apollo's Chariot */
+<span class="fc" id="L105">        MODEL1,</span>
+        /** MODEL2 - Athena's Horse */
+<span class="fc" id="L107">        MODEL2, </span>
+        /** MODEL3 - Ero's Wings */
+<span class="fc" id="L109">        MODEL3, </span>
+        /** MODEL4 - Hades' Dogs */
+<span class="fc" id="L111">        MODEL4, </span>
+        /** MODEL5 - Hermes' Winged Sandals */
+<span class="fc" id="L113">        MODEL5, </span>
+        /** MODEL6 - Poseidon's Ship */
+<span class="fc" id="L115">        MODEL6;</span>
+        
+<span class="fc" id="L117">        private static final String[] kNames = {</span>
+            &quot;Apollo's Chariot&quot;, &quot;Athena's Horse&quot;, &quot;Ero's Wings&quot;,
+            &quot;Hades' Dogs&quot;, &quot;Hermes' Winged Sandals&quot;, &quot;Poseidon's Ship&quot;
+        };
+        
+        /**
+         * Gets a string representation of the vehicle
+         * @return Vehicle Model name as a string
+         */
+        @Override
+        public String toString()
+        {
+            // GET names in alphabetical order
+<span class="fc" id="L130">            return kNames[this.ordinal()];</span>
+        }
+    }
+    
+    //color - enum representing the color of this vehicle
+    private final Color kColor;
+    //type - enum representing type of this vehicle
+    private final Type kType;
+    //name - enum representing name of this vehicle
+    private final Model kName;
+    
+    /**
+     * Constructs a new vehicle card
+     * @param name The Model this card will hold
+     */
+    public VehicleCard(Model name) 
+<span class="fc" id="L146">    {</span>
+        //Initialize the card to have the given color, type, and name
+<span class="fc" id="L148">        this.kName = name;</span>
+<span class="fc" id="L149">        this.kColor = Color.kFromModel[name.ordinal()];</span>
+<span class="fc" id="L150">        this.kType = Type.kFromModel[name.ordinal()];</span>
+<span class="fc" id="L151">    }</span>
+    
+    /**
+     * Returns whether this card is the same as the other vehicle card
+     * @param other the vehicle card to check for equivalence to
+     * @return whether this card is equal to the other vehicle card
+     */
+    @Override
+    public boolean equals(Object other) 
+    {
+        //IF the other card is a vehiclecard and has the same name THEN
+<span class="fc bfc" id="L162" title="All 4 branches covered.">        return (other instanceof VehicleCard &amp;&amp;</span>
+                ((VehicleCard)other).kName == this.kName);
+    }
+    
+    /**
+     * Return the color of this vehicle
+     * @return the enum color of this vehicle
+     */
+    public Color getColor() 
+    {
+<span class="fc" id="L172">        return kColor;</span>
+    }
+    
+    /**
+     * Return the model of this vehicle
+     * @return the model of this vehicle
+     */
+    public Model getModel() 
+    {
+<span class="fc" id="L181">        return kName;</span>
+    }
+    
+    /**
+     * Return the type of this vehicle
+     * @return the type of this vehicle
+     */
+    public Type getType() 
+    {
+<span class="fc" id="L190">        return kType;</span>
+    }
+    
+    /**
+     * Deep copies the vehicle card
+     * @return the copy of this vehicle card
+     * @throws CloneNotSupportedException if this card cannot be cloned
+     */
+    @Override
+    public Object clone() throws CloneNotSupportedException
+    {
+<span class="fc" id="L201">        return new VehicleCard(kName);</span>
+    }
+    
+    /**
+     * Gets a string representation of the vehicle
+     * @return Vehicle model name as a string
+     */
+    @Override
+    public String toString() 
+    {
+<span class="fc" id="L211">        return getModel().toString();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>

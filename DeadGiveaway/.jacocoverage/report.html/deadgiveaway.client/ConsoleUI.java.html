@@ -1,0 +1,1196 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ConsoleUI.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCoverage analysis of project &quot;DeadGiveaway&quot; (powered by JaCoCo from EclEmma)</a> &gt; <a href="index.html" class="el_package">deadgiveaway.client</a> &gt; <span class="el_source">ConsoleUI.java</span></div><h1>ConsoleUI.java</h1><pre class="source lang-java linenums">package deadgiveaway.client;
+
+import deadgiveaway.*;
+import java.util.*;
+import java.util.concurrent.Semaphore;
+import deadgiveaway.server.*;
+import java.io.PrintStream;
+import java.io.InputStream;
+import java.awt.event.ActionEvent;
+
+/**
+ * This class contains definitions for a console interface used by for
+ * testing.
+ * 
+ * @author Austin Sparks
+ * @version 2.0
+ */
+public class ConsoleUI implements UserInterface 
+{
+    /** constant used to represent the Greek theme */
+<span class="nc" id="L21">    private final int kGreekNames = 0;</span>
+    /** constant used to represent the pirate theme */
+<span class="nc" id="L23">    private final int kPirateNames = 1;</span>
+    /** constant used to represent the WhiteHouse theme */
+<span class="nc" id="L25">    private final int kWhiteHouseNames = 2;</span>
+    /** max length of a username */
+<span class="nc" id="L27">    private final int kMaxName = 10;</span>
+    /** int used to represent the current theme */
+    private int curTheme;    
+    /** the list of players */
+    private ArrayList&lt;Player&gt; players;
+    /** index of this user in the ArrayList of players */
+    private int thisPlayer;
+    /** a mutex lock to prevent race conditions */
+    private final Semaphore keyMutex;
+    /** A boolean indicating whether or not the game has started */
+    private boolean gameStarted;
+    /** A ClueClient holding the connection to the server */
+    private ClueClient client;
+    /** A boolean for indicating whether the player is still in game */
+    private boolean inGame;
+    /** Optional alternate output stream */
+    private PrintStream out;
+    /** Optional alternate input stream */
+    private InputStream in;
+    /** Scanner to read from the input stream */
+    private Scanner scanner;
+    /** String to save last message printed to console */
+    private String lastMessage;
+    /** Boolean to tel is the current user is the host. */
+    private boolean isHost;
+    /** List of action cards specific names */
+<span class="nc" id="L53">    public static final String[] kActionNames = {</span>
+        &quot;Suggestion-Any&quot;, &quot;Suggestion-Current&quot;, &quot;Snoop&quot;, &quot;All Snoop Left&quot;,
+        &quot;All Snoop Right&quot;, &quot;Super Sleuth Female&quot;, &quot;Super Sleuth Male&quot;,
+        &quot;Super Sleuth Flying&quot;, &quot;Super Sleuth Blue&quot;, &quot;Super Sleuth South&quot;,
+        &quot;Super Sleuth West&quot;, &quot;Private Tip Suspect&quot;, &quot;Private Tip Vehicle&quot;,
+        &quot;Private Tip Destination&quot;, &quot;Private Tip Female&quot;, &quot;Private Tip Red&quot;,
+        &quot;Private Tip North&quot;
+    };
+    
+    
+    /**
+    * Constructs a ConsoleUI for a console user interface.
+    * @author Austin Sparks
+    * @param clnt The ClueClient that is communicating with the server.
+    */
+    public ConsoleUI(ClueClient clnt)
+<span class="nc" id="L69">    {</span>
+<span class="nc" id="L70">        keyMutex = null;</span>
+        // SET clueClient
+<span class="nc" id="L72">        this.client = clnt;</span>
+        // SET out to System.out
+<span class="nc" id="L74">        this.out = System.out;</span>
+        // SET in to System.in
+<span class="nc" id="L76">        this.in = System.in;</span>
+        // SET scanner to read from System.in
+<span class="nc" id="L78">        this.scanner = new Scanner(this.in);</span>
+        // INIT players list
+<span class="nc" id="L80">        players = new ArrayList&lt;Player&gt;();</span>
+<span class="nc" id="L81">    }</span>
+    
+    /**
+     * Constructs a ConsoleUI with specified input and output
+     * @author Austin Sparks
+     * @param clnt The ClueClient that is communicating with the server
+     * @param nout Alternate output stream for testing
+     * @param nin Alternate input stream for testing
+     */
+    public ConsoleUI(ClueClient clnt, PrintStream nout, InputStream nin)
+<span class="nc" id="L91">    {</span>
+<span class="nc" id="L92">        keyMutex = null;</span>
+        // SET clueClient
+<span class="nc" id="L94">        this.client = clnt;</span>
+        // SET this.out to nout
+<span class="nc" id="L96">        this.out = nout;</span>
+        // SET this.in to nin
+<span class="nc" id="L98">        this.in = nin;</span>
+        // SET scanner to read from nin
+<span class="nc" id="L100">        this.scanner = new Scanner(nin);</span>
+        // INIT players list
+<span class="nc" id="L102">        players = new ArrayList&lt;Player&gt;();</span>
+<span class="nc" id="L103">    }</span>
+    
+    
+    /**
+     * Sets the countdown on the turn timer. Not implemented in console.
+     * @param time A string representing the time remaining for the user's turn.
+     */
+    @Override
+    public void setTurnCountdown(String time)
+    {
+        // DO nothing as there is no timer for the console
+<span class="nc" id="L114">    }</span>
+    
+    /**
+     * Gets a Snoop. Lets a player select a target and then 
+     * one of the target's cards.
+     * @param target The player to snoop on.
+     * @return The player chosen as the target. Return null if the user cancels.
+     */
+    public Player getSnoop(Player target)
+    {
+        // PRINT out message asking for card to select
+<span class="nc" id="L125">        lastMessage = &quot;Please select a card to snoop from 1 - &quot; + </span>
+<span class="nc" id="L126">                target.getNumCards();</span>
+<span class="nc" id="L127">        out.println(lastMessage);</span>
+        
+        // IGNORE card because server picks one at random
+<span class="nc" id="L130">        String num = scan();</span>
+        
+<span class="nc" id="L132">        lastMessage += &quot;\nYou chose card &quot; + num;</span>
+<span class="nc" id="L133">        out.println(lastMessage);</span>
+        //SEND message to client with card chosen
+        //Defect #458 NullPointer Exception (FIXED)
+        //Message msg = new Message(target, players.get(thisPlayer), null,
+        //Message.Move.ACTION, Message.Type.SNOOP, target.getClueCards());
+        //client.handleUserInput(msg);
+        
+        // RETURN the target of the snoop
+<span class="nc" id="L141">        return target;</span>
+    }
+    
+    /**
+     * Gets a suggestion. Lets a player pick 
+     * @param location The location to force. Pass null to let the user choose
+     * a location (only for SUGGESTALL)
+     * @return The suggestion in an array of cards, including the action card as
+     * the last entry. Return null if the user cancels the suggestion.
+     */
+    public Card[] getSuggestion(Integer location)
+    {
+        // IF location is null
+<span class="nc bnc" id="L154" title="All 2 branches missed.">        if (location == null)</span>
+        {
+<span class="nc" id="L156">            return suggestAll();</span>
+        }
+        // ELSE IF location is not null
+        else
+        {
+<span class="nc" id="L161">            return suggestCur();</span>
+        }
+    }
+    
+    private Card[] suggestCur()
+    {
+        LocationCard loc;
+        SuspectCard sus;
+        VehicleCard veh;
+        Card[] cards;
+        
+        // PRINT message
+<span class="nc" id="L173">        out.println(&quot;Change location or suggest from current?&quot;);</span>
+<span class="nc" id="L174">        out.println(&quot;\t1 - Change Location&quot;);</span>
+<span class="nc" id="L175">        out.println(&quot;\t2 - Suggest from current location&quot;);</span>
+        // GET input
+<span class="nc" id="L177">        int input = getInput(2);</span>
+        
+<span class="nc" id="L179">        System.err.println(&quot;Input: &quot; + input);</span>
+        
+        // IF change location
+<span class="nc bnc" id="L182" title="All 2 branches missed.">        if (input == 1)</span>
+        {
+<span class="nc" id="L184">            cards = new Card[1];</span>
+            // GET the new location
+<span class="nc" id="L186">            cards[0] = getLocation();</span>
+            
+        }// ELSE make suggestion
+        else
+        {
+<span class="nc" id="L191">            cards = new Card[4];</span>
+<span class="nc" id="L192">            cards[0] = players.get(thisPlayer).getLocation();</span>
+<span class="nc" id="L193">            cards[1] = getSuspect();</span>
+<span class="nc" id="L194">            cards[2] = getVehicle();</span>
+<span class="nc" id="L195">            cards[3] = new ActionCard(ActionCard.Type.SUGGESTCUR);</span>
+        }
+        
+<span class="nc" id="L198">        return cards;</span>
+    }
+    
+    private Card[] suggestAll()
+    {
+<span class="nc" id="L203">        Card[] cards = new Card[4];</span>
+        // GET each card
+<span class="nc" id="L205">        cards[0] = getLocation();</span>
+<span class="nc" id="L206">        cards[1] = getSuspect();</span>
+<span class="nc" id="L207">        cards[2] = getVehicle();</span>
+<span class="nc" id="L208">        cards[3] = new ActionCard(ActionCard.Type.SUGGESTALL);</span>
+        
+        // RETURN the suggestion
+<span class="nc" id="L211">        return cards;</span>
+    }
+    
+    /**
+     * Prevents the user from selecting performing another action. 
+     */
+    public void actionSelected()
+    {
+        // DO nothing as there is nothing to display
+<span class="nc" id="L220">    }</span>
+    
+    /**
+     * Prompts the user to select a target for the desired action.
+     * @return The player that is selected by the user as the target.
+     */
+    public Player selectTarget()
+    {
+<span class="nc" id="L228">        int plyct = 1;</span>
+<span class="nc" id="L229">        lastMessage = &quot;Please select an opponent&quot;;</span>
+<span class="nc" id="L230">        out.println(lastMessage);</span>
+<span class="nc" id="L231">        ArrayList&lt;Player&gt; pls = new ArrayList&lt;Player&gt;();</span>
+        
+        // GO through each player
+        // Defect #460: Loop never executed (FIXED)
+<span class="nc bnc" id="L235" title="All 2 branches missed.">        for (int idx = 0; idx &lt; players.size(); idx++)</span>
+        {
+            // IF idx is not thisPlayer
+<span class="nc bnc" id="L238" title="All 2 branches missed.">            if (idx != thisPlayer)</span>
+            {
+                // ADD to the list of possible players
+<span class="nc" id="L241">                pls.add(players.get(idx));</span>
+                // PRINT out the player as an option
+<span class="nc" id="L243">                lastMessage = &quot;\t&quot; + plyct + &quot; - &quot; + players.get(idx).getName();</span>
+<span class="nc" id="L244">                out.println(lastMessage);</span>
+<span class="nc" id="L245">                plyct++;</span>
+            }
+        }
+        
+        // GET input from user
+<span class="nc" id="L250">        int input = getInput(pls.size()) - 1;</span>
+        // RETURN the selected player
+<span class="nc" id="L252">        return pls.get(input);</span>
+    }
+    
+    /**
+     * Getter for the AI difficulty.
+     * @return The difficulty selected by the user.
+     */
+    public int getAIDifficulty()
+    {
+        // ASK user to enter difficulty
+<span class="nc" id="L262">        lastMessage = &quot;Please select a difficulty\n1 - Easy&quot;</span>
+                        + &quot;\n2 - Medium\n3 - Hard\n&quot;;
+<span class="nc" id="L264">        out.print(lastMessage);</span>
+        // GET input from the user
+<span class="nc" id="L266">        int input = scanner.nextInt();</span>
+        
+        // RETURN input - 1
+<span class="nc" id="L269">        return input - 1;</span>
+    }
+    
+    /**
+     * Getter for the user's username.
+     * @return The username of the user.
+     */
+    public String getUsername()
+    {
+<span class="nc" id="L278">        lastMessage = &quot;Please enter your desired username&quot;;</span>
+        // GET username from user
+<span class="nc" id="L280">        out.println(lastMessage);</span>
+        // SCAN for user name
+<span class="nc" id="L282">        String name = scan();</span>
+        // RETURN username
+<span class="nc" id="L284">        return name;</span>
+    }
+    
+    /**
+     * Allow the user to end their turn or accuse.
+     * (Enable buttons for a GUI and display a prompt for a Console)
+     */
+    public void allowEndTurnOrAccuse()
+    {
+<span class="nc" id="L293">        String input = &quot;&quot;;</span>
+<span class="nc" id="L294">        boolean done = false;</span>
+<span class="nc" id="L295">        lastMessage = &quot;End your turn (end) or make an accusation (accuse).&quot;;</span>
+        // PRINT out options
+<span class="nc" id="L297">        out.println(lastMessage);</span>
+
+        // LOOP until user input is valid
+<span class="nc bnc" id="L300" title="All 2 branches missed.">        while (!done)</span>
+        {
+<span class="nc" id="L302">            input = scan();</span>
+            
+            // IF input is end or accuse
+<span class="nc bnc" id="L305" title="All 4 branches missed.">            if (input.equals(&quot;end&quot;) || input.equals(&quot;accuse&quot;))</span>
+            {
+                // END the loop
+<span class="nc" id="L308">                done = true;</span>
+            }// ELSE
+            else
+            {
+                // ASK again
+<span class="nc" id="L313">                lastMessage = &quot;Invalid input. Please enter \&quot;end\&quot; or \&quot;accuse\&quot;&quot;;</span>
+<span class="nc" id="L314">                out.println(lastMessage);</span>
+            }// ENDIF
+        }// ENDLOOP
+        
+        // IF end turn
+<span class="nc bnc" id="L319" title="All 2 branches missed.">        if (input.equals(&quot;end&quot;))</span>
+        {
+            // CONSTRUCT ActionEvent with &quot;End Turn&quot;
+<span class="nc" id="L322">            ActionEvent evt = new ActionEvent(this, 0, &quot;End Turn&quot;);</span>
+<span class="nc" id="L323">            client.actionPerformed(evt);</span>
+<span class="nc" id="L324">        }// ELSE</span>
+        else
+        {
+            // ACCUSE
+<span class="nc" id="L328">            accuse();</span>
+        }// ENDIF
+<span class="nc" id="L330">    }</span>
+    
+    /**
+     * Starts your turn
+     * @param player Player whose turn it is
+     * @param drawn Card that was drawn from the deck
+     */
+    private void turnStarted(Player player, ActionCard drawn)
+    {
+<span class="nc" id="L339">        boolean done = false;</span>
+<span class="nc" id="L340">        String input = &quot;&quot;;</span>
+        // ADD msg.getCards()[0] to player hand
+<span class="nc" id="L342">        players.get(thisPlayer).addCard(drawn);</span>
+        // PRINT out player cards
+<span class="nc" id="L344">        out.println(&quot;Your clue cards are&quot;);</span>
+<span class="nc" id="L345">        Card[] clueCards = players.get(thisPlayer).getClueCards();</span>
+<span class="nc" id="L346">        ArrayList&lt;Card&gt; cards = new ArrayList&lt;Card&gt;(Arrays.asList(clueCards));</span>
+<span class="nc" id="L347">        printValidCards(cards);</span>
+        // PRINT out turn indicator and cards
+<span class="nc" id="L349">        lastMessage = &quot;It is your turn. Please select an action card or accuse.&quot;;</span>
+<span class="nc" id="L350">        out.println(lastMessage);</span>
+        //Fixes defect #430
+<span class="nc" id="L352">        printActionCards();</span>
+        // LOOP until input is correct
+<span class="nc bnc" id="L354" title="All 2 branches missed.">        while (!done)</span>
+        {
+            // PRINT message to select card
+<span class="nc" id="L357">            out.println(&quot;Please enter 1, 2, or accuse&quot;);</span>
+            
+            // SCAN the next line for input
+<span class="nc" id="L360">            input = scan();</span>
+            
+            // IF input is 1, 2, or accuse
+<span class="nc bnc" id="L363" title="All 6 branches missed.">            if (input.equals(&quot;1&quot;) || input.equals(&quot;2&quot;) || input.equals(&quot;accuse&quot;))</span>
+            {
+                // SET done true
+<span class="nc" id="L366">                done = true;</span>
+            }
+        } // ENDLOOP
+
+        // IF 1
+<span class="nc bnc" id="L371" title="All 2 branches missed.">        if (input.equals(&quot;1&quot;))</span>
+        {
+            // CONSTRUCT ActionEvent with Action 0
+<span class="nc" id="L374">            ActionEvent evt = new ActionEvent(this, 0, &quot;Action 0&quot;);</span>
+<span class="nc" id="L375">            client.actionPerformed(evt);</span>
+<span class="nc" id="L376">        }</span>
+        // ELSE IF 2
+<span class="nc bnc" id="L378" title="All 2 branches missed.">        else if(input.equals(&quot;2&quot;))</span>
+        {
+            // CONSTRUCT ActionEvent with Action 1
+<span class="nc" id="L381">            ActionEvent evt = new ActionEvent(this, 0, &quot;Action 1&quot;);</span>
+<span class="nc" id="L382">            client.actionPerformed(evt);</span>
+<span class="nc" id="L383">        }</span>
+        // ELSE it's an accuse
+        else
+        {
+            // CALL accuse
+<span class="nc" id="L388">            accuse();</span>
+        }// ENDIF
+<span class="nc" id="L390">    }</span>
+    
+    /**
+     * Updates the player list to track changes to players.
+     * @author Austin Sparks
+     * @param plyrs And updated list of players
+     */
+    public void updatePlayers(Player[] plyrs)
+    {
+        // CLEAR the list of players
+<span class="nc" id="L400">        players = new ArrayList&lt;Player&gt;();</span>
+        // COPY players into this.players
+<span class="nc bnc" id="L402" title="All 2 branches missed.">        for (Player pl : plyrs)</span>
+        {
+<span class="nc" id="L404">            players.add(pl);</span>
+        }
+<span class="nc" id="L406">    }</span>
+    
+    /**
+     * Updates the player list to track changes to players.
+     * @author Austin Sparks
+     * @param plyrs An ArrayList of the players
+     */
+    @Override
+    public void updatePlayers(ArrayList&lt;Player&gt; plyrs)
+    {
+        // COPY the players over
+<span class="nc" id="L417">        players = plyrs;</span>
+<span class="nc" id="L418">    }</span>
+    
+    /**
+     * Removes the player from the lobby and begins displaying the game.
+     * @author Austin Sparks
+     */
+    public void gameStarted()
+    {
+        // PRINT out game start message
+<span class="nc" id="L427">        lastMessage = &quot;Dead Giveaway has started.&quot;;</span>
+<span class="nc" id="L428">        out.println(lastMessage);</span>
+        // SET inGame to true
+<span class="nc" id="L430">        inGame = true;</span>
+        // SET gameStarted to true
+<span class="nc" id="L432">        gameStarted = true;</span>
+<span class="nc" id="L433">    }</span>
+    
+    /**
+     * Displays that the connection to the server has been established.
+     * @author Austin Sparks
+     * @param playerPos The position of the player in the list of players
+     * @param player The player connecting to the server
+     * @return The username of the player.
+     */
+    public String connectionEstablished(int playerPos, Player player)
+    {
+<span class="nc" id="L444">        thisPlayer = playerPos;</span>
+<span class="nc" id="L445">        out.println(&quot;Connection Established&quot;);</span>
+<span class="nc" id="L446">        client.actionPerformed(new ActionEvent(this, 0, &quot;Create Game&quot;));</span>
+        
+        // RETURN the name of the player
+<span class="nc" id="L449">        return player.getName();</span>
+    }
+    
+    /**
+     * Print out the action cards the player has
+     * @author Austin Sparks
+     */
+    private void printActionCards()
+    {
+<span class="nc" id="L458">        int number = 1;</span>
+        // Get each card from the player
+<span class="nc bnc" id="L460" title="All 2 branches missed.">        for (ActionCard card : players.get(thisPlayer).getActionCards())</span>
+        {
+<span class="nc" id="L462">            lastMessage = &quot;\t&quot; + number + &quot; - &quot;;</span>
+<span class="nc" id="L463">            lastMessage += kActionNames[card.getType().ordinal()];</span>
+<span class="nc" id="L464">            out.println(lastMessage);</span>
+<span class="nc" id="L465">            number++;</span>
+        }
+<span class="nc" id="L467">    }</span>
+    
+    /**
+     * Prints out all valid cards in the play
+     * @author Austin Sparks
+     * @param validCards
+     */
+    private int printValidCards(ArrayList&lt;Card&gt; validCards)
+    {
+<span class="nc" id="L476">        int idx = 1;</span>
+        
+        // GO through each card
+<span class="nc bnc" id="L479" title="All 2 branches missed.">        for (Card card : validCards)</span>
+        {
+            //Defect #425; Fixed by incrementing idx
+            // PRINT the card out
+<span class="nc" id="L483">            lastMessage = idx++ + &quot; - &quot; + card.toString();</span>
+<span class="nc" id="L484">            out.println(lastMessage);</span>
+<span class="nc" id="L485">        }</span>
+        
+        // RETURN the index of the last card
+<span class="nc" id="L488">        return idx;</span>
+    }
+    
+    /**
+     * Displays a card that was shown to the user.
+     * @author Austin Sparks
+     * @param player The player who showed the card.
+     * @param cards The cards that were shown.
+     * @param action The action that was played to show the card
+     */
+    public void shownCard(Player player, Card[] cards, Message.Type action)
+    {
+        // GET card name
+<span class="nc" id="L501">        String card = cards[0].toString();</span>
+        // GET player name
+<span class="nc" id="L503">        String name = player.getName();</span>
+        // PRINT message saying what card by which player
+<span class="nc" id="L505">        lastMessage = name + &quot; showed you &quot; + card + &quot;\n&quot;;</span>
+<span class="nc" id="L506">        out.print(lastMessage);</span>
+<span class="nc" id="L507">    }</span>
+    
+    /**
+     * Displays a suggestion that was made.
+     * @author Austin Sparks
+     * @param player The player making the suggestion.
+     * @param suggestion The cards in the suggestion.
+     */
+    public void disproveSuggestion(Player player, Card[] suggestion)
+    {
+<span class="nc" id="L517">        lastMessage = player.getName() + &quot; made a suggestion with &quot;;</span>
+<span class="nc" id="L518">        lastMessage += suggestion[0].toString() + &quot; &quot; + suggestion[1].toString();</span>
+<span class="nc" id="L519">        lastMessage += &quot; &quot; + suggestion[2].toString();</span>
+<span class="nc" id="L520">        out.println(lastMessage);</span>
+<span class="nc" id="L521">        lastMessage = &quot;You must disprove this suggestion. Please select a card.&quot;;</span>
+<span class="nc" id="L522">        out.println(lastMessage);</span>
+<span class="nc" id="L523">        ArrayList&lt;Card&gt; validCards = new ArrayList();</span>
+        
+        // GET player name and cards
+<span class="nc" id="L526">        SuspectCard sus = (SuspectCard)suggestion[1];</span>
+<span class="nc" id="L527">        VehicleCard veh = (VehicleCard)suggestion[2];</span>
+<span class="nc" id="L528">        LocationCard loc = (LocationCard)suggestion[0];</span>
+        
+        // GO through all of player's cards and get valid ones
+<span class="nc bnc" id="L531" title="All 2 branches missed.">        for (Card card : players.get(thisPlayer).getClueCards())</span>
+        {
+            // IF equals one of the suggested
+<span class="nc bnc" id="L534" title="All 6 branches missed.">            if (sus.equals(card) || veh.equals(card) || loc.equals(card))</span>
+            {
+                // SAVE card
+<span class="nc" id="L537">                validCards.add(card);</span>
+            }
+        }
+       
+        // PRINT out options to show
+<span class="nc" id="L542">        int max = printValidCards(validCards);</span>
+        // GET input from user
+<span class="nc" id="L544">        int num = getInput(max);</span>
+        // SEND message with card
+<span class="nc" id="L546">        Card[] cards = {validCards.get(num - 1)};</span>
+        Message msg;
+<span class="nc" id="L548">        msg = new Message(players.get(thisPlayer), player, null, </span>
+               Message.Move.SHOWNCARDS, Message.Type.SUGGESTION, cards);
+<span class="nc" id="L550">        client.handleUserInput(msg);</span>
+<span class="nc" id="L551">        lastMessage = &quot;\nYou have disproved &quot; + player.getName();</span>
+<span class="nc" id="L552">        lastMessage += &quot;'s suggestion with &quot; + cards[0].toString();</span>
+<span class="nc" id="L553">        out.println(lastMessage);</span>
+<span class="nc" id="L554">    }</span>
+    
+    /**
+     * Displays an accusation that was made.
+     * @author Austin Sparks
+     * @param player The player making the accusation.
+     * @param accusation The cards in the accusation.
+     * @param right Whether the accusation was right or not
+     */
+    public void accusationMade(Player player, Card[] accusation, boolean right)
+    {
+<span class="nc" id="L565">        String name = player.getName();</span>
+        
+        // IF right
+<span class="nc bnc" id="L568" title="All 2 branches missed.">        if (right)</span>
+        {
+            // PRINT accusation was correct
+<span class="nc" id="L571">            lastMessage = &quot;The accusation was correct. &quot; + name;</span>
+<span class="nc" id="L572">            lastMessage += &quot; won the game!&quot;;</span>
+<span class="nc" id="L573">            out.println(lastMessage);</span>
+            // CALL gameOver method
+<span class="nc" id="L575">            gameOver();</span>
+        }
+        // ELSE
+        else
+        {
+            // PRINT accusation was incorrect
+<span class="nc" id="L581">            lastMessage = &quot;The accusation was incorrect. &quot; + name;</span>
+<span class="nc" id="L582">            lastMessage += &quot; is out of the game.&quot;;</span>
+<span class="nc" id="L583">            out.println(lastMessage);</span>
+        }// ENDIF
+<span class="nc" id="L585">    }</span>
+    
+    /**
+     * Respond to a super sleuth that was played
+     * @author Austin Sparks
+     * @param player Player that played the super sleuth
+     * @param card Super sleuth card
+     */
+    private void respondToSS(Player player, Card card)
+    {
+        // PRINT you must select a card to show
+<span class="nc" id="L596">        lastMessage = player.getName() + &quot; played a super sleuth. &quot;;</span>
+<span class="nc" id="L597">        lastMessage += &quot;You must respond. Please select a card.&quot;;</span>
+<span class="nc" id="L598">        out.println(lastMessage);</span>
+<span class="nc" id="L599">        ArrayList&lt;Card&gt; validCards = new ArrayList&lt;Card&gt;();</span>
+        
+        // GO through each card thisPlayer has
+<span class="nc bnc" id="L602" title="All 2 branches missed.">        for (Card cd : players.get(thisPlayer).getClueCards())</span>
+        {
+            // IF the clue card matches
+<span class="nc bnc" id="L605" title="All 2 branches missed.">            if (((ActionCard)card).matchesCard(cd, null))</span>
+            {
+                // SAWE the clue card
+<span class="nc" id="L608">                validCards.add(cd);</span>
+            }
+        }
+        
+        // PRINT out the valid cards to select
+<span class="nc" id="L613">        int max = printValidCards(validCards);</span>
+<span class="nc" id="L614">        int num = getInput(max);</span>
+<span class="nc" id="L615">        Card[] cards = {validCards.get(num - 1)};</span>
+        // SEND message to server with card
+        Message msg;
+<span class="nc" id="L618">        msg = new Message(players.get(thisPlayer), player, null, </span>
+                Message.Move.SHOWNCARDS, Message.Type.SUPERSLEUTH, cards);
+<span class="nc" id="L620">        client.handleUserInput(msg);</span>
+<span class="nc" id="L621">    }</span>
+    
+    /**
+     * Respond to a private tip
+     * @author Austin Sparks
+     * @param player Player that played the private tip
+     * @param card Private tip card
+     */
+    private void respondToPT(Player player, Card card)
+    {
+        // PRINT you must select a card to show
+<span class="nc" id="L632">        lastMessage = player.toString() + &quot; says &quot; + card.toString();</span>
+<span class="nc" id="L633">        out.println(lastMessage);</span>
+<span class="nc" id="L634">        ArrayList&lt;Card&gt; validCards = new ArrayList&lt;Card&gt;();</span>
+        
+        // GO through each card thisPlayer has
+<span class="nc bnc" id="L637" title="All 2 branches missed.">        for (Card cd : players.get(thisPlayer).getClueCards())</span>
+        {
+            // IF the card matches the action
+<span class="nc bnc" id="L640" title="All 2 branches missed.">            if (((ActionCard)card).matchesCard(cd, null))</span>
+            {
+<span class="nc" id="L642">                validCards.add(cd);</span>
+            }
+        }
+        
+        // PRINT out the valid cards to select
+<span class="nc" id="L647">        int max = printValidCards(validCards);</span>
+        // GET a card
+<span class="nc" id="L649">        int num = getInput(max);</span>
+<span class="nc" id="L650">        Card[] cards = {validCards.get(num - 1)};</span>
+        
+        // SEND response to server
+        Message msg;
+<span class="nc" id="L654">        msg = new Message(players.get(thisPlayer), player, null, </span>
+                Message.Move.SHOWNCARDS, Message.Type.PRIVATETIP, cards);
+<span class="nc" id="L656">        client.handleUserInput(msg);</span>
+<span class="nc" id="L657">    }</span>
+    
+    /**
+     * Notifies the user that invalid input was entered.
+     * @author Austin Sparks
+     */
+    @Override
+    public void invalidInput()
+    {
+        // PRINT message invalid input
+<span class="nc" id="L667">        lastMessage = &quot;Invalid input&quot;;</span>
+<span class="nc" id="L668">        out.println(lastMessage);</span>
+<span class="nc" id="L669">    }</span>
+    
+    /**
+     * Displays all actions based on the game state represented by the message.
+     * @author Austin Sparks
+     * @param o The ClueClient that received the message.
+     * @param arg The message that represents another player's action.
+     */
+    @Override
+    public void update(java.util.Observable o, Object arg)
+    {
+<span class="nc" id="L680">        String endMsg = &quot;End your turn (end) or make an accusation (accuse).&quot;;</span>
+        // SAVE msg by casting arg to a msg
+<span class="nc" id="L682">        Message msg = (Message)arg;</span>
+        
+        // IF UPDATELOG
+<span class="nc bnc" id="L685" title="All 2 branches missed.">        if(msg.getMove() == Message.Move.UPDATELOG)</span>
+        {
+            // PRINT out the information
+<span class="nc" id="L688">            out.println(getInfo(msg));</span>
+        }
+        // IF gamestarted is FALSE
+<span class="nc bnc" id="L691" title="All 2 branches missed.">        if (!gameStarted)</span>
+        {
+            // IF Message.Move.GAMESTARTED
+<span class="nc bnc" id="L694" title="All 2 branches missed.">            if (msg.getMove() == Message.Move.GAMESTARTED)</span>
+            {
+                // CALL gamestarted()
+<span class="nc" id="L697">                gameStarted();</span>
+            }
+            // ELSE IF Message.Move.CONNECTIONESTABLISHED
+<span class="nc bnc" id="L700" title="All 2 branches missed.">            else if (msg.getMove() == Message.Move.CONNECTIONESTABLISHED)</span>
+            {
+                //Fixed defect #422
+                //CALL connectionEstablished()
+<span class="nc" id="L704">                connectionEstablished(msg.getPlayer().getID(), msg.getPlayer());</span>
+<span class="nc bnc" id="L705" title="All 2 branches missed.">                isHost = (msg.getType() != Message.Type.LOBBYEXISTS);</span>
+            }
+            // ELSE IF Message.Move.LOBBYSTARTED
+<span class="nc bnc" id="L708" title="All 2 branches missed.">            else if (msg.getMove() == Message.Move.LOBBYSTARTED)</span>
+            {
+                // IF I am the host
+<span class="nc bnc" id="L711" title="All 2 branches missed.">                if (isHost)</span>
+                {
+                    // CALL startGame()
+<span class="nc" id="L714">                    startGame();</span>
+                }
+            }
+        }
+        
+        // IF Message.Move.CONNECTIONREFUSED
+<span class="nc bnc" id="L720" title="All 2 branches missed.">        if (msg.getMove() == Message.Move.CONNECTIONREFUSED)</span>
+        {
+            // PRINT message game full
+<span class="nc" id="L723">            lastMessage = &quot;A game is currently in session. &quot;;</span>
+<span class="nc" id="L724">            lastMessage += &quot;Please try again later.&quot;;</span>
+<span class="nc" id="L725">            out.println(lastMessage);</span>
+            // RETURN
+<span class="nc" id="L727">            gameOver();</span>
+        }// ELSE IF RESUMETURN
+<span class="nc bnc" id="L729" title="All 2 branches missed.">        else if (msg.getMove() == Message.Move.RESUMETURN &amp;&amp;</span>
+<span class="nc bnc" id="L730" title="All 2 branches missed.">                !lastMessage.equals(endMsg))</span>
+        {
+<span class="nc" id="L732">            allowEndTurnOrAccuse();</span>
+        }// ELSE
+        else
+        {
+            // CHECK the rest of the message
+<span class="nc" id="L737">            updateCont(msg);</span>
+        }
+<span class="nc" id="L739">    }</span>
+    
+    //Fixed defect #424
+    private void startGame()
+    {
+<span class="nc" id="L744">        String choice = &quot;&quot;;</span>
+<span class="nc" id="L745">        out.println(&quot;Enter 's' to start the game.&quot;);</span>
+        
+        // LOOP until user enters 's'
+        do
+        {
+<span class="nc" id="L750">            choice = scanner.nextLine();</span>
+<span class="nc bnc" id="L751" title="All 2 branches missed.">        } while(!choice.equals(&quot;s&quot;));</span>
+
+        // CONSTRUCT ActionEvent with Start Game
+<span class="nc" id="L754">        ActionEvent evt = new ActionEvent(this, 0, &quot;Start Game&quot;);</span>
+<span class="nc" id="L755">        client.actionPerformed(evt);</span>
+<span class="nc" id="L756">    }</span>
+    
+    /**
+     * Continues the update call in the event that thisPlayer is the target
+     * @author Austin Sparks
+     * @param msg The message that was given
+     */
+    private void updateCont(Message msg)
+    {
+        Message mes;
+        
+        // IF Message.Move.YOURTURN
+<span class="nc bnc" id="L768" title="All 2 branches missed.">        if (msg.getMove() == Message.Move.YOURTURN)</span>
+        {
+<span class="nc" id="L770">            updateYourTurn(msg);</span>
+        }
+        // ELSE IF Message.Move.SHOWNCARDS
+<span class="nc bnc" id="L773" title="All 2 branches missed.">        else if (msg.getMove() == Message.Move.SHOWNCARDS)</span>
+        {            
+            // CALL shownCard()
+<span class="nc" id="L776">            shownCard(msg.getTarget(), msg.getCards(), msg.getType());</span>
+        }
+        // ELSE IF Message.Move.DISPROVESUGGESTION
+<span class="nc bnc" id="L779" title="All 2 branches missed.">        else if (msg.getMove() == Message.Move.DISPROVESUGGESTION)</span>
+        {
+            // CALL disproveSuggestion()
+<span class="nc" id="L782">            disproveSuggestion(msg.getPlayer(), msg.getCards());</span>
+        }
+        // ELSE IF Message.Move.YOURACCUSATION
+<span class="nc bnc" id="L785" title="All 2 branches missed.">        else if (msg.getMove() == Message.Move.YOURACCUSATION)</span>
+        {
+<span class="nc" id="L787">            updateYourAccusation(msg);</span>
+        }
+        // ELSE IF Message.Move.ACCUSATION
+<span class="nc bnc" id="L790" title="All 2 branches missed.">        else if (msg.getMove() == Message.Move.ACCUSATION)</span>
+        {
+<span class="nc" id="L792">            updateAccusation(msg);</span>
+        }
+        // ELSE IF Message.Move.ACTION
+<span class="nc bnc" id="L795" title="All 2 branches missed.">        else if (msg.getMove() == Message.Move.ACTION)</span>
+        {
+<span class="nc" id="L797">            updateAction(msg);</span>
+        }
+        // ELSE IF Message.Move.PLAYERADDED
+<span class="nc bnc" id="L800" title="All 2 branches missed.">        else if (msg.getMove() == Message.Move.PLAYERADDED)</span>
+        {
+<span class="nc" id="L802">            updatePlayerAdded(msg);</span>
+        }
+        // ELSE IF Message.Move.PLAYERMOVED
+<span class="nc bnc" id="L805" title="All 2 branches missed.">        else if (msg.getMove() == Message.Move.PLAYERMOVED)</span>
+        {
+<span class="nc" id="L807">            updatePlayerMoved(msg);</span>
+        }
+<span class="nc" id="L809">    }</span>
+    
+    /**
+     * Handles a yourturn message. Skips turn if not in game.
+     * @author Austin Sparks
+     * @param msg The message containing the action
+     */
+    private void updateYourTurn(Message msg)
+    {
+        Message mes;
+
+        // IF not inGame
+<span class="nc bnc" id="L821" title="All 2 branches missed.">        if (!inGame)</span>
+        {
+            // SEND to server end turn
+<span class="nc" id="L824">            mes = new Message(players.get(thisPlayer), null, null,</span>
+                    Message.Move.ENDTURN, null, null);
+            //client.handleUserInput(mes);
+        }
+        // ELSE IF im the target
+<span class="nc bnc" id="L829" title="All 2 branches missed.">        else if (msg.getPlayer().getID() == players.get(thisPlayer).getID())</span>
+        {
+<span class="nc" id="L831">            turnStarted(msg.getTarget(), (ActionCard)msg.getCards()[0]);</span>
+        }
+        // ELSE
+        else
+        {
+<span class="nc" id="L836">            out.println(&quot;Waiting for &quot; + msg.getPlayer().getName() + &quot;.&quot;);</span>
+        }
+<span class="nc" id="L838">    }</span>
+    
+    /**
+     * Handles response to accusation the player made.
+     * @author Austin Sparks
+     * @param msg Message with the accusation information
+     */
+    private void updateYourAccusation(Message msg)
+    {
+        // IF msg is that player won
+<span class="nc bnc" id="L848" title="All 2 branches missed.">        if (msg.getType() == Message.Type.CORRECTACCUSATION)</span>
+        {
+            // PRINT you win
+<span class="nc" id="L851">            lastMessage = &quot;Your accusation was correct! You win!&quot;;</span>
+<span class="nc" id="L852">            out.println(lastMessage);</span>
+            // CALL gameOver()
+<span class="nc" id="L854">            gameOver();</span>
+        }
+        // ELSE
+        else
+        {
+            // SET inGame to false
+<span class="nc" id="L860">            inGame = false;</span>
+            // PRINT your accusation was incorrect
+<span class="nc" id="L862">            lastMessage = &quot;Your accusation was incorrect.&quot;;</span>
+<span class="nc" id="L863">            out.println(lastMessage);</span>
+            // PRINT notice
+<span class="nc" id="L865">            lastMessage = &quot;You can no longer make a move but you must &quot;;</span>
+<span class="nc" id="L866">            lastMessage += &quot; respond to other players' moves.\n&quot;;</span>
+<span class="nc" id="L867">            lastMessage += &quot;Enter anything to contiue&quot;;</span>
+<span class="nc" id="L868">            out.println(lastMessage);</span>
+<span class="nc" id="L869">            scan();</span>
+        }
+<span class="nc" id="L871">    }</span>
+    
+    /**
+     * Handles message containing someone else's accusation
+     * @param msg Message with the accusation information
+     */
+    private void updateAccusation(Message msg)
+    {
+        // IF type is correct
+<span class="nc bnc" id="L880" title="All 2 branches missed.">        if (msg.getType() == Message.Type.CORRECTACCUSATION)</span>
+        {
+            // CALL accusation made with right
+<span class="nc" id="L883">            accusationMade(msg.getPlayer(), msg.getCards(), true);</span>
+            // CALL gameOver()
+<span class="nc" id="L885">            gameOver();</span>
+        }
+        // ELSE IF type is incorrect
+<span class="nc bnc" id="L888" title="All 2 branches missed.">        else if (msg.getType() == Message.Type.INCORRECTACCUSATION)</span>
+        {
+            // Call accusationMade with not right
+<span class="nc" id="L891">            accusationMade(msg.getPlayer(), msg.getCards(), false);</span>
+        }
+        // ELSE type is null
+        else
+        {
+            // PRINT out the accusation
+<span class="nc" id="L897">            lastMessage = msg.getPlayer().getName() + &quot; accused &quot; +</span>
+<span class="nc" id="L898">                    msg.getCards()[1] + &quot; going to &quot; + msg.getCards()[0] + </span>
+<span class="nc" id="L899">                    &quot; with &quot; + msg.getCards()[2];</span>
+<span class="nc" id="L900">            out.println(lastMessage);</span>
+        }
+<span class="nc" id="L902">    }</span>
+    
+    /**
+     * Handles an action message
+     * @author Austin Sparks
+     * @param msg Message containing action
+     */
+    private void updateAction(Message msg)
+    {
+        // IF Type is SUPERSLEUTH
+<span class="nc bnc" id="L912" title="All 2 branches missed.">        if (&quot;Super Sleuth&quot;.equals(msg.getCards()[0].toString()))</span>
+        {
+            // CALL respondToSS()
+<span class="nc" id="L915">            respondToSS(msg.getTarget(), msg.getCards()[0]);</span>
+        }
+        // ELSE IF Type is PRIVATETIP
+<span class="nc bnc" id="L918" title="All 2 branches missed.">        else if (&quot;Private Tip&quot;.equals(msg.getCards()[0].toString()))</span>
+        {
+            // CALL respondToPT()
+<span class="nc" id="L921">            respondToPT(msg.getTarget(), msg.getCards()[0]);</span>
+        }
+<span class="nc" id="L923">    }</span>
+    
+    /**
+     * Handles message when a player is added
+     * @param msg Message with the new player information
+     */
+    private void updatePlayerAdded(Message msg)
+    {
+        // PRINT that the player joined
+<span class="nc" id="L932">        lastMessage = msg.getPlayer().getName() + &quot; has joined the game.&quot;;</span>
+<span class="nc" id="L933">        out.println(lastMessage);</span>
+<span class="nc" id="L934">    }</span>
+    
+    /**
+     * Handles message when a player moves
+     * @param msg Message with the player information
+     */
+    private void updatePlayerMoved(Message msg)
+    {
+        // PRINT that the player moved
+<span class="nc" id="L943">        lastMessage = msg.getPlayer().getName() + &quot; moved to &quot; + </span>
+<span class="nc" id="L944">                msg.getCards()[0].toString();</span>
+<span class="nc" id="L945">        out.println(lastMessage);</span>
+<span class="nc" id="L946">    }</span>
+    
+    /**
+     * End the game.
+     * @author Austin Sparks
+     */
+    private void gameOver()
+    {
+        // EXIT
+        //System.exit(0);
+<span class="nc" id="L956">    }</span>
+    
+    /**
+     * Get a suspect card from the user
+     * @return The suspect card they select
+     */
+    private SuspectCard getSuspect()
+    {
+<span class="nc" id="L964">        ArrayList&lt;Card&gt; validCards = new ArrayList&lt;Card&gt;();</span>
+        
+        // GO through each suspect
+<span class="nc bnc" id="L967" title="All 2 branches missed.">        for (SuspectCard.Name name : SuspectCard.Name.values())</span>
+        {
+<span class="nc" id="L969">            validCards.add(new SuspectCard(name));</span>
+        }
+        
+        // PRINT message and cards
+<span class="nc" id="L973">        lastMessage = &quot;Please select a suspect.&quot;;</span>
+<span class="nc" id="L974">        out.println(lastMessage);</span>
+<span class="nc" id="L975">        printValidCards(validCards);</span>
+        
+<span class="nc" id="L977">        return (SuspectCard)validCards.get(getInput(validCards.size()) - 1);</span>
+    }
+    
+    /**
+     * Get a vehicle card from the user
+     * @return The vehicle card they select
+     */
+    private VehicleCard getVehicle()
+    {
+<span class="nc" id="L986">        ArrayList&lt;Card&gt; validCards = new ArrayList&lt;Card&gt;();</span>
+        
+        // GO through each vehicle
+<span class="nc bnc" id="L989" title="All 2 branches missed.">        for (VehicleCard.Model model : VehicleCard.Model.values())</span>
+        {
+<span class="nc" id="L991">            validCards.add(new VehicleCard(model));</span>
+        }
+        
+        // PRINT message and cards
+<span class="nc" id="L995">        lastMessage = &quot;Please select a vehicle.&quot;;</span>
+<span class="nc" id="L996">        out.println(lastMessage);</span>
+<span class="nc" id="L997">        printValidCards(validCards);</span>
+        
+<span class="nc" id="L999">        return (VehicleCard)validCards.get(getInput(validCards.size()) - 1);</span>
+    }
+    
+    /**
+     * Get a location card from the user
+     * @return The location card they select
+     */
+    private LocationCard getLocation()
+    {
+<span class="nc" id="L1008">        ArrayList&lt;Card&gt; validCards = new ArrayList&lt;Card&gt;();</span>
+        
+        // GO through each location
+<span class="nc bnc" id="L1011" title="All 2 branches missed.">        for (LocationCard.Title title : LocationCard.Title.values())</span>
+        {
+<span class="nc" id="L1013">            validCards.add(new LocationCard(title));</span>
+        }
+        
+        // PRINT message and cards
+<span class="nc" id="L1017">        lastMessage = &quot;Please select a destination.&quot;;</span>
+<span class="nc" id="L1018">        out.println(lastMessage);</span>
+<span class="nc" id="L1019">        printValidCards(validCards);</span>
+        
+<span class="nc" id="L1021">        return (LocationCard)validCards.get(getInput(validCards.size()) - 1);</span>
+    }
+    
+    /**
+     * Perform an accusation
+     * @author Austin Sparks
+     */
+    private void accuse()
+    {
+<span class="nc" id="L1030">        Card[] cards = new Card[3];</span>
+        // GET a location
+<span class="nc" id="L1032">        cards[0] = getLocation();</span>
+        // GET a suspect
+<span class="nc" id="L1034">        cards[1] = getSuspect();</span>
+        // GET a vehicle
+<span class="nc" id="L1036">        cards[2] = getVehicle();</span>
+        
+        // SEND message to server making accusation
+        Message msg;
+<span class="nc" id="L1040">        msg = new Message(players.get(thisPlayer), null, </span>
+<span class="nc" id="L1041">                players.toArray(new Player[5]), </span>
+                Message.Move.ACCUSATION, null, cards);
+<span class="nc" id="L1043">        client.handleUserInput(msg);</span>
+<span class="nc" id="L1044">    }</span>
+    
+    /**
+     * Set the inputStream
+     * @author Austin Sparks
+     * @param inStream New input stream
+     */
+    public void setInputStream(InputStream inStream)
+    {
+        // SET input to new one
+<span class="nc" id="L1054">        in = inStream;</span>
+<span class="nc" id="L1055">        scanner = new Scanner(in);</span>
+<span class="nc" id="L1056">    }</span>
+    
+    /**
+     * Set the output stream
+     * @author Austin Sparks
+     * @param outStream New output stream
+     */
+    public void setOutputStream(PrintStream outStream)
+    {
+        // SET ouput to new one
+<span class="nc" id="L1066">        out = outStream;</span>
+<span class="nc" id="L1067">    }</span>
+    
+    /**
+     * Get the list of players the UI has for testing
+     * @author Austin Sparks
+     * @return current list of players
+     */
+    public ArrayList&lt;Player&gt; getPlayers()
+    {
+        // RETURN the list of players involved
+<span class="nc" id="L1077">        return this.players;</span>
+    }
+    
+    /**
+     * Gets input from the user with error checking
+     * @author Austin Sparks
+     * @param max Maximum value the input can be
+     * @return The input number given
+     */
+    private int getInput(int max)
+    {
+<span class="nc" id="L1088">        boolean done = false;</span>
+<span class="nc" id="L1089">        int num = -1;</span>
+        
+        // WHILE not done
+<span class="nc bnc" id="L1092" title="All 2 branches missed.">        while (!done)</span>
+        {
+            // GET the number input
+<span class="nc" id="L1095">            String input = scan();</span>
+<span class="nc" id="L1096">            num = Integer.parseInt(input);  </span>
+            // IF valid input
+<span class="nc bnc" id="L1098" title="All 4 branches missed.">            if (num &gt; 0 &amp;&amp; num &lt;= max)</span>
+            {
+                // DONE
+<span class="nc" id="L1101">                done = true;</span>
+            }
+            // ELSE ask again
+            else
+            {
+<span class="nc" id="L1106">                lastMessage += &quot;Invalid input. Please select a number 1 - &quot;;</span>
+<span class="nc" id="L1107">                lastMessage += max + &quot;.&quot;;</span>
+<span class="nc" id="L1108">                out.println(lastMessage);</span>
+            }
+<span class="nc" id="L1110">        }// ENDWHILE</span>
+        
+        // RETURN the number
+<span class="nc" id="L1113">        return num;</span>
+    }
+    
+    /**
+     * Returns the publicly available information from the Message, formatting
+     * in a format easily read by a player.
+     * @return The message, formatted
+     */
+    //Fixes defect #465
+    private String getInfo(Message msg)
+    {
+        //(Player name) (action) (target name)
+<span class="nc" id="L1125">        String returnString = msg.getPlayer().getName();</span>
+        
+        // IF the player has made an action of type suggestion
+<span class="nc bnc" id="L1128" title="All 2 branches missed.">        if (msg.getType() == Message.Type.SUGGESTION)</span>
+        {
+            
+<span class="nc" id="L1131">            LocationCard loc = (LocationCard)msg.getCards()[0];</span>
+<span class="nc" id="L1132">            SuspectCard sus = (SuspectCard)msg.getCards()[1];</span>
+<span class="nc" id="L1133">            VehicleCard veh = (VehicleCard)msg.getCards()[2];</span>
+
+<span class="nc" id="L1135">            returnString += &quot; has made a suggestion consisting of &quot;</span>
+<span class="nc" id="L1136">                + loc.toString() + &quot;, &quot;</span>
+<span class="nc" id="L1137">                + sus.toString() + &quot;, and &quot;</span>
+<span class="nc" id="L1138">                + veh.toString() + &quot;.&quot;;</span>
+<span class="nc" id="L1139">        }</span>
+        // ELSE IF the player is disproving a suggestion
+<span class="nc bnc" id="L1141" title="All 2 branches missed.">        else if (msg.getMove() == Message.Move.DISPROVESUGGESTION)</span>
+        {
+<span class="nc" id="L1143">            LocationCard loc = (LocationCard)msg.getCards()[0];</span>
+<span class="nc" id="L1144">            SuspectCard sus = (SuspectCard)msg.getCards()[1];</span>
+<span class="nc" id="L1145">            VehicleCard veh = (VehicleCard)msg.getCards()[2];</span>
+        
+<span class="nc" id="L1147">            returnString = &quot;Disprove &quot; + returnString + &quot;'s suggestion of &quot;</span>
+                + loc + &quot;, &quot;
+                + sus + &quot;, and &quot;
+                + veh + &quot;.&quot;;
+<span class="nc" id="L1151">        }</span>
+        else
+        {
+<span class="nc" id="L1154">            ActionCard action = (ActionCard)msg.getCards()[0];</span>
+<span class="nc" id="L1155">            returnString += &quot; has played a &quot; +</span>
+<span class="nc" id="L1156">                    kActionNames[action.getType().ordinal()];</span>
+            //if the action has a target
+<span class="nc bnc" id="L1158" title="All 2 branches missed.">            if(msg.getType() != Message.Type.ALLSNOOPLEFT &amp;&amp;</span>
+<span class="nc bnc" id="L1159" title="All 2 branches missed.">                    msg.getType() != Message.Type.ALLSNOOPRIGHT &amp;&amp;</span>
+<span class="nc bnc" id="L1160" title="All 2 branches missed.">                    msg.getType() != Message.Type.SUPERSLEUTH)</span>
+            {
+<span class="nc" id="L1162">                returnString += &quot; on &quot; + msg.getTarget().getName();</span>
+            }
+        }
+<span class="nc" id="L1165">        return returnString + &quot;.&quot;;</span>
+    }
+    
+    
+    /**
+     * Gets the last message printed to the user
+     * @return last message sent
+     */
+    @Override
+    public String toString()
+    {
+<span class="nc" id="L1176">        return lastMessage;</span>
+    }
+    
+    private String scan()
+    {
+<span class="nc" id="L1181">        String input = scanner.nextLine();</span>
+
+        // IF input is quit at any point
+<span class="nc bnc" id="L1184" title="All 2 branches missed.">        if (input.equals(&quot;quit&quot;))</span>
+        {
+            // QUIT
+<span class="nc" id="L1187">            System.exit(0);</span>
+        }
+
+        
+        // RETURN input
+<span class="nc" id="L1192">        return input;</span>
+    }
+    
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>

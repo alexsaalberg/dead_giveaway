@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>LocationCard.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCoverage analysis of project &quot;DeadGiveaway&quot; (powered by JaCoCo from EclEmma)</a> &gt; <a href="index.html" class="el_package">deadgiveaway</a> &gt; <span class="el_source">LocationCard.java</span></div><h1>LocationCard.java</h1><pre class="source lang-java linenums">package deadgiveaway;
+
+/**
+ * The LocationCard class provides implementation methods to simulate the
+ * properties of a location card in the game.
+ * @author Steven Gerick
+ * @version 1.0
+ */
+public class LocationCard extends Card 
+{
+    /**
+     * Enumeration that represents directions of locations
+     */
+<span class="pc" id="L14">    public enum Direction </span>
+    {
+        /**
+         * DIRECTION1 - NorthEast
+         */
+<span class="fc" id="L19">        DIRECTION1,</span>
+        /**
+         * DIRECTION2 - NorthWest
+         */
+<span class="fc" id="L23">        DIRECTION2,</span>
+        /**
+         * DIRECTION3 - SouthWest
+         */
+<span class="fc" id="L27">        DIRECTION3,</span>
+        /**
+         * DIRECTION4 - SouthEast
+         */
+<span class="fc" id="L31">        DIRECTION4;</span>
+        
+        /**
+         * Returns the four directions available as a string.
+         * @return The name of the direction being called.
+         */
+        @Override
+        public String toString() 
+        {
+<span class="nc" id="L40">            String dir = &quot;Invalid direction&quot;;</span>
+
+            //If diection1 set to NE
+<span class="nc bnc" id="L43" title="All 2 branches missed.">            if(this == DIRECTION1)</span>
+            {
+<span class="nc" id="L45">                dir = &quot;Northeast&quot;;</span>
+            }
+            //if diection2 set to NW
+<span class="nc bnc" id="L48" title="All 2 branches missed.">            else if(this == DIRECTION2)</span>
+            {
+<span class="nc" id="L50">                dir = &quot;Northwest&quot;;</span>
+            }
+            //if direction3 set to SW
+<span class="nc bnc" id="L53" title="All 2 branches missed.">            else if(this == DIRECTION3)</span>
+            {
+<span class="nc" id="L55">                dir = &quot;Southwest&quot;;</span>
+            }
+            //if direction4 set to SE
+<span class="nc bnc" id="L58" title="All 2 branches missed.">            else if(this == DIRECTION4)</span>
+            {
+<span class="nc" id="L60">                dir = &quot;Southeast&quot;;</span>
+            }
+<span class="nc" id="L62">            return dir;</span>
+        }
+        
+<span class="fc" id="L65">        private static final Direction[] kFromName = {DIRECTION1, DIRECTION1,</span>
+            DIRECTION2, DIRECTION2, DIRECTION3, DIRECTION3, DIRECTION3,
+            DIRECTION4, DIRECTION4};
+    }
+    
+    /**
+     * ToString not supported on names because these vary during runtime
+     * depending on the theme selected.
+     */
+<span class="pc" id="L74">    public enum Title </span>
+    {
+        /**
+         * Enum for name of location 1
+         */
+<span class="fc" id="L79">        TITLE1,</span>
+        /**
+         * Enum for name of location 2
+         */
+<span class="fc" id="L83">        TITLE2,</span>
+        /**
+         * Enum for name of location 3
+         */
+<span class="fc" id="L87">        TITLE3,</span>
+        /**
+         * Enum for name of location 4
+         */
+<span class="fc" id="L91">        TITLE4,</span>
+        /**
+         * Enum for name of location 5
+         */
+<span class="fc" id="L95">        TITLE5,</span>
+        /**
+         * Enum for name of location 6
+         */
+<span class="fc" id="L99">        TITLE6,</span>
+        /**
+         * Enum for name of location 7
+         */
+<span class="fc" id="L103">        TITLE7,</span>
+        /**
+         * Enum for name of location 8
+         */
+<span class="fc" id="L107">        TITLE8,</span>
+        /**
+         * Enum for name of location 9
+         */
+<span class="fc" id="L111">        TITLE9;</span>
+
+        /**
+         * Return a string representing this location's title
+         * @return a string representing this location's title
+         */
+        @Override
+        public String toString() 
+        {
+            //Set a string return value
+<span class="fc" id="L121">            String title = &quot;&quot;;</span>
+            //if it is title1
+<span class="fc bfc" id="L123" title="All 2 branches covered.">            if(this == TITLE1)</span>
+            {
+<span class="fc" id="L125">                title = &quot;Athena's Forest&quot;;</span>
+            }
+            //if it is title2
+<span class="fc bfc" id="L128" title="All 2 branches covered.">            else if(this == TITLE2)</span>
+            {
+<span class="fc" id="L130">                title = &quot;Athens&quot;;</span>
+            }
+            //if it is title3
+<span class="fc bfc" id="L133" title="All 2 branches covered.">            else if(this == TITLE3)</span>
+            {
+<span class="fc" id="L135">                title = &quot;Atlas's Sky&quot;;</span>
+            }
+            //if it is title4
+<span class="fc bfc" id="L138" title="All 2 branches covered.">            else if(this == TITLE4)</span>
+            {
+<span class="fc" id="L140">                title = &quot;Dionysius's Vineyard&quot;;</span>
+            }
+            //if it is title5
+<span class="fc bfc" id="L143" title="All 2 branches covered.">            else if(this == TITLE5)</span>
+            {
+<span class="fc" id="L145">                title = &quot;Hade's Underworld&quot;;</span>
+            }
+            //if it is title6
+<span class="fc bfc" id="L148" title="All 2 branches covered.">            else if(this == TITLE6)</span>
+            {
+<span class="fc" id="L150">                title = &quot;Hephaestus's Volcano&quot;;</span>
+            }
+            //if it is title7
+<span class="fc bfc" id="L153" title="All 2 branches covered.">            else if(this == TITLE7)</span>
+            {
+<span class="fc" id="L155">                title = &quot;Mount Olympus&quot;;</span>
+            }
+            //if it is title8
+<span class="fc bfc" id="L158" title="All 2 branches covered.">            else if(this == TITLE8)</span>
+            {
+<span class="fc" id="L160">                title = &quot;Phoebe's Moon&quot;;</span>
+            }
+            //if it is title9
+            else
+            {
+<span class="fc" id="L165">                title = &quot;Poseidon's Ocean&quot;;</span>
+            }
+<span class="fc" id="L167">            return title;</span>
+        }
+    }
+    
+    //Direction - Direction enum indicating one of four directions for the card
+    private final Direction kDirection;
+    //Name - Name enum that indicates the name of the card
+    private final Title kTitle;
+    
+    /**
+     * Constructs a new LocationCard
+     * @param titl the name this card will hold
+     */
+    public LocationCard(Title titl) 
+<span class="fc" id="L181">    {</span>
+        //INITIALIZE the card's fields using the given direction and name enums
+<span class="fc" id="L183">        kTitle = titl;</span>
+        //INITIALIZE direction using the static array of ordinals to directions
+<span class="fc" id="L185">        kDirection = Direction.kFromName[titl.ordinal()];</span>
+<span class="fc" id="L186">    }</span>
+    
+    /**
+     * Returns whether this card is the same as the other location card
+     * @param other the location card to check for equivalence to
+     * @return whether this card is equal to the other location card
+     */
+    @Override
+    public boolean equals(Object other) 
+    {
+        //IF the other card is a LocationCard and has the same name
+<span class="fc bfc" id="L197" title="All 4 branches covered.">        return other instanceof LocationCard &amp;&amp;</span>
+               ((LocationCard)other).kTitle == this.kTitle;
+    }
+    
+    /**
+     * Return the name of this destination
+     * @return the name of this destination
+     */
+    public Title getTitle() 
+    {
+<span class="fc" id="L207">        return kTitle;</span>
+    }
+   
+    /**
+     * Return the direction of this destination
+     * @return the direction of this destination
+     */
+    public Direction getDirection() 
+    {
+<span class="fc" id="L216">        return kDirection;</span>
+    }
+   
+    /**
+     * Copy the current card
+     * @return Copy of the card
+     * @throws CloneNotSupportedException if this object cannot be cloned
+     */
+    @Override
+    public Object clone() throws CloneNotSupportedException
+    {
+<span class="fc" id="L227">        return new LocationCard(kTitle);</span>
+    }
+    
+    /**
+     * Gets the string representation of the location card
+     * @return Name of location as string
+     */
+    @Override
+    public String toString() 
+    {
+<span class="fc" id="L237">        return getTitle().toString();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>

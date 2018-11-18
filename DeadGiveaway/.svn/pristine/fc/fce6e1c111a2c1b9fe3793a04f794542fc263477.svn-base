@@ -1,0 +1,346 @@
+
+package deadgiveaway.client;
+
+import deadgiveaway.*;
+import deadgiveaway.client.ClueClient;
+import deadgiveaway.client.ConsoleUI;
+import deadgiveaway.server.Player;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.PrintStream;
+import static java.lang.System.out;
+import java.util.ArrayList;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import static org.junit.Assert.*;
+
+/**
+ * Integration Test for ConsoleUI
+ * @author Brad
+ */
+public class ConsoleUIIntegrationTest
+{
+    PrintStream out;
+    InputStream in;
+    ClueClient client;
+    ConsoleUI cui;
+    
+    public ConsoleUIIntegrationTest()
+    {
+    }
+    
+    
+    @Before
+    public void setUp()
+    {
+        client = new ClueClient("localhost", 5557, null, ConsoleUI.class);
+        out = new PrintStream(new ByteArrayOutputStream());
+        cui = new ConsoleUI(client);
+        cui.setOutputStream(out);
+    }
+    
+    @After
+    public void tearDown()
+    {
+    }
+
+      @Test
+    public void testUpdatePlayers() 
+    {
+        ArrayList<Player> initPlayers = new ArrayList();
+        ArrayList<Player> newPlayers = new ArrayList();
+        
+        initPlayers.add(new Player("bob", 0, null));
+        initPlayers.add(new Player("john", 1, null));
+        newPlayers.add(new Player("mary", 0, null));
+        newPlayers.add(new Player("jane", 1, null));
+        
+        // players should be null at start
+        assertTrue(cui.getPlayers().isEmpty());
+        
+        cui.updatePlayers(initPlayers);
+        // players should match the initial
+        assertEquals("bob", cui.getPlayers().get(0).getName());
+        assertEquals("john", cui.getPlayers().get(1).getName());
+        
+        cui.updatePlayers(newPlayers);
+        // players should match the new
+        assertEquals("mary", cui.getPlayers().get(0).getName());
+        assertEquals("jane", cui.getPlayers().get(1).getName());
+    }
+    
+    @Test
+    public void testGameStarted() 
+    {
+        String expectedOut = "Dead Giveaway has started.";
+        
+        cui.gameStarted();
+        // output should match expected
+        assertEquals(expectedOut, cui.toString());
+    }
+    
+    @Test
+    public void testConnectionEstablished() 
+    {              
+        ArrayList<Player> initPlayers = new ArrayList();
+        initPlayers.add(new Player("spongebob", 0,
+                new LocationCard(LocationCard.Title.TITLE1)));
+        cui.gameStarted();
+        
+        String input = "spongebob\n2\n";
+        in = new ByteArrayInputStream(input.getBytes());
+        cui.setInputStream(in);
+        
+        cui.updatePlayers(initPlayers);
+
+        // output should match
+        //assertEquals("spongebob", cui.connectionEstablished(0, initPlayers.get(0)));
+    }
+    
+    @Test
+    public void testTurnStarted() 
+    {
+        String results = "Turn started\nIt is your turn. Please select" 
+                + "an action card or accuse.\nPlease enter 1, 2, or accuse";
+        
+        Player player = new Player("bob", 0, null);
+        ArrayList<Player> initPlayers = new ArrayList();
+        initPlayers.add(player);
+        
+        ActionCard card = new ActionCard(ActionCard.Type.SNOOP);
+        
+        cui.gameStarted();
+        cui.updatePlayers(initPlayers);
+        
+        String input = "1\n";      
+        in = new ByteArrayInputStream(input.getBytes());
+        cui.setInputStream(in);
+
+        
+    }
+    
+    @Test
+    public void testShownCard() 
+    {
+        String expectedOut = "spongebob showed you Aphrodite\n";
+        SuspectCard aphro = new SuspectCard(SuspectCard.Name.NAME1);
+        ArrayList<Player> initPlayers = new ArrayList();
+        initPlayers.add(new Player("spongebob", 0, null));
+        Card[] cards = {aphro};
+        
+        cui.shownCard(initPlayers.get(0), cards, Message.Type.SNOOP);
+        // output should match
+        assertEquals(expectedOut, cui.toString());
+    }
+    
+    @Test
+    public void testDisproveSuggestion() 
+    {
+        String expectedOut = "1 - Aphrodite\n2 - Athena's Horse\n";
+        expectedOut += "Invalid input. Please select a number 1 - 3.\n";
+        expectedOut +=  "You have disproved spongebob's suggestion with ";
+        expectedOut += "Aphrodite";
+        
+        String input = "5\n1\n";
+        in = new ByteArrayInputStream(input.getBytes());
+        cui.setInputStream(in);
+        
+        cui.gameStarted();
+        ArrayList<Player> initPlayers = new ArrayList();
+        initPlayers.add(new Player("spongebob", 0, null));
+
+        SuspectCard aphro = new SuspectCard(SuspectCard.Name.NAME1);
+        LocationCard athens = new LocationCard(LocationCard.Title.TITLE2);
+        VehicleCard horse = new VehicleCard(VehicleCard.Model.MODEL2);
+        Card[] suggestion = {athens, aphro, horse};
+        
+        initPlayers.get(0).addCard(aphro);
+        initPlayers.get(0).addCard(horse);
+        cui.updatePlayers(initPlayers);
+        
+        //cui.disproveSuggestion(cui.getPlayers().get(0), suggestion);
+        // output should be the same
+        //assertEquals(expectedOut, cui.toString());
+    }
+    
+    /**
+     * Test of accusationMade method, of class ConsoleUI.
+     */
+    @Test
+    public void testAccusationMade() 
+    {
+        // correct accusation
+  
+        String expectedOutput = "The accusation was correct. spongebob won the game!";
+        
+        Player sponge = new Player("spongebob", 0, null);
+        SuspectCard aphro = new SuspectCard(SuspectCard.Name.NAME1);
+        LocationCard athens = new LocationCard(LocationCard.Title.TITLE2);
+        VehicleCard horse = new VehicleCard(VehicleCard.Model.MODEL2);
+        Card[] accusation = {aphro, athens, horse};
+        cui.accusationMade(sponge, accusation, true);
+        // should print message and call game over
+        assertEquals(expectedOutput, cui.toString());
+        
+        // incorrect accusation
+        expectedOutput = "The accusation was incorrect. spongebob is out of the game.";
+        
+        cui.accusationMade(sponge, accusation, false);
+        // should print message 
+        assertEquals(expectedOutput, cui.toString());
+    }
+    
+    
+    /**
+     * Test of invalidInput method, of class ConsoleUI.
+     */
+    @Test
+    public void testInvalidInput()
+    {
+        String expectedOut = "Invalid input";
+        
+        cui.invalidInput();
+        
+        // output should match
+        assertEquals(expectedOut, cui.toString());
+    }
+    
+    @Test
+    public void testGetSnoop()
+    {
+        
+        String input = "2\n";
+        in = new ByteArrayInputStream(input.getBytes());
+        cui.setInputStream(in);
+        
+        String result = "Please select a card to snoop from 1 - 3";
+        result += "\nYou chose card 2";
+        
+        ArrayList<Player> initPlayers = new ArrayList();
+        Player sponge = new Player("spongebob", 0, null);
+        Player joe = new Player("joe", 1, null);
+        
+        
+        SuspectCard aphro = new SuspectCard(SuspectCard.Name.NAME1);
+        LocationCard athens = new LocationCard(LocationCard.Title.TITLE2);
+        VehicleCard horse = new VehicleCard(VehicleCard.Model.MODEL2);
+        
+        sponge.addCard(aphro);
+        sponge.addCard(athens);
+        sponge.addCard(horse);
+        
+        initPlayers.add(sponge);
+        initPlayers.add(joe);
+        cui.gameStarted();
+        
+        cui.updatePlayers(initPlayers);
+        
+        cui.getSnoop(sponge);
+        assertEquals(result, cui.toString());
+    }
+    
+    @Test
+    public void testGetAIDifficulty()
+    {
+        String results = "Please select a difficulty\n1 - Easy"
+                        + "\n2 - Medium\n3 - Hard\n";
+        
+        String input = "2\n";
+        in = new ByteArrayInputStream(input.getBytes());
+        cui.setInputStream(in);
+        
+        assertEquals(1, cui.getAIDifficulty());
+        assertEquals(results, cui.toString());
+    }
+    
+    @Test
+    public void testGetUsername()
+    {
+        String results = "Please enter your desired username";
+        
+        String input = "bob\n";
+        in = new ByteArrayInputStream(input.getBytes());
+        cui.setInputStream(in);
+        
+        assertEquals("bob", cui.getUsername());
+        
+        input = "spongebob\n";
+        in = new ByteArrayInputStream(input.getBytes());
+        cui.setInputStream(in);
+        
+        assertEquals("spongebob", cui.getUsername());
+    }
+    
+    
+    @Test
+    public void testAllowEndTurnOrAccuse()
+    {
+        String results = "End your turn (end) or make an accusation (accuse).";
+        
+        ArrayList<Player> initPlayers = new ArrayList();
+        initPlayers.add(new Player("spongebob", 0, null));
+        cui.updatePlayers(initPlayers);
+        cui.gameStarted();
+        
+        String input = "end\n";
+        in = new ByteArrayInputStream(input.getBytes());
+        cui.setInputStream(in);
+        //cui.allowEndTurnOrAccuse();
+        
+        //assertEquals(results, cui.toString());
+        
+        results += "Invalid input. Please enter \"end\" or \"accuse\"";
+        
+        input = "garbage\nend\n";
+        in = new ByteArrayInputStream(input.getBytes());
+        cui.setInputStream(in);
+        //cui.allowEndTurnOrAccuse();
+        
+        //assertEquals(results, cui.toString());
+    }
+    
+    @Test
+    public void testUpdate()
+    {
+        String results1 = "A game is currently in session. Please try again later.";
+        String results2 = "End your turn (end) or make an accusation (accuse).";
+        
+        ArrayList<Player> initPlayers = new ArrayList();
+        Player player = new Player("bob", 0, null);
+        Player joe = new Player("joe", 1, null);
+        initPlayers.add(player);
+        initPlayers.add(joe);
+        
+        ActionCard snoop = new ActionCard(ActionCard.Type.SNOOP);
+        ActionCard sswest = new ActionCard(ActionCard.Type.SSWEST);
+        player.addCard(snoop);
+        player.addCard(sswest);
+        
+        cui.updatePlayers(initPlayers);
+        
+        Message msg = new Message(player, joe, null,
+                    Message.Move.UPDATELOG, null, player.getActionCards());
+        
+        cui.update(client, msg);
+        
+        msg = new Message(player, null, null,
+                    Message.Move.GAMESTARTED, null, player.getActionCards());
+        cui.update(client, msg);
+        testGameStarted();
+        
+        msg = new Message(player, null, null,
+                    Message.Move.CONNECTIONREFUSED, null, player.getActionCards());
+        cui.update(client, msg);
+        assertEquals(results1, cui.toString());
+        
+        
+        msg = new Message(player, null, null,
+                    Message.Move.LOBBYSTARTED, null, player.getActionCards());
+        cui.update(client, msg);
+        
+    }
+}

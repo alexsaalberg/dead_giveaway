@@ -1,0 +1,12 @@
+Please enter your desired username
+Please select a difficulty
+1 - Easy
+2 - Medium
+3 - Hard
+Successfully connected as spongebob
+Enter 's' to start the game
+Dead Giveaway has started.
+It is your turn. Please select an action card or accuse.
+	1 - Private Tip Destination
+	2 - Suggest from Any Destination
+Patrick showed you Hephaestus's Volcano

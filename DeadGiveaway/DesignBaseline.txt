@@ -1,0 +1,460 @@
+Running javap on all files in classes/deadgiveaway/
+Compiled from "ActionCard.java"
+class deadgiveaway.ActionCard$1 {
+  static final int[] $SwitchMap$deadgiveaway$ActionCard$Type;
+  static {};
+}
+Compiled from "ActionCard.java"
+public class deadgiveaway.ActionCard extends deadgiveaway.Card {
+  public deadgiveaway.ActionCard(deadgiveaway.ActionCard$Type);
+  public boolean equals(deadgiveaway.Card);
+  public deadgiveaway.ActionCard$Type getType();
+  public java.lang.String toString();
+  public java.lang.Object clone() throws java.lang.CloneNotSupportedException;
+}
+Compiled from "ActionCard.java"
+public final class deadgiveaway.ActionCard$Type extends java.lang.Enum<deadgiveaway.ActionCard$Type> {
+  public static final deadgiveaway.ActionCard$Type SUGGESTALL;
+  public static final deadgiveaway.ActionCard$Type SUGGESTCUR;
+  public static final deadgiveaway.ActionCard$Type SNOOP;
+  public static final deadgiveaway.ActionCard$Type ALLSNOOPLEFT;
+  public static final deadgiveaway.ActionCard$Type ALLSNOOPRIGHT;
+  public static final deadgiveaway.ActionCard$Type SSFEMALE;
+  public static final deadgiveaway.ActionCard$Type SSMALE;
+  public static final deadgiveaway.ActionCard$Type SSFLYING;
+  public static final deadgiveaway.ActionCard$Type SSBLUE;
+  public static final deadgiveaway.ActionCard$Type SSSOUTH;
+  public static final deadgiveaway.ActionCard$Type SSWEST;
+  public static final deadgiveaway.ActionCard$Type PTSUSPECT;
+  public static final deadgiveaway.ActionCard$Type PTVEHICLE;
+  public static final deadgiveaway.ActionCard$Type PTDESTINATION;
+  public static final deadgiveaway.ActionCard$Type PTFEMALE;
+  public static final deadgiveaway.ActionCard$Type PTREDVEHICLE;
+  public static final deadgiveaway.ActionCard$Type PTNORTHDEST;
+  public static deadgiveaway.ActionCard$Type[] values();
+  public static deadgiveaway.ActionCard$Type valueOf(java.lang.String);
+  public java.lang.String title();
+  public java.lang.String description();
+  static {};
+}
+Compiled from "Card.java"
+public abstract class deadgiveaway.Card implements java.io.Serializable {
+  public deadgiveaway.Card();
+  public abstract boolean equals(deadgiveaway.Card);
+  public java.lang.Object clone() throws java.lang.CloneNotSupportedException;
+  public java.lang.String toString();
+  public void setTitle(java.lang.String);
+}
+Compiled from "ClientApp.java"
+final class deadgiveaway.client.ClientApp$1 implements java.lang.Runnable {
+  final deadgiveaway.client.GUI val$gui;
+  deadgiveaway.client.ClientApp$1(deadgiveaway.client.GUI);
+  public void run();
+}
+Compiled from "ClientApp.java"
+public class deadgiveaway.client.ClientApp {
+  public deadgiveaway.client.ClientApp();
+  public static void main(java.lang.String[]);
+}
+Compiled from "ClueServer.java"
+class deadgiveaway.server.ClueServer$1 {
+  static final int[] $SwitchMap$deadgiveaway$Message$Move;
+  static final int[] $SwitchMap$deadgiveaway$ActionCard$Type;
+  static {};
+}
+Compiled from "ClueServer.java"
+public class deadgiveaway.server.ClueServer extends ocsf.server.AbstractServer {
+  protected java.util.ArrayList<deadgiveaway.server.Player> players;
+  protected java.util.ArrayList<deadgiveaway.server.Player> waitingOn;
+  protected deadgiveaway.Card[] suggestion;
+  protected java.util.ArrayList<deadgiveaway.Card> solution;
+  public deadgiveaway.server.ClueServer(int, java.lang.Integer);
+  public void start();
+  protected void handleMessageFromClient(java.lang.Object, ocsf.server.ConnectionToClient);
+  protected void sendToPlayer(deadgiveaway.server.Player, deadgiveaway.Message);
+  public static void printPlayers(java.util.ArrayList<deadgiveaway.server.Player>);
+  public void clientConnected(ocsf.server.ConnectionToClient);
+  public void clientDisconnected(ocsf.server.ConnectionToClient);
+  public java.util.ArrayList<deadgiveaway.server.Player> getPlayers();
+  public java.util.ArrayList<deadgiveaway.Card> getSolution();
+  public java.util.ArrayList<deadgiveaway.ActionCard> getDeck();
+  protected void sendToAllClients(deadgiveaway.Message);
+  static {};
+}
+Compiled from "GUI.java"
+class deadgiveaway.client.GUI$10 implements java.awt.event.ActionListener {
+  final deadgiveaway.client.GUI this$0;
+  deadgiveaway.client.GUI$10(deadgiveaway.client.GUI);
+  public void actionPerformed(java.awt.event.ActionEvent);
+}
+Compiled from "GUI.java"
+class deadgiveaway.client.GUI$11 implements java.awt.event.ActionListener {
+  final deadgiveaway.client.GUI this$0;
+  deadgiveaway.client.GUI$11(deadgiveaway.client.GUI);
+  public void actionPerformed(java.awt.event.ActionEvent);
+}
+Compiled from "GUI.java"
+class deadgiveaway.client.GUI$12 implements java.awt.event.ActionListener {
+  final deadgiveaway.client.GUI this$0;
+  deadgiveaway.client.GUI$12(deadgiveaway.client.GUI);
+  public void actionPerformed(java.awt.event.ActionEvent);
+}
+Compiled from "GUI.java"
+class deadgiveaway.client.GUI$13 {
+  static final int[] $SwitchMap$deadgiveaway$ActionCard$Type;
+  static {};
+}
+Compiled from "GUI.java"
+class deadgiveaway.client.GUI$1 implements java.awt.event.ActionListener {
+  final deadgiveaway.client.GUI this$0;
+  deadgiveaway.client.GUI$1(deadgiveaway.client.GUI);
+  public void actionPerformed(java.awt.event.ActionEvent);
+}
+Compiled from "GUI.java"
+class deadgiveaway.client.GUI$2 implements java.awt.event.ActionListener {
+  final deadgiveaway.client.GUI this$0;
+  deadgiveaway.client.GUI$2(deadgiveaway.client.GUI);
+  public void actionPerformed(java.awt.event.ActionEvent);
+}
+Compiled from "GUI.java"
+class deadgiveaway.client.GUI$3 implements java.awt.event.ActionListener {
+  final deadgiveaway.client.GUI this$0;
+  deadgiveaway.client.GUI$3(deadgiveaway.client.GUI);
+  public void actionPerformed(java.awt.event.ActionEvent);
+}
+Compiled from "GUI.java"
+class deadgiveaway.client.GUI$4 implements java.awt.event.ActionListener {
+  final deadgiveaway.client.GUI this$0;
+  deadgiveaway.client.GUI$4(deadgiveaway.client.GUI);
+  public void actionPerformed(java.awt.event.ActionEvent);
+}
+Compiled from "GUI.java"
+class deadgiveaway.client.GUI$5 implements java.awt.event.ActionListener {
+  final deadgiveaway.client.GUI this$0;
+  deadgiveaway.client.GUI$5(deadgiveaway.client.GUI);
+  public void actionPerformed(java.awt.event.ActionEvent);
+}
+Compiled from "GUI.java"
+class deadgiveaway.client.GUI$6 implements java.awt.event.ActionListener {
+  final deadgiveaway.client.GUI this$0;
+  deadgiveaway.client.GUI$6(deadgiveaway.client.GUI);
+  public void actionPerformed(java.awt.event.ActionEvent);
+}
+Compiled from "GUI.java"
+class deadgiveaway.client.GUI$7 implements java.awt.event.ActionListener {
+  final deadgiveaway.client.GUI this$0;
+  deadgiveaway.client.GUI$7(deadgiveaway.client.GUI);
+  public void actionPerformed(java.awt.event.ActionEvent);
+}
+Compiled from "GUI.java"
+class deadgiveaway.client.GUI$8 implements java.awt.event.ActionListener {
+  final deadgiveaway.client.GUI this$0;
+  deadgiveaway.client.GUI$8(deadgiveaway.client.GUI);
+  public void actionPerformed(java.awt.event.ActionEvent);
+}
+Compiled from "GUI.java"
+class deadgiveaway.client.GUI$9 implements java.awt.event.ActionListener {
+  final deadgiveaway.client.GUI this$0;
+  deadgiveaway.client.GUI$9(deadgiveaway.client.GUI);
+  public void actionPerformed(java.awt.event.ActionEvent);
+}
+Compiled from "GUI.java"
+public class deadgiveaway.client.GUI extends javax.swing.JFrame implements java.awt.KeyEventPostProcessor {
+  public static final java.lang.String[] kActionCardNames;
+  public static final java.lang.String[] kActionNames;
+  public static final java.lang.String[] kLocationCardFiles;
+  public static final java.lang.String[] kSuspectCardFiles;
+  public static final java.lang.String[] kVehicleCardFiles;
+  public static final java.lang.String[] kNumberNames;
+  public deadgiveaway.client.GUI(java.util.ArrayList<deadgiveaway.server.Player>, java.lang.String, int);
+  public void sendMessage(deadgiveaway.Message);
+  public void addPlayer(deadgiveaway.server.Player);
+  public void writeToLog(java.lang.String);
+  public boolean postProcessKeyEvent(java.awt.event.KeyEvent);
+  static void access$000(deadgiveaway.client.GUI, java.awt.event.ActionEvent);
+  static void access$200(deadgiveaway.client.GUI, java.awt.event.ActionEvent);
+  static void access$300(deadgiveaway.client.GUI, java.awt.event.ActionEvent);
+  static void access$400(deadgiveaway.client.GUI, java.awt.event.ActionEvent);
+  static void access$500(deadgiveaway.client.GUI, java.awt.event.ActionEvent);
+  static void access$600(deadgiveaway.client.GUI, java.awt.event.ActionEvent);
+  static void access$700(deadgiveaway.client.GUI, java.awt.event.ActionEvent);
+  static void access$800(deadgiveaway.client.GUI, java.awt.event.ActionEvent);
+  static void access$900(deadgiveaway.client.GUI, java.awt.event.ActionEvent);
+  static void access$1000(deadgiveaway.client.GUI, java.awt.event.ActionEvent);
+  static void access$1100(deadgiveaway.client.GUI, java.awt.event.ActionEvent);
+  static javax.swing.JLabel access$1200(deadgiveaway.client.GUI);
+  static void access$1300(deadgiveaway.client.GUI);
+  static {};
+}
+Compiled from "GUI.java"
+class deadgiveaway.client.GUI$ClueClient extends ocsf.client.AbstractClient {
+  deadgiveaway.client.GUI gui;
+  final deadgiveaway.client.GUI this$0;
+  public deadgiveaway.client.GUI$ClueClient(deadgiveaway.client.GUI, java.lang.String, int, deadgiveaway.client.GUI);
+  protected void connectionException(java.lang.Exception);
+  protected void handleMessageFromServer(java.lang.Object);
+  protected void connectionEstablished();
+  protected void connectionClosed();
+  public void sendToServer(java.lang.Object);
+}
+Compiled from "GUI.java"
+class deadgiveaway.client.GUI$TurnTimer implements java.awt.event.ActionListener {
+  final deadgiveaway.client.GUI this$0;
+  protected void reset();
+  protected void reset(int);
+  protected void resetMax();
+  protected int getMax();
+  protected void setMax(int);
+  public void actionPerformed(java.awt.event.ActionEvent);
+  deadgiveaway.client.GUI$TurnTimer(deadgiveaway.client.GUI, int, deadgiveaway.client.GUI, deadgiveaway.client.GUI$1);
+}
+Compiled from "HumanPlayer.java"
+public class deadgiveaway.server.HumanPlayer extends deadgiveaway.server.Player {
+  public deadgiveaway.server.HumanPlayer(int, java.lang.String, deadgiveaway.LocationCard);
+  public java.lang.Object clone() throws java.lang.CloneNotSupportedException;
+  public boolean equals(java.lang.Object);
+}
+Compiled from "LocationCard.java"
+class deadgiveaway.LocationCard$1 {
+  static final int[] $SwitchMap$deadgiveaway$LocationCard$Direction;
+  static final int[] $SwitchMap$deadgiveaway$LocationCard$Title;
+  static {};
+}
+Compiled from "LocationCard.java"
+public class deadgiveaway.LocationCard extends deadgiveaway.Card {
+  public deadgiveaway.LocationCard(deadgiveaway.LocationCard$Title);
+  public boolean equals(deadgiveaway.Card);
+  public deadgiveaway.LocationCard$Title getTitle();
+  public deadgiveaway.LocationCard$Direction getDirection();
+  public java.lang.Object clone() throws java.lang.CloneNotSupportedException;
+  public java.lang.String toString();
+}
+Compiled from "LocationCard.java"
+public final class deadgiveaway.LocationCard$Direction extends java.lang.Enum<deadgiveaway.LocationCard$Direction> {
+  public static final deadgiveaway.LocationCard$Direction DIRECTION1;
+  public static final deadgiveaway.LocationCard$Direction DIRECTION2;
+  public static final deadgiveaway.LocationCard$Direction DIRECTION3;
+  public static final deadgiveaway.LocationCard$Direction DIRECTION4;
+  public static deadgiveaway.LocationCard$Direction[] values();
+  public static deadgiveaway.LocationCard$Direction valueOf(java.lang.String);
+  public java.lang.String toString();
+  static deadgiveaway.LocationCard$Direction[] access$000();
+  static {};
+}
+Compiled from "LocationCard.java"
+final class src.clue.LocationCard$Name extends java.lang.Enum<src.clue.LocationCard$Name> {
+  public static final src.clue.LocationCard$Name NAME1;
+  public static final src.clue.LocationCard$Name NAME2;
+  public static final src.clue.LocationCard$Name NAME3;
+  public static final src.clue.LocationCard$Name NAME4;
+  public static final src.clue.LocationCard$Name NAME5;
+  public static final src.clue.LocationCard$Name NAME6;
+  public static final src.clue.LocationCard$Name NAME7;
+  public static final src.clue.LocationCard$Name NAME8;
+  public static final src.clue.LocationCard$Name NAME9;
+  public static src.clue.LocationCard$Name[] values();
+  public static src.clue.LocationCard$Name valueOf(java.lang.String);
+  static {};
+}
+Compiled from "LocationCard.java"
+public final class deadgiveaway.LocationCard$Title extends java.lang.Enum<deadgiveaway.LocationCard$Title> {
+  public static final deadgiveaway.LocationCard$Title TITLE1;
+  public static final deadgiveaway.LocationCard$Title TITLE2;
+  public static final deadgiveaway.LocationCard$Title TITLE3;
+  public static final deadgiveaway.LocationCard$Title TITLE4;
+  public static final deadgiveaway.LocationCard$Title TITLE5;
+  public static final deadgiveaway.LocationCard$Title TITLE6;
+  public static final deadgiveaway.LocationCard$Title TITLE7;
+  public static final deadgiveaway.LocationCard$Title TITLE8;
+  public static final deadgiveaway.LocationCard$Title TITLE9;
+  public static deadgiveaway.LocationCard$Title[] values();
+  public static deadgiveaway.LocationCard$Title valueOf(java.lang.String);
+  public java.lang.String toString();
+  static {};
+}
+Compiled from "Message.java"
+class deadgiveaway.Message$1 {
+  static final int[] $SwitchMap$deadgiveaway$Message$Move;
+  static {};
+}
+Compiled from "Message.java"
+public class deadgiveaway.Message implements java.io.Serializable {
+  public deadgiveaway.Message(deadgiveaway.server.Player, deadgiveaway.server.Player, deadgiveaway.server.Player[], deadgiveaway.Message$Move, java.lang.String, deadgiveaway.Card[]);
+  public boolean equals(deadgiveaway.Message);
+  public deadgiveaway.Card[] getCards();
+  public deadgiveaway.server.Player getPlayer();
+  public deadgiveaway.server.Player getTarget();
+  public deadgiveaway.server.Player[] getPlayers();
+  public deadgiveaway.Message$Move getMove();
+  public java.lang.String getMsg();
+  public java.lang.Object clone() throws java.lang.CloneNotSupportedException;
+  public java.lang.String toString();
+}
+Compiled from "Message.java"
+public final class deadgiveaway.Message$Move extends java.lang.Enum<deadgiveaway.Message$Move> {
+  public static final deadgiveaway.Message$Move ACTION;
+  public static final deadgiveaway.Message$Move SUGGESTION;
+  public static final deadgiveaway.Message$Move ACCUSATION;
+  public static final deadgiveaway.Message$Move YOURTURN;
+  public static final deadgiveaway.Message$Move TIMEOUT;
+  public static final deadgiveaway.Message$Move YOURACCUSATION;
+  public static final deadgiveaway.Message$Move SHOWNCARDS;
+  public static final deadgiveaway.Message$Move UPDATELOG;
+  public static final deadgiveaway.Message$Move DISPROVESUGGESTION;
+  public static final deadgiveaway.Message$Move GAMESTARTED;
+  public static final deadgiveaway.Message$Move CONNECTIONESTABLISHED;
+  public static final deadgiveaway.Message$Move CONNECTIONREFUSED;
+  public static final deadgiveaway.Message$Move PLAYERADDED;
+  public static final deadgiveaway.Message$Move UPDATECARDS;
+  public static deadgiveaway.Message$Move[] values();
+  public static deadgiveaway.Message$Move valueOf(java.lang.String);
+  public java.lang.String toString();
+  static {};
+}
+Compiled from "Player.java"
+public abstract class deadgiveaway.server.Player implements java.io.Serializable {
+  protected deadgiveaway.ActionCard[] actionCards;
+  protected deadgiveaway.Card[] clueCards;
+  protected int numCards;
+  protected deadgiveaway.LocationCard location;
+  protected deadgiveaway.server.Player[] players;
+  protected int id;
+  protected java.lang.String name;
+  protected java.lang.Boolean isOut;
+  public deadgiveaway.server.Player(java.lang.String, int, deadgiveaway.LocationCard);
+  public void addCard(deadgiveaway.Card);
+  public void removeActionCard(deadgiveaway.ActionCard);
+  public void removeActionCard(int);
+  public void removeClueCard(deadgiveaway.Card);
+  public final boolean hasCard(deadgiveaway.Card);
+  public final deadgiveaway.Card[] getClueCards();
+  public final deadgiveaway.ActionCard[] getActionCards();
+  public final int getID();
+  public final void setID(int);
+  public final void addPlayer(deadgiveaway.server.Player);
+  public final deadgiveaway.LocationCard getLocation();
+  public final void setLocation(deadgiveaway.LocationCard);
+  public final java.lang.String getName();
+  public final void setName(java.lang.String);
+  public final void setOut();
+  public final java.lang.Boolean getOut();
+  public final int getNumActions();
+  public final int getNumCards();
+  public java.lang.String toString();
+  public java.lang.Object clone() throws java.lang.CloneNotSupportedException;
+}
+Compiled from "RobotPlayer.java"
+class deadgiveaway.server.RobotPlayer$1 {
+  static final int[] $SwitchMap$deadgiveaway$ActionCard$Type;
+  static {};
+}
+Compiled from "RobotPlayer.java"
+public class deadgiveaway.server.RobotPlayer extends deadgiveaway.server.Player {
+  public deadgiveaway.server.RobotPlayer(int, java.lang.String, java.lang.Integer, deadgiveaway.LocationCard);
+  public void addCard(deadgiveaway.Card);
+  public void selectAction(deadgiveaway.Message, deadgiveaway.server.ClueServer);
+  public void suggest(deadgiveaway.ActionCard, deadgiveaway.server.ClueServer);
+  public void snoop(deadgiveaway.ActionCard, deadgiveaway.server.ClueServer);
+  public void allSnoop(deadgiveaway.ActionCard, deadgiveaway.server.ClueServer);
+  public void superSleuth(deadgiveaway.ActionCard, deadgiveaway.server.ClueServer);
+  public void privateTip(deadgiveaway.ActionCard, deadgiveaway.server.ClueServer);
+  public void showCard(deadgiveaway.Card);
+  public int getSeed();
+  public java.lang.Object clone() throws java.lang.CloneNotSupportedException;
+  public java.util.ArrayList<deadgiveaway.Card> getUnseenCards();
+  public void setUnseenCards(java.util.ArrayList<deadgiveaway.Card>);
+  public boolean equals(java.lang.Object);
+}
+Compiled from "ServerApp.java"
+public class deadgiveaway.server.ServerApp {
+  public deadgiveaway.server.ServerApp();
+  public static void main(java.lang.String[]);
+}
+Compiled from "SuspectCard.java"
+class deadgiveaway.SuspectCard$1 {
+  static final int[] $SwitchMap$deadgiveaway$SuspectCard$Name;
+  static final int[] $SwitchMap$deadgiveaway$SuspectCard$Gender;
+  static {};
+}
+Compiled from "SuspectCard.java"
+public class deadgiveaway.SuspectCard extends deadgiveaway.Card {
+  public deadgiveaway.SuspectCard(deadgiveaway.SuspectCard$Name);
+  public boolean equals(deadgiveaway.Card);
+  public deadgiveaway.SuspectCard$Name getName();
+  public deadgiveaway.SuspectCard$Gender getGender();
+  public java.lang.Object clone() throws java.lang.CloneNotSupportedException;
+  public java.lang.String toString();
+}
+Compiled from "SuspectCard.java"
+public final class deadgiveaway.SuspectCard$Gender extends java.lang.Enum<deadgiveaway.SuspectCard$Gender> {
+  public static final deadgiveaway.SuspectCard$Gender GENDER1;
+  public static final deadgiveaway.SuspectCard$Gender GENDER2;
+  public static deadgiveaway.SuspectCard$Gender[] values();
+  public static deadgiveaway.SuspectCard$Gender valueOf(java.lang.String);
+  public java.lang.String toString();
+  static deadgiveaway.SuspectCard$Gender[] access$000();
+  static {};
+}
+Compiled from "SuspectCard.java"
+public final class deadgiveaway.SuspectCard$Name extends java.lang.Enum<deadgiveaway.SuspectCard$Name> {
+  public static final deadgiveaway.SuspectCard$Name NAME1;
+  public static final deadgiveaway.SuspectCard$Name NAME2;
+  public static final deadgiveaway.SuspectCard$Name NAME3;
+  public static final deadgiveaway.SuspectCard$Name NAME4;
+  public static final deadgiveaway.SuspectCard$Name NAME5;
+  public static final deadgiveaway.SuspectCard$Name NAME6;
+  public static deadgiveaway.SuspectCard$Name[] values();
+  public static deadgiveaway.SuspectCard$Name valueOf(java.lang.String);
+  public java.lang.String toString();
+  static {};
+}
+Compiled from "VehicleCard.java"
+class deadgiveaway.VehicleCard$1 {
+  static final int[] $SwitchMap$deadgiveaway$VehicleCard$Color;
+  static final int[] $SwitchMap$deadgiveaway$VehicleCard$Type;
+  static final int[] $SwitchMap$deadgiveaway$VehicleCard$Model;
+  static {};
+}
+Compiled from "VehicleCard.java"
+public class deadgiveaway.VehicleCard extends deadgiveaway.Card {
+  public deadgiveaway.VehicleCard(deadgiveaway.VehicleCard$Model);
+  public boolean equals(deadgiveaway.Card);
+  public deadgiveaway.VehicleCard$Color getColor();
+  public deadgiveaway.VehicleCard$Model getModel();
+  public deadgiveaway.VehicleCard$Type getType();
+  public java.lang.Object clone() throws java.lang.CloneNotSupportedException;
+  public java.lang.String toString();
+}
+Compiled from "VehicleCard.java"
+public final class deadgiveaway.VehicleCard$Color extends java.lang.Enum<deadgiveaway.VehicleCard$Color> {
+  public static final deadgiveaway.VehicleCard$Color COLOR1;
+  public static final deadgiveaway.VehicleCard$Color COLOR2;
+  public static final deadgiveaway.VehicleCard$Color[] kFromModel;
+  public static deadgiveaway.VehicleCard$Color[] values();
+  public static deadgiveaway.VehicleCard$Color valueOf(java.lang.String);
+  public java.lang.String toString();
+  static {};
+}
+Compiled from "VehicleCard.java"
+public final class deadgiveaway.VehicleCard$Model extends java.lang.Enum<deadgiveaway.VehicleCard$Model> {
+  public static final deadgiveaway.VehicleCard$Model MODEL1;
+  public static final deadgiveaway.VehicleCard$Model MODEL2;
+  public static final deadgiveaway.VehicleCard$Model MODEL3;
+  public static final deadgiveaway.VehicleCard$Model MODEL4;
+  public static final deadgiveaway.VehicleCard$Model MODEL5;
+  public static final deadgiveaway.VehicleCard$Model MODEL6;
+  public static deadgiveaway.VehicleCard$Model[] values();
+  public static deadgiveaway.VehicleCard$Model valueOf(java.lang.String);
+  public java.lang.String toString();
+  static {};
+}
+Compiled from "VehicleCard.java"
+public final class deadgiveaway.VehicleCard$Type extends java.lang.Enum<deadgiveaway.VehicleCard$Type> {
+  public static final deadgiveaway.VehicleCard$Type TYPE1;
+  public static final deadgiveaway.VehicleCard$Type TYPE2;
+  public static final deadgiveaway.VehicleCard$Type[] kFromModel;
+  public static deadgiveaway.VehicleCard$Type[] values();
+  public static deadgiveaway.VehicleCard$Type valueOf(java.lang.String);
+  public java.lang.String toString();
+  static {};
+}

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>FakeClueServerCameron.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCoverage analysis of project &quot;DeadGiveaway&quot; (powered by JaCoCo from EclEmma)</a> &gt; <a href="index.html" class="el_package">deadgiveaway.fake</a> &gt; <span class="el_source">FakeClueServerCameron.java</span></div><h1>FakeClueServerCameron.java</h1><pre class="source lang-java linenums">package deadgiveaway.fake;
+
+import deadgiveaway.*;
+import deadgiveaway.server.ClueServer;
+import deadgiveaway.server.ClueServerHelper;
+import ocsf.server.ConnectionToClient;
+
+/**
+ * Fake Clue Server for testing
+ * @author camgeehr
+ */
+public class FakeClueServerCameron extends ClueServer
+{
+    /* Empty message */
+    private Message message;
+    
+    /**
+     * Constructor
+     * @param port port number
+     * @param seed random seed
+     * @param clueServerHelper helper for the server
+     */
+    public FakeClueServerCameron(int port, int seed, 
+            ClueServerHelper clueServerHelper)
+    {
+<span class="fc" id="L26">        super(port, seed, clueServerHelper);</span>
+<span class="fc" id="L27">    }</span>
+    
+    /**
+     * Handles a message from the client
+     * @param msg Message coming in
+     * @param con Connection
+     */
+    public void handleMessageFromClient(Object msg, ConnectionToClient con)
+    {
+<span class="fc" id="L36">        message = (Message)msg;</span>
+<span class="fc" id="L37">    }</span>
+    
+    /**
+     * Gets the last message received
+     * @return the last message received
+     */
+    public Message getLastMessage()
+    {
+<span class="fc" id="L45">        return message;</span>
+    }
+    
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>

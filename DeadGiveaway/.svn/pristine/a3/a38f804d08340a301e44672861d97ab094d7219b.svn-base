@@ -1,0 +1,522 @@
+package deadgiveaway.client;
+
+import deadgiveaway.*;
+import deadgiveaway.server.Player;
+import ocsf.server.*;
+import java.util.*;
+import org.junit.*;
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
+import org.uispec4j.*;
+
+/**
+ * Unit Test class for ClueClient
+ * @author Jon Kuzmich
+ * @author Brad Johnson
+ */
+public class GuiComponentTest
+{
+    @Test
+    public void testNothing()
+    {}
+    /*
+    //Test Server used to test if ClueClient sends Messages properly
+    private TestServer testServer;
+    private ArrayList<Card> presetDeck;
+    private ArrayList<Player> players;
+    private Player[] playerArray;
+    private ArrayList<Card> solution;
+    private UserInterface mockedUI;
+    private volatile boolean paused;
+    private int[] cardNums = {4, 4, 4, 3, 3};
+    Message addMessage;
+    Message startMessage;
+    @Before
+    public void setUp() {
+        presetDeck = new ArrayList<Card>();
+        solution = new ArrayList<Card>();
+        players = new ArrayList<Player>();
+        players.add(new Player("Player 1", 0, new LocationCard(LocationCard.Title.TITLE1)));
+        players.add(new Player("Player 2", 1, new LocationCard(LocationCard.Title.TITLE2)));
+        players.add(new Player("Player 3", 2, new LocationCard(LocationCard.Title.TITLE3)));
+        players.add(new Player("Player 4", 3, new LocationCard(LocationCard.Title.TITLE4)));
+        players.add(new Player("Player 5", 4, new LocationCard(LocationCard.Title.TITLE5)));
+        for (int i = 1; i < 9; i++) {
+            presetDeck.add(new LocationCard(LocationCard.Title.values()[i]));
+        }
+        for (int i = 1; i < 6; i++) {
+            presetDeck.add(new SuspectCard(SuspectCard.Name.values()[i]));
+        }
+        for (int i = 1; i < 6; i++) {
+            presetDeck.add(new VehicleCard(VehicleCard.Model.values()[i]));
+        }
+        playerArray = players.toArray(new Player[5]);
+        solution.add(new LocationCard(LocationCard.Title.TITLE1));
+        solution.add(new SuspectCard(SuspectCard.Name.NAME1));
+        solution.add(new VehicleCard(VehicleCard.Model.MODEL1));
+        for (int idx = 1; idx < 5; idx++) {
+            for (int jdx = 0; jdx < cardNums[idx]; jdx++)
+            {
+                players.get(idx).addCard(presetDeck.remove(0));
+            }
+            players.get(idx).addCard(new ActionCard(ActionCard.Type.SUGGESTALL));
+        }
+        players.get(0).addCard(new LocationCard(LocationCard.Title.TITLE1));
+        players.get(0).addCard(new LocationCard(LocationCard.Title.TITLE3));
+        players.get(0).addCard(new LocationCard(LocationCard.Title.TITLE5));
+        players.get(0).addCard(new LocationCard(LocationCard.Title.TITLE9));
+        players.get(0).addCard(new ActionCard(ActionCard.Type.SUGGESTALL));
+        addMessage = new Message(players.get(4), null, players.toArray(new Player[5]),
+                Message.Move.PLAYERADDED, null, null);
+        startMessage = new Message(players.get(0), null, players.toArray(new Player[5]),
+                Message.Move.GAMESTARTED, null, null);
+    }*/
+ /*   
+    @After
+    public void tearDown() {
+        ((GUI)mockedUI).dispose();
+        waitMS(2000);
+    }
+*/
+    /**
+     * Test of the handleUserInput method of class ClueClient.
+     */
+ /*   @Test
+    public void testHandleUserInput() 
+    {
+        System.out.println("testHandleUserInput");
+        //Start the test server
+        testServer = new TestServer(5556);
+        try
+        {
+            testServer.listen();
+        }
+        catch (java.io.IOException ex)
+        {
+            System.out.println(ex);
+        }
+        Message message = new Message(null, null, null,
+                Message.Move.PLAYERMOVED, null, null);
+
+        //Create the client
+        ClueClient client = new ClueClient("localhost", 5556, null,
+                GUI.class);
+        
+        mockedUI = client.getInterface();
+        
+        Message lobbyMessage = new Message(players.get(0), null, playerArray
+                , Message.Move.CONNECTIONESTABLISHED, Message.Type.LOBBYEXISTS, null);
+        
+        mockedUI.update(client, lobbyMessage);
+        client.handleMessageFromServer(startMessage);
+        
+        //Test that the client can handle a null input
+        client.handleUserInput(null);
+        try
+        {
+            Thread.sleep(100);
+        }
+        catch (InterruptedException ex)
+        {
+            
+        }
+        
+        //Test that the client can send a message the server from the UI
+        client.handleUserInput(message);
+    }*/
+    /**
+     * Test ACTION handling of the handleUserInput method of class ClueClient.
+     */
+/*    @Test
+    public void testHandleUserInputAction() 
+    {
+        System.out.println("testHandleUserInputAction");
+        //Start the test server
+        testServer = new TestServer(5557);
+        try
+        {
+            testServer.listen();
+        }
+        catch (java.io.IOException ex)
+        {
+            System.out.println(ex);
+        }
+        //Mock a UI and create a Message
+        Message message = new Message(players.get(0), null,
+                playerArray, Message.Move.YOURTURN, null,
+        new Card[] {new ActionCard(ActionCard.Type.SNOOP)});
+        
+        //Create the ClueClient
+        ClueClient client = new ClueClient("localhost", 5557, null,
+                GUI.class);
+        
+        mockedUI = client.getInterface();
+        
+        Message lobbyMessage = new Message(players.get(0), null, playerArray
+                , Message.Move.CONNECTIONESTABLISHED, Message.Type.LOBBYEXISTS, null);
+
+        mockedUI.update(client, lobbyMessage);
+        client.handleMessageFromServer(addMessage);
+        client.handleMessageFromServer(startMessage);
+
+        //Test that the client allows an action to be played
+        client.handleMessageFromServer(message);
+        System.out.println("Play the snoop");
+        waitMS(1000);
+        waitForInput();
+    }*/
+    /**
+     * Test SUGGESTION handling of the handleUserInput method of class
+     * ClueClient.
+     */
+/*    @Test
+    public void testHandleUserInputSuggestion() 
+    {
+        System.out.println("testHandleUserInputSuggestion");
+        //Start the test server
+        testServer = new TestServer(5558);
+        try
+        {
+            testServer.listen();
+        }
+        catch (java.io.IOException ex)
+        {
+            System.out.println(ex);
+        }
+        //Create Cards for the suggestion
+
+        //Create a list of cards and a message
+
+        Message message = new Message(players.get(0), null, playerArray, Message.Move.YOURTURN,
+        null, new Card[] {new ActionCard(ActionCard.Type.SUGGESTALL)});
+        
+        //Create the client
+        ClueClient client = new ClueClient("localhost", 5558, null,
+                GUI.class);
+        
+        mockedUI = client.getInterface();
+        Message lobbyStart = new Message(null, null, null,
+                Message.Move.LOBBYSTARTED, null, null);        
+        Message lobbyMessage = new Message(players.get(0), null, playerArray
+                , Message.Move.CONNECTIONESTABLISHED, null, null);
+        
+        mockedUI.update(client, lobbyMessage);
+        
+        waitForInput();
+        mockedUI.update(client, lobbyStart);
+        
+        waitForInput();
+        client.handleMessageFromServer(startMessage);
+        
+        System.out.println("Make a suggestion");
+        client.handleMessageFromServer(message);
+        
+        waitMS(2000);
+        waitForInput();
+    }*/
+    /**
+     * Test ACCUSATION handling of the handleUserInput method of class ClueClient.
+     */
+ /*   @Test
+    public void testHandleUserInputAccusation() 
+    {
+        waitMS(1000);
+        //Start the test server
+        System.out.println("testHandleUserInputAccusation");
+        testServer = new TestServer(5559);
+        try
+        {
+            testServer.listen();
+        }
+        catch (java.io.IOException ex)
+        {
+            System.out.println(ex);
+        }        
+        
+        //Create the clue client
+        ClueClient client = new ClueClient("localhost", 5559, null,
+                GUI.class);
+        
+        mockedUI = client.getInterface();
+        
+        Message lobbyMessage = new Message(players.get(0), null, playerArray
+                , Message.Move.CONNECTIONESTABLISHED, Message.Type.LOBBYEXISTS, null);
+        mockedUI.update(client, lobbyMessage);
+        client.handleMessageFromServer(startMessage);
+        
+        waitMS(1000);
+        
+        client.handleMessageFromServer(new Message(players.get(0), null, playerArray,
+            Message.Move.RESUMETURN, null, null));
+        //Test that the client allows a proper accusation to go through
+        
+        System.out.println("Make an accusation");
+        
+        waitForInput();
+    }*/
+    /**
+     * Test TIMEOUT handling of the handleUserInput method of class ClueClient.
+     */
+   /* @Test
+    public void testHandleUserInputTimeOut() 
+    {
+        waitMS(1000);
+        System.out.println("testHandleUserInputTimeOut");
+        //Start the test server
+        testServer = new TestServer(5560);
+        try
+        {
+            testServer.listen();
+        }
+        catch (java.io.IOException ex)
+        {
+            System.out.println(ex);
+        }
+        
+        //Create the client
+        ClueClient client = new ClueClient("localhost", 5560, null,
+                GUI.class);
+        
+        mockedUI = client.getInterface();
+        
+        Message lobbyMessage = new Message(players.get(0), null, playerArray
+                , Message.Move.CONNECTIONESTABLISHED, Message.Type.LOBBYEXISTS, null);
+        mockedUI.update(client, lobbyMessage);
+        client.handleMessageFromServer(startMessage);
+        
+        //Test that the client allows an automatic move to go to the server
+        Message message = new Message(null, null, null, Message.Move.TIMEOUT,
+                null, null);
+        client.handleUserInput(message);
+        
+        //should be 0 invalid input
+    } */
+    /**
+     * Test SHOWNCARDS handling of the handleUserInput method of class 
+     * ClueClient.
+     */
+  /*  @Test
+    public void testHandleUserInputShownCards() 
+    {
+        waitMS(1000);
+        System.out.println("testHandleUserInputShownCards");
+        //Start the test server
+        testServer = new TestServer(5561);
+        try
+        {
+            testServer.listen();
+        }
+        catch (java.io.IOException ex)
+        {
+            System.out.println(ex);
+        }
+        //Create a mock for the UI and create Message shown card, and an action
+        LocationCard testLocation = new LocationCard(LocationCard.Title.TITLE5);
+        SuspectCard testSuspect = new SuspectCard(SuspectCard.Name.NAME1);
+        VehicleCard testVehicle = new VehicleCard(VehicleCard.Model.MODEL1);
+        ActionCard testAction = new ActionCard(ActionCard.Type.ALLSNOOPLEFT);
+        Message curMessage = new Message(players.get(3), null, null, Message.Move.ACTION,
+                Message.Type.ALLSNOOPLEFT, new Card[] {testAction});
+        Message message = new Message(players.get(0), players.get(1), null, Message.Move.SHOWNCARDS,
+                null, new Card[] {testLocation});
+        
+        //Create the clue client
+        ClueClient client = new ClueClient("localhost", 5561, null,
+                GUI.class);
+        
+        mockedUI = client.getInterface();
+        
+        Message lobbyMessage = new Message(players.get(0), null, playerArray
+                , Message.Move.CONNECTIONESTABLISHED, Message.Type.LOBBYEXISTS, null);
+        mockedUI.update(client, lobbyMessage);
+        client.handleMessageFromServer(startMessage);
+        
+        waitMS(1000);
+        
+        //Test that the client does allow a correct card through 
+        //(Showing a Location in response to a Private Tip Destination)
+        testAction = new ActionCard(ActionCard.Type.PTDESTINATION);
+        curMessage = new Message(players.get(1), players.get(0), null, Message.Move.ACTION,
+                Message.Type.PRIVATETIP, new Card[] {testAction}  );
+        message = new Message(players.get(0), players.get(1), null, Message.Move.SHOWNCARDS,
+                null, new Card[] {testLocation});
+        
+        client.handleMessageFromServer(curMessage);
+        
+        waitForInput();
+        //Test that the client does allow a correct card through 
+        //(Showing a Location in response to a Private Tip Northern Destination)
+        testAction = new ActionCard(ActionCard.Type.PTNORTHDEST);
+        curMessage = new Message(players.get(1), players.get(0), null, Message.Move.ACTION,
+                Message.Type.PRIVATETIP, new Card[] {testAction}  );
+        
+        client.handleMessageFromServer(curMessage);
+        
+        waitForInput();
+                
+        
+        //Test that the client does allow a correct card through 
+        //(Showing a southeast in response to a Super Sleuth south)
+        testAction = new ActionCard(ActionCard.Type.SSSOUTH);
+        curMessage = new Message(players.get(1), players.get(0), null, Message.Move.ACTION,
+                Message.Type.SUPERSLEUTH, new Card[] {testAction}  );
+        
+        client.handleMessageFromServer(curMessage);
+        waitForInput();
+
+        //Test that the client does allow a correct card through 
+        //(Showing a southwest in response to a Super Sleuth west)
+        testAction = new ActionCard(ActionCard.Type.SSWEST);
+        curMessage = new Message(players.get(1), players.get(0), null, Message.Move.ACTION,
+                Message.Type.SUPERSLEUTH, new Card[] {testAction}  );
+
+        
+        client.handleMessageFromServer(curMessage);
+        
+        waitForInput();
+                
+        //Test that the client lets the user show a correct card to disprove
+        //the suggestion.
+                
+        curMessage = new Message(players.get(1), players.get(0), null, Message.Move.DISPROVESUGGESTION,
+        null, new Card[] {
+            new LocationCard(LocationCard.Title.TITLE1),
+            new SuspectCard(SuspectCard.Name.NAME1),
+            new VehicleCard(VehicleCard.Model.MODEL1),
+            new ActionCard(ActionCard.Type.SUGGESTALL)
+        });
+        message = new Message(players.get(1), players.get(0), null, Message.Move.SHOWNCARDS, null,
+        new Card[] {new LocationCard(LocationCard.Title.TITLE1)});
+        
+        client.handleMessageFromServer(curMessage);        
+        waitForInput();
+    }*/
+
+    /**
+     * Test ENDTURN handling of the handleUserInput method of class ClueClient.
+     */
+ /*   @Test
+    public void testHandleUserInputEndTurn() 
+    {
+        waitMS(1000);
+        System.out.println("testHandleUserInputEndTurn");
+        //Start the test server
+        testServer = new TestServer(5563);
+        try
+        {
+            testServer.listen();
+        }
+        catch (java.io.IOException ex)
+        {
+            System.out.println(ex);
+        }
+        Message curMessage = new Message(players.get(0), null ,playerArray, Message.Move.YOURTURN, null, null);
+        
+        //Create the client
+        ClueClient client = new ClueClient("localhost", 5563, null,
+                GUI.class);
+        
+        mockedUI = client.getInterface();
+        
+        Message lobbyMessage = new Message(players.get(0), null, playerArray
+                , Message.Move.CONNECTIONESTABLISHED, Message.Type.LOBBYEXISTS, null);
+        mockedUI.update(client, lobbyMessage);
+        client.handleMessageFromServer(startMessage);
+        
+        //Test that the client doesn't let users end their turn before making a
+        // move
+        client.curMessage = new Message(players.get(0), null, playerArray,
+        Message.Move.YOURTURN, null, new Card[] {
+            new ActionCard(ActionCard.Type.ALLSNOOPLEFT)});
+        Message message = new Message(players.get(0), null , playerArray, Message.Move.ENDTURN, null, null);
+        client.handleUserInput(message);
+        
+        //Test that the client lets users end their turn after resuming their 
+        //turn
+        client.curMessage = new Message(players.get(0), null ,playerArray, Message.Move.RESUMETURN, null, null);
+        message = new Message(players.get(0), null ,playerArray, Message.Move.ENDTURN, null, null);
+        client.handleUserInput(message);
+        
+        //Test that the client lets users end their turn after playing an action 
+        // and being shown a card
+        client.handleMessageFromServer(new Message(players.get(0),players.get(1),null, Message.Move.SHOWNCARDS, null,
+        new Card[] {new LocationCard(LocationCard.Title.TITLE4)}));
+        client.curMessage = new Message(players.get(0), null, playerArray,
+        Message.Move.RESUMETURN, null, null);
+        message = new Message(players.get(0), null , playerArray, Message.Move.ENDTURN, null, null);
+        client.handleUserInput(message);
+    } */
+    
+    /**
+     * Test of handleMessageFromServer method in class ClueClient.
+     */
+  /*  @Test
+    public void testHandleMessageFromServer() 
+    {
+        System.out.println("testHandleMessageFromServer");
+        //Start the test server
+        testServer = new TestServer(5564);
+        try
+        {
+            testServer.listen();
+        }
+        catch (java.io.IOException ex)
+        {
+            System.out.println(ex);
+        }
+        //Create a mock of the UI
+
+        //Create the ClueClient
+        ClueClient client = new ClueClient("localhost", 5564, null,
+                GUI.class);
+        
+        mockedUI = client.getInterface();
+        assertNull(client.curMessage);
+        
+        Message lobbyMessage = new Message(players.get(0), null, playerArray
+                , Message.Move.CONNECTIONESTABLISHED, Message.Type.LOBBYEXISTS, null);
+        mockedUI.update(client, lobbyMessage);
+        client.handleMessageFromServer(startMessage);
+                
+        //Ensure the current Message in ClueClient updates to a new Message
+        assertEquals(startMessage, client.curMessage);
+    }
+    
+    private class TestServer extends AbstractServer
+    {
+        public int messagesReceived;
+        
+        public TestServer(int port)
+        {
+            super(port);
+            messagesReceived = 0;
+        }
+        
+        protected void handleMessageFromClient(Object message,
+                ConnectionToClient client)
+        {
+            messagesReceived++;
+            paused = false;
+        }
+        
+        public void resetMessages()
+        {
+            messagesReceived = 0;
+        }
+    }
+    private void waitMS(long ms) {
+        long start = System.currentTimeMillis();
+        try
+        {
+            Thread.sleep(ms);
+        }
+        catch (InterruptedException e) {
+            
+        }
+    }
+    
+    private void waitForInput() {
+        paused = true;
+        while (paused);
+    } */
+}

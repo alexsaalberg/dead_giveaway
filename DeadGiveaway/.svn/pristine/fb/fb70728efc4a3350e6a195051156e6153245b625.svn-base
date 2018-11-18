@@ -1,0 +1,358 @@
+package deadgiveaway.client;
+
+import deadgiveaway.*;
+import deadgiveaway.server.*;
+import junit.framework.TestCase;
+import static org.mockito.Mockito.*;
+import javax.swing.*;
+import java.awt.event.WindowEvent;
+import java.awt.Robot;
+import java.awt.AWTException;
+import java.awt.event.MouseEvent;
+import deadgiveaway.Message.Type;
+import java.awt.event.KeyEvent;
+import java.util.ArrayList;
+/**
+ * Test class for GUI.
+ * @author Steven Gerick
+ */
+public class GUITest extends TestCase {
+    private ClueClient client;
+    private GUI gui;
+    private Robot robot;
+    private Player player1;
+    private Player player2;
+    private Player player3;
+    private Player player4;
+    private Player player5;
+    private ArrayList<Player> players;
+    private ArrayList<Card> presetDeck;
+    private ArrayList<Card> solution;
+    private int[] cardNums = {4, 4, 4, 3, 3};
+    public void setup() {
+        presetDeck = new ArrayList<Card>();
+        solution = new ArrayList<Card>();
+        players = new ArrayList<Player>();
+        for (int i = 1; i < 9; i++) {
+            presetDeck.add(new LocationCard(LocationCard.Title.values()[i]));
+        }
+        for (int i = 1; i < 6; i++) {
+            presetDeck.add(new SuspectCard(SuspectCard.Name.values()[i]));
+        }
+        for (int i = 1; i < 6; i++) {
+            presetDeck.add(new VehicleCard(VehicleCard.Model.values()[i]));
+        }
+        solution.add(new LocationCard(LocationCard.Title.TITLE1));
+        solution.add(new SuspectCard(SuspectCard.Name.NAME1));
+        solution.add(new VehicleCard(VehicleCard.Model.MODEL1));
+        
+        client =  mock(ClueClient.class);
+        try {
+            robot = new Robot();
+        }
+        catch (AWTException e) {
+            System.out.println("Could not create robot");
+        }
+        player1 = mock(Player.class);
+        player2 = mock(Player.class);
+        player3 = mock(Player.class);
+        player4 = mock(Player.class);
+        player5 = mock(Player.class);
+        when(player1.getLocation()).thenReturn(new LocationCard(LocationCard.Title.TITLE1));
+        when(player2.getLocation()).thenReturn(new LocationCard(LocationCard.Title.TITLE2));
+        when(player3.getLocation()).thenReturn(new LocationCard(LocationCard.Title.TITLE3));
+        when(player4.getLocation()).thenReturn(new LocationCard(LocationCard.Title.TITLE4));
+        when(player5.getLocation()).thenReturn(new LocationCard(LocationCard.Title.TITLE5));
+        when(player1.getNumCards()).thenReturn(4);
+        when(player2.getNumCards()).thenReturn(4);
+        when(player3.getNumCards()).thenReturn(4);
+        when(player4.getNumCards()).thenReturn(3);
+        when(player5.getNumCards()).thenReturn(3);
+        when(player1.getNumActions()).thenReturn(1);
+        when(player2.getNumActions()).thenReturn(1);
+        when(player3.getNumActions()).thenReturn(1);
+        when(player4.getNumActions()).thenReturn(1);
+        when(player5.getNumActions()).thenReturn(1);
+        when(player1.getName()).thenReturn("Player 1");
+        when(player2.getName()).thenReturn("Player 2");
+        when(player3.getName()).thenReturn("Player 3");
+        when(player4.getName()).thenReturn("Player 4");
+        when(player5.getName()).thenReturn("Player 5");
+        when(player1.getClueCards()).thenReturn(new Card[] {
+            new LocationCard(LocationCard.Title.TITLE1),
+            new LocationCard(LocationCard.Title.TITLE2),
+            new LocationCard(LocationCard.Title.TITLE3),
+            new LocationCard(LocationCard.Title.TITLE4)
+        }).thenReturn(new Card[] {
+            new LocationCard(LocationCard.Title.TITLE1),
+            new LocationCard(LocationCard.Title.TITLE2),
+            new LocationCard(LocationCard.Title.TITLE3),
+            new LocationCard(LocationCard.Title.TITLE4)
+        });
+        players.add(player1);
+        players.add(player2);
+        players.add(player3);
+        players.add(player4);
+        players.add(player5);
+        when(player1.getActionCards()).thenReturn(new ActionCard[] {
+            new ActionCard(ActionCard.Type.SUGGESTALL),
+            new ActionCard(ActionCard.Type.SUGGESTALL)
+        });
+        when(player1.getID()).thenReturn(0).thenReturn(0).thenReturn(0);
+        when(player2.getID()).thenReturn(1).thenReturn(1).thenReturn(1);
+        when(player3.getID()).thenReturn(2).thenReturn(2).thenReturn(2);
+        when(player4.getID()).thenReturn(3).thenReturn(3).thenReturn(3);
+        when(player5.getID()).thenReturn(4).thenReturn(4).thenReturn(4);
+        gui = new GUI(client);
+        gui.setVisible(true);
+    }
+    
+    @Override
+    public void tearDown() {
+        //gui.dispatchEvent(new WindowEvent(gui, WindowEvent.WINDOW_CLOSING));
+    }
+    
+    public void testAll() {
+        //setup();
+        //ptestConstructor();
+        //ptestGameStarted();
+        //ptestUpdatePlayers();
+        //ptestShownCard();
+        //ptestTurnStarted();
+        //ptestInvalidInput();
+        //ptestUpdate();
+        //ptestAccusationMade();
+        //ptestDisproveSuggestion();
+        //ptestPostProcessEvent();
+        //ptestGameOver();
+    }
+    
+    private void ptestConstructor() {
+        waitMS(500); //verify game doesn't crash
+    }
+    
+    private void ptestConnectionEstablished() {
+        waitMS(500); //verify game doesn't crash
+    }
+    
+    private void ptestGameStarted() {
+        //have robot enter username, click on buttons to create and start game
+        moveandPress(170,140, 500); //click username box
+        Player[] playerArray = new Player[] {
+            player1
+        };
+        Message connectionMessage = mock(Message.class);
+        Message lobbyMessage = mock(Message.class);
+        when(lobbyMessage.getPlayers()).thenReturn(playerArray);
+        typeString("testname0"); //type "testname" as username
+        moveandPress(30,205, 500); //click "easy" AI
+        moveandPress(100,250, 500); //click "create game" box
+        when(connectionMessage.getMove()).thenReturn(Message.Move.CONNECTIONESTABLISHED);
+        when(lobbyMessage.getMove()).thenReturn(Message.Move.LOBBYSTARTED);
+        when(connectionMessage.getPlayer()).thenReturn(player1);
+        when(lobbyMessage.getPlayer()).thenReturn(player1);
+        gui.update(client, connectionMessage);
+        gui.update(client, lobbyMessage);
+        Message startMessage = mock(Message.class);
+        waitMS(1000);
+        moveandPress(100,300, 500); //click "start game" box
+        waitMS(500);
+        when(startMessage.getPlayers()).thenReturn(playerArray);
+        Message addMessage = mock(Message.class);
+        when (addMessage.getPlayers()).thenReturn(players.toArray(new Player[5]));
+        when (addMessage.getMove()).thenReturn(Message.Move.PLAYERADDED);
+        waitMS(500);
+        gui.update(client, addMessage);
+        when(startMessage.getMove()).thenReturn(Message.Move.GAMESTARTED);
+        waitMS(500);
+        gui.updatePlayers(players);
+        gui.update(client, startMessage);
+        waitMS(500);
+    }
+     
+    private void ptestUpdatePlayers() {
+        gui.updatePlayers(players);
+        waitMS(500); //verify game continues
+    }
+    
+    private void ptestShownCard() {
+        gui.shownCard(players.get(1), players.get(1), new Card[] {new LocationCard(
+                LocationCard.Title.TITLE7)}, Message.Type.SNOOP);
+        waitMS(500); //verify checkbox for player 1,
+        //mount olympus is checked. robot closes the window
+        gui.shownCard(players.get(1), players.get(2), new Card[] {new SuspectCard(
+                SuspectCard.Name.NAME2)}, Message.Type.PRIVATETIP);
+        waitMS(500); //verify checkbox for player 2,
+        //Ares is checked. robot closes the window
+        gui.shownCard(players.get(1), players.get(3), new Card[] {new SuspectCard(
+                SuspectCard.Name.NAME6)}, Message.Type.SUGGESTION);
+        waitMS(500); //verify checkbox for player 3,
+        //Hermes is checked. robot closes the window
+        gui.shownCard(players.get(1),  players.get(4),new Card[] {new VehicleCard(
+                VehicleCard.Model.MODEL3)}, Message.Type.SUPERSLEUTH);
+        waitMS(500); //verify checkbox for player 4,
+        //Eros' wings is checked. robot closes the window
+    }
+    
+    private void ptestTurnStarted() {
+        gui.turnStarted(players.get(2), new ActionCard(
+                ActionCard.Type.SUGGESTCUR), false); //verify nothing happens
+        gui.turnStarted(players.get(4), null, true); //verify nothing happens
+        waitMS(500);
+        gui.turnStarted(players.get(0), new ActionCard(ActionCard.Type.SNOOP),
+                false);//verify user can make turn
+        moveandPress(200,200,1500); //click on deck, verify new snoop card in hand
+        moveandPress(800,400,1500); //click on snoop card
+        gui.turnStarted(players.get(0), null, true);//verify user can end turn
+    }
+
+    private void ptestDisproveSuggestion() {
+        Card[] suggestion = {
+                new LocationCard(LocationCard.Title.TITLE1),
+                new SuspectCard(SuspectCard.Name.NAME2),
+                new VehicleCard(VehicleCard.Model.MODEL3),
+                new ActionCard(ActionCard.Type.SUGGESTALL)
+        };
+        //verify player can disprove with a location card
+        gui.disproveSuggestion(players.get(0), suggestion);
+        waitMS(1000); //close the request window
+        waitMS(1000); //click the second location
+        waitMS(500);
+    }
+    
+    private void ptestAccusationMade() {
+        Card[] accusation = {
+                new LocationCard(LocationCard.Title.TITLE1),
+                new SuspectCard(SuspectCard.Name.NAME2),
+                new VehicleCard(VehicleCard.Model.MODEL3)
+        };
+        when(player5.getID()).thenReturn(4);
+        gui.accusationMade(players.get(4), accusation, false);
+        //verify user sees that player 5 has lost
+    }
+    
+    private void ptestInvalidInput() {
+        gui.invalidInput();
+        //verify user sees they have made invalid input
+    }
+    
+    private void ptestUpdate() {
+        LocationCard temp = players.get(3).getLocation();
+        when(player3.getLocation()).thenReturn(new LocationCard(LocationCard.Title.TITLE3)).thenReturn
+                (new LocationCard(LocationCard.Title.TITLE3));
+        when(player4.getLocation()).thenReturn(new LocationCard(LocationCard.Title.TITLE4)).thenReturn
+                (new LocationCard(LocationCard.Title.TITLE4));
+        players.get(3).setLocation(players.get(4).getLocation());
+        players.get(4).setLocation(temp);
+        Message moveMessage = mock(Message.class);
+        when(moveMessage.getPlayer()).thenReturn(player3);
+        when(moveMessage.getTarget()).thenReturn(player4);
+        when(moveMessage.getPlayers()).thenReturn(players.toArray(new Player[5]));
+        when(moveMessage.getMove()).thenReturn(Message.Move.PLAYERMOVED);
+        when(moveMessage.getCards()).thenReturn(new Card[] {new LocationCard(LocationCard.Title.TITLE3)});
+        gui.update(client, moveMessage);
+        //verify locations of player 3 and player 4 switch
+        waitMS(500);
+    }
+    
+    private void ptestPostProcessEvent() {
+        gui.turnStarted(players.get(0), new ActionCard(ActionCard.Type.SNOOP),
+                false); //verify user can make turn
+        pressandRelease(KeyEvent.VK_R, 50, 500); //verify rules show up
+        pressandRelease(KeyEvent.VK_ESCAPE, 50, 500); //verify rules menu closes
+        Card[] suggestion = {
+                new LocationCard(LocationCard.Title.TITLE1),
+                new LocationCard(LocationCard.Title.TITLE2),
+                new LocationCard(LocationCard.Title.TITLE3),
+                new ActionCard(ActionCard.Type.SUGGESTALL)
+        };
+        waitMS(500);
+        pressandRelease(KeyEvent.VK_D, 50, 500); //verify card is drawn
+        waitMS(500);
+        pressandRelease(KeyEvent.VK_5, 50, 500); //verify user can play the snoop
+        waitMS(500);
+        gui.turnStarted(players.get(0), null, true);
+        pressandRelease(KeyEvent.VK_BACK_SPACE, 50, 500); //verify turn ends
+        //verify player can disprove with two different location cards
+        when(player2.getID()).thenReturn(1);
+        gui.disproveSuggestion(players.get(1), suggestion);
+        pressandRelease(KeyEvent.VK_1, 50, 500); //have player select first location
+    }
+    
+    private void ptestGameOver() {
+        Card[] accusation = {
+                new LocationCard(LocationCard.Title.TITLE1),
+                new LocationCard(LocationCard.Title.TITLE2),
+                new LocationCard(LocationCard.Title.TITLE3)
+        };
+        when(player3.getID()).thenReturn(2);
+        gui.accusationMade(players.get(2), accusation, true);
+        //verify user can no longer make any moves
+        tearDown();
+        setup();
+        ptestConnectionEstablished();
+        ptestGameStarted();
+        gui.turnStarted(players.get(0), null, true);
+        pressandRelease(KeyEvent.VK_A, 50, 500); //verify accusation menu pops up
+        pressandRelease(KeyEvent.VK_TAB, 50, 500);
+        pressandRelease(KeyEvent.VK_TAB, 50, 500);
+        pressandRelease(KeyEvent.VK_DOWN, 50, 500);
+        pressandRelease(KeyEvent.VK_DOWN, 50, 500);
+        pressandRelease(KeyEvent.VK_ENTER, 50, 500); //verify Ares is selected
+        pressandRelease(KeyEvent.VK_TAB, 50, 500);
+        pressandRelease(KeyEvent.VK_TAB, 50, 500);
+        pressandRelease(KeyEvent.VK_DOWN, 50, 500);
+        pressandRelease(KeyEvent.VK_EQUALS, 50, 500); //verify Athena's forsest is shown
+        pressandRelease(KeyEvent.VK_EQUALS, 50, 500); //verify accusation menu goes away
+        waitMS(500);
+        gui.accusationMade(players.get(0), accusation, true); //verify player wins
+        tearDown();
+        setup();
+        waitMS(500);
+        ptestConnectionEstablished();
+        Message refuseMessage = mock(Message.class);
+        when (refuseMessage.getMove()).thenReturn(Message.Move.CONNECTIONREFUSED);
+        gui.update(client, refuseMessage); //verify client closes
+    }
+    
+    private void waitMS(long ms) {
+        long start = System.currentTimeMillis();
+        try
+        {
+            Thread.sleep(ms);
+        }
+        catch (InterruptedException e) {
+            
+        }
+    }
+    
+    private void moveandPress(int x, int y, int wait) {
+        robot.mouseMove(x, y);
+        waitMS(wait);
+        robot.mousePress(java.awt.event.InputEvent.BUTTON1_MASK);
+        waitMS(100);
+        robot.mouseRelease(java.awt.event.InputEvent.BUTTON1_MASK);
+    }
+    
+    private void typeString(String string) {
+        for (int i = 0; i < string.length(); i++) {
+            char c = string.charAt(i);
+            if (Character.isUpperCase(c)) {
+                robot.keyPress(KeyEvent.VK_SHIFT);
+            }
+            robot.keyPress(Character.toUpperCase(string.charAt(i)));
+            robot.keyRelease(Character.toUpperCase(string.charAt(i)));
+            
+            if (Character.isUpperCase(c)) {
+                robot.keyRelease(KeyEvent.VK_SHIFT);
+            }
+        }
+    }
+    
+    private void pressandRelease(int keyCode, int howLong, int waitTime) {
+        waitMS(waitTime);
+        robot.keyPress(keyCode);
+        waitMS(howLong);
+        robot.keyRelease(keyCode);
+    }
+}

@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ObservableClient.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCoverage analysis of project &quot;DeadGiveaway&quot; (powered by JaCoCo from EclEmma)</a> &gt; <a href="index.html" class="el_package">ocsf.client</a> &gt; <span class="el_source">ObservableClient.java</span></div><h1>ObservableClient.java</h1><pre class="source lang-java linenums">// This file contains material supporting section 6.13 of the textbook:
+// &quot;Object Oriented Software Engineering&quot; and is issued under the open-source
+// license found at www.lloseng.com
+
+package ocsf.client;
+
+import java.util.*;
+import java.io.*;
+import java.net.*;
+
+/**
+ * This class acts as a subclass of &lt;code&gt;AbstractClient&lt;/code&gt;
+ * and is also an &lt;code&gt;Observable&lt;/code&gt; class.
+ * Each time a new message is received, observers are notified.
+ *
+ * @author Dr Robert Lagani&amp;egrave;re
+ * @author Dr Timothy C. Lethbridge
+ * @author Fran&amp;ccedil;ois B&amp;eacute;lange
+ * @version Febuary 2001
+ */
+public class ObservableClient extends Observable
+{
+  // Class variables ***************************************************
+
+  /**
+   * Indicates a close of the connection to server.
+   */
+  public static final String CONNECTION_CLOSED = &quot;#OC:Connection closed.&quot;;
+
+  /**
+   * Indicates establishment of a connection to server.
+   */
+  public static final String CONNECTION_ESTABLISHED = &quot;#OC:Connection established.&quot;;
+
+  //Instance variables **********************************************
+
+  /**
+   * The service instance used to simulate multiple class inheritance.
+   */
+  private AdaptableClient service;
+
+  //Constructor *****************************************************
+
+  public ObservableClient(String host, int port)
+<span class="nc" id="L45">  {</span>
+<span class="nc" id="L46">    service = new AdaptableClient(host, port, this);</span>
+<span class="nc" id="L47">  }</span>
+
+  //Instance methods ************************************************
+
+  /**
+   * Opens the connections with the server
+   * @throws java.io.IOException when there is an IO error
+   */
+  final public void openConnection() throws IOException
+  {
+<span class="nc" id="L57">    service.openConnection();</span>
+<span class="nc" id="L58">  }</span>
+
+  /**
+   * Closes the connection to the server.
+   * @throws java.io.IOException when there is an IO error
+   */
+  final public void closeConnection() throws IOException
+  {
+<span class="nc" id="L66">    service.closeConnection();</span>
+<span class="nc" id="L67">  }</span>
+
+  /**
+   * Sends an object to the server. This is the only way that
+   * methods should communicate with the server.
+   *
+   *  @param msg   The message to be sent.
+   *  @throws java.io.IOException when there is an IO error
+   */
+  final public void sendToServer(Object msg) throws IOException
+  {
+<span class="nc" id="L78">    service.sendToServer(msg);</span>
+<span class="nc" id="L79">  }</span>
+
+// ACCESSING METHODS ------------------------------------------------
+
+  /**
+   * Used to find out if the client is connnected.
+   * @return boolean representing if the service is connected
+   */
+  final public boolean isConnected()
+  {
+<span class="nc" id="L89">    return service.isConnected();</span>
+  }
+
+  /**
+   * @return the port number.
+   */
+  final public int getPort()
+  {
+<span class="nc" id="L97">    return service.getPort();</span>
+  }
+
+  /**
+   * Sets the server port number for the next connection.
+   * Only has effect if the client is not currently connected.
+   *
+   * @param port the port number.
+   */
+  final public void setPort(int port)
+  {
+<span class="nc" id="L108">    service.setPort(port);</span>
+<span class="nc" id="L109">  }</span>
+
+  /**
+   * @return the host name.
+   */
+  final public String getHost()
+  {
+<span class="nc" id="L116">    return service.getHost();</span>
+  }
+
+  /**
+   * Sets the server host for the next connection.
+   * Only has effect if the client is not currently connected.
+   *
+   * @param host the host name.
+   */
+  final public void setHost(String host)
+  {
+<span class="nc" id="L127">    service.setHost(host);</span>
+<span class="nc" id="L128">  }</span>
+
+  /**
+   * @return the client's Inet address.
+   */
+  final public InetAddress getInetAddress()
+  {
+<span class="nc" id="L135">    return service.getInetAddress();</span>
+  }
+
+
+  /**
+   * This method is used to handle messages from the server.  This method
+   * can be overriden but should always call notifyObservers().
+   *
+   * @param message The message received from the client.
+   */
+  protected void handleMessageFromServer(Object message)
+  {
+<span class="nc" id="L147">    setChanged();</span>
+<span class="nc" id="L148">    notifyObservers(message);</span>
+<span class="nc" id="L149">  }</span>
+
+  /**
+   * Hook method called after the connection has been closed.
+   */
+  protected void connectionClosed()
+  {
+<span class="nc" id="L156">    setChanged();</span>
+<span class="nc" id="L157">    notifyObservers(CONNECTION_CLOSED);</span>
+<span class="nc" id="L158">  }</span>
+
+  /**
+   * Hook method called each time an exception
+   * is raised by the client listening thread.
+   *
+   * @param exception the exception raised.
+   */
+  protected void connectionException(Exception exception)
+  {
+<span class="nc" id="L168">    setChanged();</span>
+<span class="nc" id="L169">    notifyObservers(exception);</span>
+<span class="nc" id="L170">  }</span>
+
+  /**
+   * Hook method called after a connection has been established.
+   */
+  protected void connectionEstablished()
+  {
+<span class="nc" id="L177">    setChanged();</span>
+<span class="nc" id="L178">    notifyObservers(CONNECTION_ESTABLISHED);</span>
+<span class="nc" id="L179">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+To change this template, choose Tools | Templates
+and open the template in the editor.
+-->
+
+
+<project>
+    <!-- pre-init target to set properties the script will use -->
+    <target name="-pre-init">
+        <!-- Create a timestamp for Ant to use in javadoc title -->
+        <tstamp/>
+        <!-- Create a property for javadoc special parameters -->
+        <property name="systemtest.dir" value="system"/>
+        <property name="client.class" value="deadgiveaway.client.ClientApp"/>
+        <property name="server.class" value="deadgiveaway.server.ServerApp"/>
+        <property name="diffresults" value="${systemtest.dir}/diffresults.txt"/>
+        <property name="error.log" value="${systemtest.dir}/errorlog.txt"/>
+    </target>
+    
+<!--
+                =================
+                SYSTEM TEST SECTION
+                =================
+     -->
+    <target name="systest5" depends="-pre-init" description="Run console-based system tests.">
+        <!-- SYSTEM TEST 5 -->
+        <!-- Execute the game server with a known seed -->
+        <parallel>
+            <sequential>
+                <java classname="${server.class}"
+                    classpath="build/classes"
+                    fork="true"
+                    output="${systemtest.dir}/server.out"
+                    error="${error.log}">
+                    <arg line="-s 29 -p 5557"/>
+                </java>
+            </sequential>
+        <!-- Execute the console version of the app with test data -->
+            <sequential>
+                <sleep milliseconds="200"/>
+                <java classname="${client.class}"
+                    classpath="build/classes"
+                    fork="true"
+                    input="${systemtest.dir}/consoledata/test5.in"
+                    output="${systemtest.dir}/results/test5.out"
+                    error="${error.log}"
+                    append="false">
+                    <arg line="-h localhost -c -p 5557"/>
+                </java>
+            </sequential>
+        </parallel>
+        <exec dir="${systemtest.dir}" executable="/usr/bin/diff" osfamily="unix"
+              output="${diffresults}" append="true">
+            <arg line="-b results/test5.out oracles/test5.txt"/>
+        </exec>
+    </target>
+</project>

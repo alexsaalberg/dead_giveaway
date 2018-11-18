@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>AdaptableServer.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCoverage analysis of project &quot;DeadGiveaway&quot; (powered by JaCoCo from EclEmma)</a> &gt; <a href="index.html" class="el_package">ocsf.server</a> &gt; <span class="el_source">AdaptableServer.java</span></div><h1>AdaptableServer.java</h1><pre class="source lang-java linenums">// This file contains material supporting section 6.13 of the textbook:
+// &quot;Object Oriented Software Engineering&quot; and is issued under the open-source
+// license found at www.lloseng.com
+
+package ocsf.server;
+
+import java.io.*;
+import java.net.*;
+import java.util.*;
+
+/**
+* The &lt;code&gt; AdaptableServer &lt;/code&gt; is an adapter class
+* that extends the &lt;code&gt; AbstractServer &lt;/code&gt; class in place of
+* the &lt;code&gt; AbstractObservableServer &lt;/code&gt;.&lt;p&gt;
+*
+* Project Name: OCSF (Object Client-Server Framework)&lt;p&gt;
+*
+* @author Dr. Robert Lagani&amp;egrave;re
+* @version Febuary 2001
+*/
+class AdaptableServer extends AbstractServer
+{
+  //Instance variables **********************************************
+
+  /**
+   * The adapter used to simulate multiple class inheritance.
+   */
+  private ObservableServer server;
+
+// CONSTRUCTORS *****************************************************
+
+  /**
+   * Constructs the server adapter.
+   *
+   * @param  host  the server's host name.
+   * @param  port  the port number.
+   */
+  public AdaptableServer(int port, ObservableServer server)
+  {
+<span class="nc" id="L40">    super(port);</span>
+<span class="nc" id="L41">    this.server = server;</span>
+<span class="nc" id="L42">  }</span>
+
+// OVERRIDDEN METHODS ---------
+
+  /**
+   * Hook method called each time a new client connection is
+   * accepted.
+   *
+   * @param client the connection connected to the client.
+   */
+  final protected void clientConnected(ConnectionToClient client)
+  {
+<span class="nc" id="L54">    server.clientConnected(client);</span>
+<span class="nc" id="L55">  }</span>
+
+  /**
+   * Hook method called each time a client disconnects.
+   *
+   * @param client the connection with the client.
+   */
+  final protected void clientDisconnected(ConnectionToClient client)
+  {
+<span class="nc" id="L64">    server.clientDisconnected(client);</span>
+<span class="nc" id="L65">  }</span>
+
+  /**
+   * Hook method called each time an exception
+   * is raised in a client thread.
+   *
+   * @param client the client that raised the exception.
+   * @param exception the exception raised.
+   */
+  final protected void clientException(ConnectionToClient client,
+                                        Throwable exception)
+  {
+<span class="nc" id="L77">    server.clientException(client, exception);</span>
+<span class="nc" id="L78">  }</span>
+
+  /**
+   * Hook method called when the server stops accepting
+   * connections because an exception has been raised.
+   *
+   * @param exception the exception raised.
+   */
+  final protected void listeningException(Throwable exception)
+  {
+<span class="nc" id="L88">    server.listeningException(exception);</span>
+<span class="nc" id="L89">  }</span>
+
+  /**
+   * Hook method called when the server stops accepting
+   * connections.
+   */
+  final protected void serverStopped()
+  {
+<span class="nc" id="L97">    server.serverStopped();</span>
+<span class="nc" id="L98">  }</span>
+
+  /**
+   * Hook method called when the server starts listening for
+   * connections.
+   */
+  final protected void serverStarted()
+  {
+<span class="nc" id="L106">    server.serverStarted();</span>
+<span class="nc" id="L107">  }</span>
+
+  /**
+   * Hook method called when the server is closed.
+   */
+  final protected void serverClosed()
+  {
+<span class="nc" id="L114">    server.serverClosed();</span>
+<span class="nc" id="L115">  }</span>
+
+  /**
+   * Handles a command sent from the client to the server.
+   *
+   * @param msg   the message sent.
+   * @param client the connection connected to the client that
+   *  sent the message.
+   */
+  final protected void handleMessageFromClient(Object msg,
+                                         ConnectionToClient client)
+  {
+<span class="nc" id="L127">    server.handleMessageFromClient(msg, client);</span>
+<span class="nc" id="L128">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>

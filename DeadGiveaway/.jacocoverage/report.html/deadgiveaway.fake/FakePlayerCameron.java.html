@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>FakePlayerCameron.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCoverage analysis of project &quot;DeadGiveaway&quot; (powered by JaCoCo from EclEmma)</a> &gt; <a href="index.html" class="el_package">deadgiveaway.fake</a> &gt; <span class="el_source">FakePlayerCameron.java</span></div><h1>FakePlayerCameron.java</h1><pre class="source lang-java linenums">package deadgiveaway.fake;
+
+import deadgiveaway.*;
+import deadgiveaway.server.*;
+import deadgiveaway.server.Player;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Arrays;
+
+/**
+ * Fake player for testing.
+ * @author Cameron Geehr
+ */
+public class FakePlayerCameron extends Player
+{
+    /** Number of cards */
+    protected int numCards;
+    /** Number of actions */
+    protected int numActions;
+    /** Player name */
+    protected String name;
+    /** Player id */
+    protected int id;
+    /** Robot difficulty */
+    protected int difficulty;
+    /** List of other players */
+    protected List&lt;FakePlayerCameron&gt; players;
+    
+    /**
+     * Constructor.
+     * @param name Player name
+     * @param id Player id
+     * @param location Player's location
+     */
+    public FakePlayerCameron(String name, int id, LocationCard location)
+    {
+<span class="nc" id="L37">        super(name, id, location);</span>
+<span class="nc" id="L38">        this.name = name;</span>
+<span class="nc" id="L39">        this.id = id;</span>
+<span class="nc" id="L40">        this.location = location;</span>
+<span class="nc" id="L41">        numCards = 0;</span>
+<span class="nc" id="L42">        numActions = 0;</span>
+<span class="nc" id="L43">        players = new ArrayList();</span>
+<span class="nc" id="L44">    }</span>
+    
+    /**
+     * Get the name of the player
+     * @return name of the player
+     */
+    public String getName()
+    {
+        // IF name is what i want
+<span class="nc bnc" id="L53" title="All 2 branches missed.">        if (name.equals(&quot;CameronGeehr&quot;))</span>
+        {
+<span class="nc" id="L55">            return &quot;CameronGeh&quot;;</span>
+        }
+        // ELSE 
+        else
+        {
+<span class="nc" id="L60">            return name;</span>
+        }
+    }
+    
+    /**
+     * Get player id
+     * @return player id
+     */
+    public int getID()
+    {
+<span class="nc" id="L70">        return id;</span>
+    }
+    
+    /*public LocationCard getLocation()
+    {
+        return new LocationCard(location.getTitle());
+    }
+    
+    public void setLocation(LocationCard locaton)
+    {
+        this.location = new LocationCard(location.getTitle());
+    }*/
+    
+    /**
+     * Get the number of cards
+     * @return number of cards
+     */
+    public int getNumCards()
+    {
+<span class="nc" id="L89">        return numCards;</span>
+    }
+    
+    /**
+     * Get the number of actions
+     * @return number of actions
+     */
+    public int getNumActions()
+    {
+<span class="nc" id="L98">        return numActions;</span>
+    }
+    
+    /**
+     * Determines if player has given card
+     * @param card card to test
+     * @return true if has card
+     */
+    public boolean hasCard(Card card)
+    {
+        // IF card is action card
+<span class="nc bnc" id="L109" title="All 2 branches missed.">        if (card instanceof ActionCard)</span>
+        {
+<span class="nc bnc" id="L111" title="All 4 branches missed.">            return numActions &gt; 0 &amp;&amp; numActions &lt; 2;</span>
+        }
+        // ELSE
+        else
+        {
+<span class="nc bnc" id="L116" title="All 4 branches missed.">            return numCards &gt; 0 &amp;&amp; numCards &lt; 4;</span>
+        }
+    }
+    
+    /**
+     * Add a player to the list
+     * @param player new player
+     */
+    public void addPlayer(FakePlayerCameron player)
+    {
+<span class="nc" id="L126">        players.add(player);</span>
+<span class="nc" id="L127">    }</span>
+    
+    /**
+     * Get the players in the list
+     * @return players
+     */
+    public FakePlayerCameron[] getPlayers()
+    {
+<span class="nc" id="L135">        return players.toArray(new FakePlayerCameron[players.size()]);</span>
+    }
+    
+    /**
+     * Set the difficulty
+     * @param difficulty new diff
+     */
+    public void setDifficulty(int difficulty)
+    {
+<span class="nc" id="L144">        this.difficulty = difficulty;</span>
+<span class="nc" id="L145">    }</span>
+    
+    /**
+     * Get the diff
+     * @return diff
+     */
+    public int getDifficulty()
+    {
+<span class="nc" id="L153">        return difficulty;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>

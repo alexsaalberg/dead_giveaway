@@ -1,0 +1,482 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>Player.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCoverage analysis of project &quot;DeadGiveaway&quot; (powered by JaCoCo from EclEmma)</a> &gt; <a href="index.html" class="el_package">deadgiveaway.server</a> &gt; <span class="el_source">Player.java</span></div><h1>Player.java</h1><pre class="source lang-java linenums">package deadgiveaway.server;
+
+import deadgiveaway.*;
+import java.util.List;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Arrays;
+
+/**
+ * The Player abstract class declares methods to be used by any player in a
+ * clue game, whether said player is a robot or a human.
+ * @author Steven Gerick
+ * @author Christopher Siu
+ * @author Cameron Geehr
+ * @version 2.0
+ */
+public class Player implements java.io.Serializable
+{
+    //a constant representing the max length of a player's name
+    protected static final int kNameCap = 10;
+    //a constant represening the max amount of action cards
+    protected static final int kMaxActionCards = 2;
+    //a constant representing the max amount of clue cards
+    protected static final int kMaxClueCards = 4;
+    //a constant representing the max amount of players
+    protected static final int kMaxPlayers = 5;
+    //actionCards - list of action cards this player owns
+    protected ActionCard[] actionCards;
+    //numActions - the number of action cards this player owns
+    protected int numActions;
+    //clueCards - list of clue cards this player owns
+    protected Card[] clueCards;
+    //numCards - the number of clue cards this player owns
+    protected int numCards;
+    //location - destination marker this player has
+    protected LocationCard location;
+    //players - list of all players
+    protected Player[] players;
+    //ID - int representing the ID of this player
+    protected int id;
+    //name - String representing a name for the player
+    protected String name;
+    //isOut - boolean representing if the player is eliminated
+    protected Boolean isOut;
+    //difficulty - int representing difficulty of the player
+    protected int difficulty;
+   
+   /**
+    * This constructor is not intended to be called publicly. It exists
+    * to encapsulate shared construction functionality between HumanPlayer
+    * and RobotPlayer and is public to initialize the list for GUI testing.
+    * @param name the name of this player
+    * @param id the ID of this player
+    * @param location the location to start the player at
+    */
+    public Player(String name, int id, LocationCard location) 
+<span class="fc" id="L57">    {</span>
+        //IF the length of the input name is greater than 10 characters THEN
+<span class="fc bfc" id="L59" title="All 2 branches covered.">        if (name.length() &gt; kNameCap)</span>
+        {
+            //TRIM the name to 10 characters
+<span class="fc" id="L62">            this.name = name.substring(0, kNameCap);</span>
+        }
+        //ELSE use the input name
+        else
+        {
+<span class="fc" id="L67">            this.name = name;</span>
+        }
+       
+<span class="fc" id="L70">        this.location = location;</span>
+<span class="fc" id="L71">        this.id = id;</span>
+<span class="fc" id="L72">        isOut = false;</span>
+<span class="fc" id="L73">        actionCards = new ActionCard[kMaxActionCards];</span>
+<span class="fc" id="L74">        players = new Player[kMaxPlayers];</span>
+<span class="fc" id="L75">        clueCards = new Card[kMaxClueCards];</span>
+<span class="fc" id="L76">        numCards = 0;</span>
+<span class="fc" id="L77">        numActions = 0;</span>
+<span class="fc" id="L78">        difficulty = 0;</span>
+<span class="fc" id="L79">    }</span>
+   
+    /**
+     * add a card to this user's hand.
+     * @param card the card to add
+     */
+    public void addCard(Card card) 
+    {
+        //IF the card is an action card 
+<span class="fc bfc" id="L88" title="All 2 branches covered.">        if (card instanceof ActionCard) </span>
+        {
+            // GO through all the cards
+<span class="fc bfc" id="L91" title="All 2 branches covered.">            for (int idx = 0; idx &lt; actionCards.length; idx++)</span>
+            {
+                // IF there is no card, add it and quit
+<span class="fc bfc" id="L94" title="All 2 branches covered.">                if (actionCards[idx] == null) </span>
+                {
+<span class="fc" id="L96">                    actionCards[idx] = (ActionCard)card;</span>
+<span class="fc" id="L97">                    numActions++;</span>
+<span class="fc" id="L98">                    break;</span>
+                }
+            }
+        }
+        else 
+        {
+            //set the proper card
+<span class="fc bfc" id="L105" title="All 2 branches covered.">            if (numCards &lt; clueCards.length) </span>
+            {
+<span class="fc" id="L107">                clueCards[numCards++] = card;</span>
+            }
+        }
+<span class="fc" id="L110">    }</span>
+   
+    /**
+     * Remove a card from this user's hand.
+     * @param card the card to remove
+     */
+    public void removeActionCard(ActionCard card) 
+    {
+        //IF the card is in the first slot, remove that and move the first to 0
+<span class="fc bfc" id="L119" title="All 2 branches covered.">        if (card.equals(actionCards[0])) </span>
+        {
+<span class="fc" id="L121">            actionCards[0] = actionCards[1];</span>
+<span class="fc" id="L122">            actionCards[1] = null;</span>
+<span class="fc" id="L123">            numActions--;</span>
+        }
+        //ELSE remove it from the second slot
+<span class="pc bpc" id="L126" title="1 of 2 branches missed.">        else if (card.equals(actionCards[1]))</span>
+        {
+<span class="fc" id="L128">            actionCards[1] = null;</span>
+<span class="fc" id="L129">            numActions--;</span>
+        }
+<span class="fc" id="L131">    }</span>
+   
+    /**
+     * Remove a card from this user's hand.
+     * @param idx the index to remove
+     */
+    public void removeActionCard(int idx) 
+    {
+        //IF the action card is at index 0, remove it and move 1 to 0
+<span class="fc bfc" id="L140" title="All 2 branches covered.">        if (idx == 0)</span>
+        {
+<span class="fc" id="L142">            actionCards[0] = actionCards[1];</span>
+<span class="fc" id="L143">            actionCards[1] = null;</span>
+        }
+        //ELSE if the card is index 1, remove it
+<span class="fc bfc" id="L146" title="All 2 branches covered.">        else if (idx == 1) </span>
+        {
+<span class="fc" id="L148">            actionCards[1] = null;</span>
+        }
+<span class="fc" id="L150">        numActions--;</span>
+<span class="fc" id="L151">    }</span>
+   
+    /**
+     * Remove a clue card from this player's hand.
+     * @param card the card to remove from the clueCards list
+     */
+    public void removeClueCard(Card card) 
+    {
+        //REMOVE the card from the clue card list
+<span class="fc bfc" id="L160" title="All 2 branches covered.">        for (int idx = 0; idx &lt; clueCards.length; idx++) </span>
+        {
+            //IF the card is found, remove it
+<span class="fc bfc" id="L163" title="All 2 branches covered.">            if (card.equals(clueCards[idx])) </span>
+            {
+<span class="fc" id="L165">                clueCards[idx] = null;</span>
+<span class="fc" id="L166">                numCards--;</span>
+<span class="fc" id="L167">                break;</span>
+            }
+        }
+<span class="fc" id="L170">    }</span>
+   
+    /**
+     * Check whether the player has the given card in their hand.
+     * @param card the card to check for
+     * @return whether the player has the given card in their hand
+     */
+    public  boolean hasCard(Card card) 
+    {
+        //IF the card is an ActionCard THEN
+<span class="fc bfc" id="L180" title="All 2 branches covered.">        if (card instanceof ActionCard) </span>
+        {
+            // LOOP through all cards
+<span class="fc bfc" id="L183" title="All 2 branches covered.">            for (Card crd : actionCards) </span>
+            {
+                // IF the card is found, we are done
+<span class="fc bfc" id="L186" title="All 2 branches covered.">                if (card.equals(crd))</span>
+                {
+<span class="fc" id="L188">                    return true;</span>
+                }
+            }
+            //return actionCards.contains((ActionCard)card);
+        }
+        else 
+        {
+            // GO through every card
+<span class="fc bfc" id="L196" title="All 2 branches covered.">            for (Card crd : clueCards) </span>
+            {
+                // IF card is found, we are done
+<span class="fc bfc" id="L199" title="All 2 branches covered.">                if (card.equals(crd))</span>
+                {
+<span class="fc" id="L201">                    return true;</span>
+                }
+            }
+           //return clueCards.contains(card);
+        }
+       
+<span class="fc" id="L207">        return false;</span>
+    }
+   
+    /**
+     * Returns the set of cards this player has.
+     * @return The set of cards belonging to this player.
+     */
+    public  Card[] getClueCards() 
+    {
+         //RETURN a reference to the list of cards
+<span class="fc" id="L217">        return clueCards;</span>
+    }
+   
+    /**
+     * Return the list of action cards belonging to this player.
+     * @return the list of ActionCards this player has
+     */
+    public  ActionCard[] getActionCards() 
+    {
+<span class="fc" id="L226">        return actionCards;</span>
+    }
+   
+    /**
+     * Returns the ID of this player.
+     * @return the ID of this player
+     */
+    public  int getID() 
+    {
+        //RETURN the ID field directly
+<span class="fc" id="L236">        return id;</span>
+    }
+   
+    /**
+     * Set the ID of this player.
+     * @param newId the ID to set this player to.
+     */
+    public  void setID(int newId) 
+    {
+        //SET the ID of this player
+<span class="fc" id="L246">        this.id = newId;</span>
+<span class="fc" id="L247">    }</span>
+   
+    /**
+     * Adds a player to this player's list of players.
+     * @param player the player to add to the list
+     */
+    public  void addPlayer(Player player) 
+    {
+        //ADD a player to the list of players in the first non-null position
+<span class="fc bfc" id="L256" title="All 2 branches covered.">        for (int idx = 0; idx &lt; players.length; idx++) </span>
+        {
+            // IF there is no player, add it
+<span class="fc bfc" id="L259" title="All 2 branches covered.">            if (players[idx] == null) </span>
+            {
+<span class="fc" id="L261">                players[idx] = player;</span>
+<span class="fc" id="L262">                break;</span>
+            }
+        }
+<span class="fc" id="L265">    }</span>
+   
+    /**
+     * Get the location of this player.
+     * @return the location of this player
+     */
+    public  LocationCard getLocation() 
+    {
+<span class="fc" id="L273">        return location;</span>
+    }
+   
+    /**
+     * Move this player to a different location.
+     * @param location The location to move this player to
+     */
+    public  void setLocation(LocationCard location) 
+    {
+<span class="fc" id="L282">        this.location = location;</span>
+<span class="fc" id="L283">    }</span>
+   
+    /**
+     * Return the name of this player.
+     * @return the name of this player
+     */
+    public  String getName() 
+    {
+<span class="fc" id="L291">        return name;</span>
+    }
+   
+    /**
+     * Rename this player.
+     * @param name The name to set for this player
+     */
+    public  void setName(String name) 
+    {
+        //IF the name is greater than 10 characters trim it to 10 and use it
+<span class="fc bfc" id="L301" title="All 2 branches covered.">        if (name.length() &gt; kNameCap)</span>
+        {
+<span class="fc" id="L303">            this.name = name.substring(0, kNameCap);</span>
+        }
+        //ELSE use the input name
+        else
+        {
+<span class="fc" id="L308">            this.name = name;</span>
+        }
+<span class="fc" id="L310">    }</span>
+   
+    /**
+     * Sets this player as out.
+     */
+    public  void setOut() 
+    {
+<span class="fc" id="L317">        isOut = true;</span>
+<span class="fc" id="L318">    }</span>
+   
+    /**
+     * Returns whether this player is out.
+     * @return whether this player is out
+     */
+    public  Boolean getOut() 
+    {
+<span class="fc" id="L326">        return isOut;</span>
+    }
+    
+    /**
+     * Returns the number of action cards this player has.
+     * @return the number of action cards in this player's hand
+     */
+    public  int getNumActions() 
+    {
+<span class="fc" id="L335">        return numActions;</span>
+    }
+    
+    /**
+     * Return the number of clue cards this player has.
+     * @return the number of clue cards this player has
+     */
+    public  int getNumCards() 
+    {
+<span class="fc" id="L344">        return numCards;</span>
+    }
+    
+    /**
+     * Returns all of the players in the game.
+     * @return the list of players
+     */
+    public Player[] getPlayers()
+    {
+<span class="fc" id="L353">        return players;</span>
+    }
+    
+    /**
+     * Converts the player to a string.
+     * Player(Id, name, isOut, location, clueCards, actionCards)
+     * @return String representation of the message
+     * @author Alex Saalberg
+     */
+    @Override
+    public String toString() 
+    {
+<span class="fc" id="L365">        String returnString = &quot;player(&quot;; //The string to be returned by this method</span>
+        
+<span class="fc" id="L367">        returnString += getID();</span>
+<span class="fc" id="L368">        returnString += &quot;; &quot; + name;</span>
+<span class="fc" id="L369">        returnString += &quot;; IsOut:&quot; + isOut;</span>
+<span class="fc" id="L370">        returnString += &quot;; &quot; + location;</span>
+        
+<span class="fc" id="L372">        returnString += &quot;; &quot;;</span>
+        
+        //GO through all clue cards
+<span class="fc bfc" id="L375" title="All 2 branches covered.">        for(int idx = 0; idx &lt; numCards; idx++)</span>
+        {
+<span class="fc" id="L377">            returnString += idx + &quot;:&quot;  + clueCards[idx] + &quot; &quot;;</span>
+        }
+<span class="fc" id="L379">        returnString += &quot;; &quot;;</span>
+        
+        //GO through all action cards
+<span class="fc bfc" id="L382" title="All 2 branches covered.">        for(int idx = 0; idx &lt; numActions; idx++)</span>
+        {
+<span class="fc" id="L384">            returnString += idx+&quot;:&quot;+actionCards[idx]+&quot; &quot;; </span>
+        }
+<span class="fc" id="L386">        returnString += &quot;)&quot;;</span>
+        
+<span class="fc" id="L388">        return returnString;</span>
+        
+        
+    }
+    
+    /**
+     * Clone this player.
+     * @return A new player with the same fields
+     * @throws CloneNotSupportedException if the object cannot be cloned
+     */
+    @Override
+    public Object clone() throws CloneNotSupportedException
+    {
+<span class="fc" id="L401">        return deepCopy();</span>
+    }
+    
+    /**
+     * Returns a deep copy of the state of this Player.
+     * @return A deep copy of this player.
+     */
+    public Player deepCopy()
+    {
+        //Fixes defect 438
+<span class="fc" id="L411">        Player clone = new Player(name, id, location); </span>
+
+<span class="fc" id="L413">        clone.difficulty = difficulty;</span>
+        //Checks every action card
+<span class="fc bfc" id="L415" title="All 2 branches covered.">        for (int idx = 0; idx &lt; numActions; idx++)</span>
+        {
+<span class="fc" id="L417">            clone.actionCards[idx] = new ActionCard(actionCards[idx].getType());</span>
+        }
+<span class="fc" id="L419">        clone.numActions = numActions;</span>
+        
+        //COPY all clue cards into the new player
+<span class="fc bfc" id="L422" title="All 2 branches covered.">        for (int idx = 0; idx &lt; numCards; idx++) </span>
+        {
+            // IF suspect card, clone it
+<span class="fc bfc" id="L425" title="All 2 branches covered.">            if (clueCards[idx] instanceof SuspectCard) </span>
+            {
+<span class="fc" id="L427">                SuspectCard.Name nm = ((SuspectCard)clueCards[idx]).getName();</span>
+<span class="fc" id="L428">                clone.clueCards[idx] = new SuspectCard(nm);</span>
+<span class="fc" id="L429">            }</span>
+            // ELSE IF vehicle card, clone it
+<span class="fc bfc" id="L431" title="All 2 branches covered.">            else if (clueCards[idx] instanceof VehicleCard) </span>
+            {
+                VehicleCard.Model md;
+<span class="fc" id="L434">                md = ((VehicleCard)clueCards[idx]).getModel();</span>
+<span class="fc" id="L435">                clone.clueCards[idx] = new VehicleCard(md);</span>
+<span class="fc" id="L436">            }</span>
+            // ELSE it is a location card
+            else 
+            {
+<span class="fc" id="L440">                LocationCard.Title tl = ((LocationCard)clueCards[idx]).getTitle();</span>
+<span class="fc" id="L441">                clone.clueCards[idx] = new LocationCard(tl);</span>
+            }
+        }
+        
+<span class="fc" id="L445">        clone.numCards = numCards;</span>
+        
+        //COPY all players in the list to the new players list
+<span class="fc" id="L448">        clone.players = players;</span>
+        
+<span class="fc" id="L450">        clone.name = name;</span>
+<span class="fc" id="L451">        clone.isOut = isOut;</span>
+        
+        //IF location is not null
+<span class="pc bpc" id="L454" title="1 of 2 branches missed.">        if (location != null)</span>
+        {
+            // CLONE location
+<span class="fc" id="L457">            clone.location = new LocationCard(location.getTitle());</span>
+        }
+<span class="fc" id="L459">        clone.id = id;</span>
+        
+<span class="fc" id="L461">        return clone;</span>
+    }
+    
+    /**
+     * Returns the difficulty setting of the player.
+     * @return The difficulty setting of the player.
+     */
+    public int getDifficulty()
+    {
+<span class="fc" id="L470">        return difficulty;</span>
+    }
+
+    /**
+     * Set the difficulty of this player.
+     * @param difficulty the difficulty to set this player to.
+     */
+    public void setDifficulty(int difficulty)
+    {
+<span class="fc" id="L479">        this.difficulty = difficulty;</span>
+<span class="fc" id="L480">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>

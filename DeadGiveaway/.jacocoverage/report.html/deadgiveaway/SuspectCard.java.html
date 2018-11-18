@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>SuspectCard.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCoverage analysis of project &quot;DeadGiveaway&quot; (powered by JaCoCo from EclEmma)</a> &gt; <a href="index.html" class="el_package">deadgiveaway</a> &gt; <span class="el_source">SuspectCard.java</span></div><h1>SuspectCard.java</h1><pre class="source lang-java linenums">package deadgiveaway;
+
+/**
+ * The SuspectCard class provides implementation methods to simulate the
+ * properties of a suspect card in the game.
+ * @author Austin Sparks
+ * @version 2.0
+ */
+public class SuspectCard extends Card 
+{
+    /**
+     * Enumerator designating the name of the suspect card
+     */
+<span class="pc" id="L14">    public enum Name </span>
+    {
+        /** Name 1*/
+<span class="fc" id="L17">        NAME1,</span>
+        /** Name 2*/
+<span class="fc" id="L19">        NAME2,</span>
+        /** Name 3*/
+<span class="fc" id="L21">        NAME3,</span>
+        /** Name 4*/
+<span class="fc" id="L23">        NAME4,</span>
+        /** Name 5*/
+<span class="fc" id="L25">        NAME5,</span>
+        /** Name 6*/
+<span class="fc" id="L27">        NAME6;</span>
+        
+        /** list of names for Greek theme */
+<span class="fc" id="L30">        private static final String[] kNames = {</span>
+            &quot;Aphrodite&quot;, &quot;Ares&quot;, &quot;Artemis&quot;, &quot;Dionysius&quot;, &quot;Hera&quot;, &quot;Hermes&quot;
+        };
+        
+        /**
+         * Represents the name of the suspect
+         * @return name of the suspect
+         */
+        @Override
+        public String toString() 
+        {
+            //Return a name corresponding to this card's suspect
+<span class="fc" id="L42">            return kNames[this.ordinal()];</span>
+        }
+    }
+    
+    /**
+     * Enumerator designating the gender of each suspect
+     */
+<span class="pc" id="L49">    public enum Gender </span>
+    {
+        /** Gender 1*/
+<span class="fc" id="L52">        GENDER1,</span>
+        /** Gender 2*/
+<span class="fc" id="L54">        GENDER2;</span>
+        
+        /**
+         * Gets a string representation of the suspect's gender
+         * @return Suspect's gender
+         */
+        @Override
+        public String toString() 
+        {
+            // GET the gender - male then female
+<span class="nc" id="L64">            String gender = &quot;male&quot;;</span>
+            
+            // ASSIGN gender as female if Gender 2
+<span class="nc bnc" id="L67" title="All 2 branches missed.">            if (this == GENDER2)</span>
+            {
+<span class="nc" id="L69">                gender = &quot;female&quot;;</span>
+            }
+            
+<span class="nc" id="L72">            return gender;</span>
+        }
+        
+        /** Array containing the genders of the suspects in order */
+<span class="fc" id="L76">        private static final Gender[] kFromName = {GENDER2, GENDER1, GENDER2,</span>
+                                                   GENDER1, GENDER2, GENDER1};
+    }
+    
+    /** name of this suspect */
+    private final Name kName;
+    /** gender of this suspect */
+    private final Gender kGender;
+    
+    /**
+     * Constructs a new SuspectCard
+     * @param name the name of this suspect
+     */
+    public SuspectCard(Name name) 
+<span class="fc" id="L90">    {</span>
+        //INITIALIZE the suspect card using the input name enum
+<span class="fc" id="L92">        this.kName = name;</span>
+<span class="fc" id="L93">        this.kGender = Gender.kFromName[name.ordinal()];</span>
+<span class="fc" id="L94">        super.setTitle(name.toString());</span>
+<span class="fc" id="L95">    }</span>
+    
+    /**
+     * Returns whether this card is the same as the other suspect card
+     * @param other the suspect card to check for equivalence to
+     * @return whether this card is equal to the other suspect card
+     */
+    @Override
+    public boolean equals(Object other) 
+    {
+        //IF the other card is a SuspectCard and has the same name
+<span class="fc bfc" id="L106" title="All 4 branches covered.">        return (other instanceof SuspectCard &amp;&amp;</span>
+                 ((SuspectCard)other).kName == this.kName);
+    }
+    
+    /**
+     * Gets the name of this suspect
+     * @return name of this suspect
+     */
+    public Name getName() 
+    {
+<span class="fc" id="L116">        return kName;</span>
+    }
+   
+    /**
+     * Return the gender of this suspect
+     * @return the gender of this suspect
+     */
+    public Gender getGender() 
+    {
+<span class="fc" id="L125">        return kGender;</span>
+    }
+   
+    /**
+     * Deep copies the suspect card
+     * @return a copy of the suspect card
+     * @throws CloneNotSupportedException if the card cannot be cloned
+     */
+    @Override
+    public Object clone() throws CloneNotSupportedException
+    {
+<span class="fc" id="L136">        return new SuspectCard(kName);</span>
+    }
+    
+    /**
+     * Gets the name of the suspect as a string
+     * @return The suspect's name.
+     */
+    @Override
+    public String toString() 
+    {
+<span class="fc" id="L146">        return getName().toString();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>

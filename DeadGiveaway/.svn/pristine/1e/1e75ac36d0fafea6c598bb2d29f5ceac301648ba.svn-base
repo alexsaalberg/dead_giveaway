@@ -1,0 +1,1154 @@
+package deadgiveaway.client;
+
+import deadgiveaway.*;
+import ocsf.server.*;
+import java.util.*;
+import org.junit.*;
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
+
+/**
+ * Unit Test class for ClueClient
+ * @author Jon Kuzmich
+ * @author Brad Johnson
+ */
+public class ClueClientTest 
+{
+    //Test Server used to test if ClueClient sends Messages properly
+    private TestServer testServer;
+    
+    /**
+     * Test of the constructor of class ClueClient.
+     */
+    @Test
+    public void testConstructor() 
+    {
+        //Start the test server
+        testServer = new TestServer(5555);
+        try
+        {
+            testServer.listen();
+        }
+        catch (java.io.IOException ex)
+        {
+            System.out.println(ex);
+        }
+        UserInterface mockedUI = mock(UserInterface.class);
+        
+        ClueClient client = new ClueClient("localhost", 5555, mockedUI,
+                UserInterface.class);
+        
+        //Ensure the UI was added as an observer
+        assertEquals(1, client.countObservers());
+        //Ensure the starting message is empty
+        assertEquals(null, client.curMessage);
+        
+        //Close the test server
+        try
+        {
+            client.closeConnection();
+            testServer.close();
+        }
+        catch (java.io.IOException ex)
+        {
+            System.out.println(ex);
+        }
+    }
+    /**
+     * Test of the handleUserInput method of class ClueClient.
+     */
+    @Test
+    public void testHandleUserInput() 
+    {
+        //Start the test server
+        testServer = new TestServer(5550);
+        try
+        {
+            testServer.listen();
+        }
+        catch (java.io.IOException ex)
+        {
+            System.out.println(ex);
+        }
+        UserInterface mockedUI = mock(UserInterface.class);
+        Message mockedMessage = mock(Message.class, 
+                withSettings().serializable());
+        
+        //Create the client
+        ClueClient client = new ClueClient("localhost", 5550, mockedUI,
+                UserInterface.class);
+        
+        //Test that the client can handle a null input
+        client.handleUserInput(null);
+        verify(mockedUI, times(1)).invalidInput();
+        try
+        {
+            Thread.sleep(100);
+        }
+        catch (InterruptedException ex)
+        {
+            
+        }
+        assertEquals(0, testServer.messagesReceived);
+        
+        //Test that the client can send a message the server from the UI
+        when(mockedMessage.getMove()).thenReturn(Message.Move.PLAYERMOVED);
+        client.handleUserInput(mockedMessage);
+        try
+        {
+            Thread.sleep(500);
+        }
+        catch (InterruptedException ex)
+        {
+            
+        }
+        assertEquals(1, testServer.messagesReceived);
+        
+        //Close the test server
+        try
+        {
+            client.closeConnection();
+            testServer.close();
+        }
+        catch (java.io.IOException ex)
+        {
+            System.out.println(ex);
+        }
+    }
+    /**
+     * Test ACTION handling of the handleUserInput method of class ClueClient.
+     */
+    @Test
+    public void testHandleUserInputAction() 
+    {
+        //Start the test server
+        testServer = new TestServer(5557);
+        try
+        {
+            testServer.listen();
+        }
+        catch (java.io.IOException ex)
+        {
+            System.out.println(ex);
+        }
+        //Mock a UI and a Message
+        UserInterface mockedUI = mock(UserInterface.class);
+        Message mockedMessage = mock(Message.class, 
+                withSettings().serializable());
+        
+        //Create the ClueClient
+        ClueClient client = new ClueClient("localhost", 5557, mockedUI,
+                UserInterface.class);
+        
+        //Test that the client doesn't allow a second action to be played
+        client.handleMessageFromServer(mockedMessage);
+        when(mockedMessage.getMove()).thenReturn(Message.Move.ACTION).
+                thenReturn(Message.Move.RESUMETURN);
+        
+        client.handleUserInput(mockedMessage);
+        
+        verify(mockedUI, times(1)).invalidInput();
+        
+        //Test that the client allows an action to be played
+        client.handleMessageFromServer(mockedMessage);
+        when(mockedMessage.getMove()).thenReturn(Message.Move.ACTION).
+                thenReturn(Message.Move.YOURTURN);
+        
+        client.handleUserInput(mockedMessage);
+        
+        try
+        {
+            Thread.sleep(500);
+        }
+        catch (InterruptedException ex)
+        {
+            
+        }
+        
+        assertEquals(1, testServer.messagesReceived);
+        
+        //Close the server and client
+        try
+        {
+            client.closeConnection();
+            testServer.close();
+        }
+        catch (java.io.IOException ex)
+        {
+            System.out.println(ex);
+        }
+    }
+    /**
+     * Test SUGGESTION handling of the handleUserInput method of class
+     * ClueClient.
+     */
+    @Test
+    public void testHandleUserInputSuggestion() 
+    {
+        //Start the test server
+        testServer = new TestServer(5558);
+        try
+        {
+            testServer.listen();
+        }
+        catch (java.io.IOException ex)
+        {
+            System.out.println(ex);
+        }
+        UserInterface mockedUI = mock(UserInterface.class);
+        
+        //Create Card mocks for the suggestion
+        LocationCard cardMock1 = mock(LocationCard.class);
+        SuspectCard cardMock2 = mock(SuspectCard.class);
+        VehicleCard cardMock3 = mock(VehicleCard.class);
+        ActionCard cardMock4 = mock(ActionCard.class);
+        //Create a list of cards from the mocks and a mocked message
+        Card[] cardList = new Card[] {cardMock2, cardMock1, cardMock4,
+            cardMock3};
+        Message mockedMessage = mock(Message.class, 
+                withSettings().serializable());
+        
+        //Create the client
+        ClueClient client = new ClueClient("localhost", 5558, mockedUI,
+                UserInterface.class);
+        
+        //Test that the client detects an invalid suggestion configuration
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SUGGESTION);
+        when(mockedMessage.getCards()).thenReturn(cardList);
+        client.handleUserInput(mockedMessage);
+        
+        verify(mockedUI, times(1)).invalidInput();
+        
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SUGGESTION);
+        cardList = new Card[] {cardMock1, cardMock2, cardMock3,
+            cardMock1};
+        when(mockedMessage.getCards()).thenReturn(cardList);
+        client.handleUserInput(mockedMessage);
+        
+        verify(mockedUI, times(2)).invalidInput();
+        
+        //Test that the client sends a valid suggestion to the server
+        cardList = new Card[] {cardMock1, cardMock2, cardMock3, cardMock4};
+        when(mockedMessage.getCards()).thenReturn(cardList);
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(2)).invalidInput();
+        try
+        {
+            Thread.sleep(500);
+        }
+        catch (InterruptedException ex)
+        {
+            
+        }
+        assertEquals(1, testServer.messagesReceived);
+        
+        //Close the server and client
+        try
+        {
+            client.closeConnection();
+            testServer.close();
+        }
+        catch (java.io.IOException ex)
+        {
+            System.out.println(ex);
+        }
+    }
+    /**
+     * Test ACCUSATION handling of the handleUserInput method of class ClueClient.
+     */
+    @Test
+    public void testHandleUserInputAccusation() 
+    {
+        //Start the test server
+        testServer = new TestServer(5559);
+        try
+        {
+            testServer.listen();
+        }
+        catch (java.io.IOException ex)
+        {
+            System.out.println(ex);
+        }
+        UserInterface mockedUI = mock(UserInterface.class);
+        
+        //Create Card mocks for the accusation
+        LocationCard cardMock1 = mock(LocationCard.class);
+        SuspectCard cardMock2 = mock(SuspectCard.class);
+        VehicleCard cardMock3 = mock(VehicleCard.class);
+        
+        //Create a list of cards from the card mocks and create a mocked message
+        Card[] cardList = new Card[] {cardMock2, cardMock1, cardMock3};
+        Message mockedMessage = mock(Message.class, 
+                withSettings().serializable());
+        
+        //Create the clue client
+        ClueClient client = new ClueClient("localhost", 5559, mockedUI,
+                UserInterface.class);
+        
+        //Test that the client detects an improperly configured accusation
+        when(mockedMessage.getMove()).thenReturn(Message.Move.ACCUSATION);
+        when(mockedMessage.getCards()).thenReturn(cardList);
+        client.handleUserInput(mockedMessage);
+        
+        verify(mockedUI, times(1)).invalidInput();
+        
+        when(mockedMessage.getMove()).thenReturn(Message.Move.ACCUSATION);
+        cardList = new Card[] {cardMock1, cardMock3, cardMock2};
+        when(mockedMessage.getCards()).thenReturn(cardList);
+        client.handleUserInput(mockedMessage);
+        
+        verify(mockedUI, times(2)).invalidInput();
+        
+        //Test that the client allows a proper accusation to go through
+        cardList = new Card[] {cardMock1, cardMock2, cardMock3};
+        when(mockedMessage.getCards()).thenReturn(cardList);
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(2)).invalidInput();
+        
+        //TEST another invalid configuration
+        cardList = new Card[] {cardMock1, cardMock2, cardMock2};
+        when(mockedMessage.getCards()).thenReturn(cardList);
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(3)).invalidInput();
+        
+        try
+        {
+            Thread.sleep(500);
+        }
+        catch (InterruptedException ex)
+        {
+            
+        }
+        assertEquals(1, testServer.messagesReceived);
+        
+        //Close the server and client
+        try
+        {
+            client.closeConnection();
+            testServer.close();
+        }
+        catch (java.io.IOException ex)
+        {
+            System.out.println(ex);
+        }
+    }
+    /**
+     * Test TIMEOUT handling of the handleUserInput method of class ClueClient.
+     */
+    @Test
+    public void testHandleUserInputTimeOut() 
+    {
+        //Start the test server
+        testServer = new TestServer(5560);
+        try
+        {
+            testServer.listen();
+        }
+        catch (java.io.IOException ex)
+        {
+            System.out.println(ex);
+        }
+        UserInterface mockedUI = mock(UserInterface.class);
+        Message mockedMessage = mock(Message.class, 
+                withSettings().serializable());
+        
+        //Create the client
+        ClueClient client = new ClueClient("localhost", 5560, mockedUI,
+                UserInterface.class);
+        
+        //Test that the client allows an automatic move to go to the server
+        when(mockedMessage.getMove()).thenReturn(Message.Move.TIMEOUT);
+        client.handleUserInput(mockedMessage);
+        try
+        {
+            Thread.sleep(500);
+        }
+        catch (InterruptedException ex)
+        {
+            
+        }
+        assertEquals(1, testServer.messagesReceived);
+        
+        //Close the server and client
+        try
+        {
+            client.closeConnection();
+            testServer.close();
+        }
+        catch (java.io.IOException ex)
+        {
+            System.out.println(ex);
+        }
+    }
+    /**
+     * Test SHOWNCARDS handling of the handleUserInput method of class 
+     * ClueClient.
+     */
+    @Test
+    public void testHandleUserInputShownCards() 
+    {
+        //Start the test server
+        testServer = new TestServer(5561);
+        try
+        {
+            testServer.listen();
+        }
+        catch (java.io.IOException ex)
+        {
+            System.out.println(ex);
+        }
+        //Create a mock for the UI, the Message, a shown card, and an action
+        UserInterface mockedUI = mock(UserInterface.class);
+        Message mockedMessage = mock(Message.class, 
+                withSettings().serializable());
+        Message mockedCurMessage = mock(Message.class, 
+                withSettings().serializable());
+        LocationCard mockedCard = mock(LocationCard.class);
+        VehicleCard mockedVehicle = mock(VehicleCard.class);
+        SuspectCard mockedSuspect = mock(SuspectCard.class);
+        ActionCard mockedAction = mock(ActionCard.class);
+        
+        //Create the clue client
+        ClueClient client = new ClueClient("localhost", 5561, mockedUI,
+                UserInterface.class);
+        
+        //Set the clients current message to the mocked message
+        client.handleMessageFromServer(mockedCurMessage);
+        
+        //Test that the client allows a correct card through
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SHOWNCARDS);
+        when(mockedCurMessage.getMove()).thenReturn(Message.Move.ACTION);
+        when(mockedCurMessage.getType()).thenReturn(Message.Type.ALLSNOOPLEFT);
+        when(mockedCurMessage.getCards()).thenReturn(new Card[] {mockedAction});
+        when(mockedAction.getType()).thenReturn(ActionCard.Type.ALLSNOOPLEFT);
+        when(mockedAction.matchesCard(mockedCard, null)).thenReturn(true);
+        when(mockedMessage.getCards()).thenReturn(new Card[] {mockedCard});
+
+        client.handleUserInput(mockedMessage);
+        try
+        {
+            Thread.sleep(500);
+        }
+        catch (InterruptedException ex)
+        {
+            
+        }
+        assertEquals(1, testServer.messagesReceived);
+        
+        //Test that the client doesn't allow an incorrect card through 
+        //(Showing a Location in response to a Private Tip Vehicle)
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SHOWNCARDS);
+        when(mockedCurMessage.getMove()).thenReturn(Message.Move.ACTION);
+        when(mockedCurMessage.getType()).thenReturn(Message.Type.PRIVATETIP);
+        when(mockedMessage.getCards()).thenReturn(new Card[] {mockedCard});
+        when(mockedCurMessage.getCards()).thenReturn(new Card[] {mockedAction});
+        when(mockedAction.matchesCard(mockedCard, null)).thenReturn(false);
+        when(mockedAction.getType()).thenReturn(ActionCard.Type.PTVEHICLE);
+        
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(1)).invalidInput();
+        
+        //Test that the client allows a correct card through 
+        //(Showing a Vehicle in response to a Private Tip Vehicle)
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SHOWNCARDS);
+        when(mockedCurMessage.getMove()).thenReturn(Message.Move.ACTION);
+        when(mockedCurMessage.getType()).thenReturn(Message.Type.PRIVATETIP);
+        when(mockedMessage.getCards()).thenReturn(new Card[] {mockedVehicle});
+        when(mockedCurMessage.getCards()).thenReturn(new Card[] {mockedAction});
+        when(mockedAction.matchesCard(mockedVehicle, null)).thenReturn(true);
+        when(mockedAction.getType()).thenReturn(ActionCard.Type.PTVEHICLE);
+        
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(1)).invalidInput();
+        
+        //Test that the client doesn't allow an incorrect card through 
+        //(Showing a Location in response to a Private Tip Red Vehicle)
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SHOWNCARDS);
+        when(mockedCurMessage.getMove()).thenReturn(Message.Move.ACTION);
+        when(mockedCurMessage.getType()).thenReturn(Message.Type.PRIVATETIP);
+        when(mockedMessage.getCards()).thenReturn(new Card[] {mockedCard});
+        when(mockedCurMessage.getCards()).thenReturn(new Card[] {mockedAction});
+        when(mockedAction.getType()).thenReturn(ActionCard.Type.PTREDVEHICLE);
+        when(mockedAction.matchesCard(mockedCard, null)).thenReturn(false);
+        
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(2)).invalidInput();
+        
+        //Test that the client does allow a correct card through 
+        //(Showing a Red Vehicle in response to a Private Tip Red Vehicle)
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SHOWNCARDS);
+        when(mockedCurMessage.getMove()).thenReturn(Message.Move.ACTION);
+        when(mockedCurMessage.getType()).thenReturn(Message.Type.PRIVATETIP);
+        when(mockedVehicle.getColor()).thenReturn(VehicleCard.Color.COLOR1);
+        when(mockedMessage.getCards()).thenReturn(new Card[] {mockedVehicle});
+        when(mockedCurMessage.getCards()).thenReturn(new Card[] {mockedAction});
+        when(mockedAction.getType()).thenReturn(ActionCard.Type.PTREDVEHICLE);
+        when(mockedAction.matchesCard(mockedVehicle, null)).thenReturn(true);
+        
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(2)).invalidInput();
+        
+        //Test that the client doesn't allow an incorrect card through 
+        //(Showing a Red Vehicle in response to a Private Tip Red Vehicle)
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SHOWNCARDS);
+        when(mockedCurMessage.getMove()).thenReturn(Message.Move.ACTION);
+        when(mockedCurMessage.getType()).thenReturn(Message.Type.PRIVATETIP);
+        when(mockedVehicle.getColor()).thenReturn(VehicleCard.Color.COLOR2);
+        when(mockedMessage.getCards()).thenReturn(new Card[] {mockedVehicle});
+        when(mockedCurMessage.getCards()).thenReturn(new Card[] {mockedAction});
+        when(mockedAction.getType()).thenReturn(ActionCard.Type.PTREDVEHICLE);
+        when(mockedAction.matchesCard(mockedVehicle, null)).thenReturn(false);
+        
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(3)).invalidInput();
+        
+        //Test that the client does allow a correct card through 
+        //(Showing a Location in response to a Private Tip Destination)
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SHOWNCARDS);
+        when(mockedCurMessage.getMove()).thenReturn(Message.Move.ACTION);
+        when(mockedCurMessage.getType()).thenReturn(Message.Type.PRIVATETIP);
+        when(mockedMessage.getCards()).thenReturn(new Card[] {mockedCard});
+        when(mockedCurMessage.getCards()).thenReturn(new Card[] {mockedAction});
+        when(mockedAction.getType()).thenReturn(ActionCard.Type.PTDESTINATION);
+        when(mockedAction.matchesCard(mockedCard, null)).thenReturn(true);
+        
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(3)).invalidInput();
+        
+        //Test that the client doesn't allow an incorrect card through 
+        //(Showing a Vehicle in response to a Private Tip Destination)
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SHOWNCARDS);
+        when(mockedCurMessage.getMove()).thenReturn(Message.Move.ACTION);
+        when(mockedCurMessage.getType()).thenReturn(Message.Type.PRIVATETIP);
+        when(mockedMessage.getCards()).thenReturn(new Card[] {mockedVehicle});
+        when(mockedCurMessage.getCards()).thenReturn(new Card[] {mockedAction});
+        when(mockedAction.getType()).thenReturn(ActionCard.Type.PTDESTINATION);
+        when(mockedAction.matchesCard(mockedVehicle, null)).thenReturn(false);
+        
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(4)).invalidInput();
+        
+        //Test that the client does allow a correct card through 
+        //(Showing a Location in response to a Private Tip Northern Destination)
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SHOWNCARDS);
+        when(mockedCurMessage.getMove()).thenReturn(Message.Move.ACTION);
+        when(mockedCurMessage.getType()).thenReturn(Message.Type.PRIVATETIP);
+        when(mockedMessage.getCards()).thenReturn(new Card[] {mockedCard});
+        when(mockedCurMessage.getCards()).thenReturn(new Card[] {mockedAction});
+        when(mockedAction.getType()).thenReturn(ActionCard.Type.PTNORTHDEST);
+        when(mockedCard.getDirection()).thenReturn(LocationCard.Direction.DIRECTION1);
+        when(mockedAction.matchesCard(mockedCard, null)).thenReturn(true);
+        
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(4)).invalidInput();
+        
+        //Test that the client does allow a correct card through 
+        //(Showing a Location in response to a Private Tip Northern Destination)
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SHOWNCARDS);
+        when(mockedCurMessage.getMove()).thenReturn(Message.Move.ACTION);
+        when(mockedCurMessage.getType()).thenReturn(Message.Type.PRIVATETIP);
+        when(mockedMessage.getCards()).thenReturn(new Card[] {mockedCard});
+        when(mockedCurMessage.getCards()).thenReturn(new Card[] {mockedAction});
+        when(mockedAction.getType()).thenReturn(ActionCard.Type.PTNORTHDEST);
+        when(mockedCard.getDirection()).thenReturn(LocationCard.Direction.DIRECTION2);
+        when(mockedAction.matchesCard(mockedCard, null)).thenReturn(true);
+        
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(4)).invalidInput();
+        
+        //Test that the client doesn't allow an incorrect card through 
+        //(Showing a Vehicle in response to a Private Tip North Destination)
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SHOWNCARDS);
+        when(mockedCurMessage.getMove()).thenReturn(Message.Move.ACTION);
+        when(mockedCurMessage.getType()).thenReturn(Message.Type.PRIVATETIP);
+        when(mockedMessage.getCards()).thenReturn(new Card[] {mockedVehicle});
+        when(mockedCurMessage.getCards()).thenReturn(new Card[] {mockedAction});
+        when(mockedAction.getType()).thenReturn(ActionCard.Type.PTNORTHDEST);
+        when(mockedAction.matchesCard(mockedVehicle, null)).thenReturn(false);
+        
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(5)).invalidInput();
+        
+        //Test that the client doesn't allow an incorrect card through 
+        //(Showing a South in response to a Private Tip North Destination)
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SHOWNCARDS);
+        when(mockedCurMessage.getMove()).thenReturn(Message.Move.ACTION);
+        when(mockedCurMessage.getType()).thenReturn(Message.Type.PRIVATETIP);
+        when(mockedMessage.getCards()).thenReturn(new Card[] {mockedCard});
+        when(mockedCurMessage.getCards()).thenReturn(new Card[] {mockedAction});
+        when(mockedCard.getDirection()).thenReturn(LocationCard.Direction.DIRECTION3);
+        when(mockedAction.getType()).thenReturn(ActionCard.Type.PTNORTHDEST);
+        when(mockedAction.matchesCard(mockedCard, null)).thenReturn(false);
+        
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(6)).invalidInput();
+        
+        //Test that the client doesn't allow an incorrect card through 
+        //(Showing a Location in response to a Private Tip Suspect)
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SHOWNCARDS);
+        when(mockedCurMessage.getMove()).thenReturn(Message.Move.ACTION);
+        when(mockedCurMessage.getType()).thenReturn(Message.Type.PRIVATETIP);
+        when(mockedMessage.getCards()).thenReturn(new Card[] {mockedCard});
+        when(mockedCurMessage.getCards()).thenReturn(new Card[] {mockedAction});
+        when(mockedCard.getDirection()).thenReturn(LocationCard.Direction.DIRECTION3);
+        when(mockedAction.getType()).thenReturn(ActionCard.Type.PTSUSPECT);
+        when(mockedAction.matchesCard(mockedCard, null)).thenReturn(false);
+        
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(7)).invalidInput();
+        
+        //Test that the client does allow a correct card through 
+        //(Showing a Suspect in response to a Private Tip Suspect)
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SHOWNCARDS);
+        when(mockedCurMessage.getMove()).thenReturn(Message.Move.ACTION);
+        when(mockedCurMessage.getType()).thenReturn(Message.Type.PRIVATETIP);
+        when(mockedMessage.getCards()).thenReturn(new Card[] {mockedSuspect});
+        when(mockedCurMessage.getCards()).thenReturn(new Card[] {mockedAction});
+        when(mockedAction.getType()).thenReturn(ActionCard.Type.PTSUSPECT);
+        when(mockedAction.matchesCard(mockedSuspect, null)).thenReturn(true);
+        
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(7)).invalidInput();
+        
+        //Test that the client does allow a correct card through 
+        //(Showing a Suspect in response to a Private Tip FEMALE)
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SHOWNCARDS);
+        when(mockedCurMessage.getMove()).thenReturn(Message.Move.ACTION);
+        when(mockedCurMessage.getType()).thenReturn(Message.Type.PRIVATETIP);
+        when(mockedMessage.getCards()).thenReturn(new Card[] {mockedSuspect});
+        when(mockedCurMessage.getCards()).thenReturn(new Card[] {mockedAction});
+        when(mockedSuspect.getGender()).thenReturn(SuspectCard.Gender.GENDER2);
+        when(mockedAction.getType()).thenReturn(ActionCard.Type.PTFEMALE);
+        when(mockedAction.matchesCard(mockedSuspect, null)).thenReturn(true);
+        
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(7)).invalidInput();
+        
+        //Test that the client doesn't allow an incorrect card through 
+        //(Showing a Male in response to a Private Tip FEMALE)
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SHOWNCARDS);
+        when(mockedCurMessage.getMove()).thenReturn(Message.Move.ACTION);
+        when(mockedCurMessage.getType()).thenReturn(Message.Type.PRIVATETIP);
+        when(mockedMessage.getCards()).thenReturn(new Card[] {mockedSuspect});
+        when(mockedCurMessage.getCards()).thenReturn(new Card[] {mockedAction});
+        when(mockedSuspect.getGender()).thenReturn(SuspectCard.Gender.GENDER1);
+        when(mockedAction.getType()).thenReturn(ActionCard.Type.PTFEMALE);
+        when(mockedAction.matchesCard(mockedSuspect, null)).thenReturn(false);
+        
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(8)).invalidInput();
+        
+        //Test that the client doesn't allow an incorrect card through 
+        //(Showing a Location in response to a Private Tip FEMALE)
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SHOWNCARDS);
+        when(mockedCurMessage.getMove()).thenReturn(Message.Move.ACTION);
+        when(mockedCurMessage.getType()).thenReturn(Message.Type.PRIVATETIP);
+        when(mockedMessage.getCards()).thenReturn(new Card[] {mockedCard});
+        when(mockedCurMessage.getCards()).thenReturn(new Card[] {mockedAction});
+        when(mockedSuspect.getGender()).thenReturn(SuspectCard.Gender.GENDER1);
+        when(mockedAction.getType()).thenReturn(ActionCard.Type.PTFEMALE);
+        when(mockedAction.matchesCard(mockedCard, null)).thenReturn(false);
+        
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(9)).invalidInput();
+        
+        //Test that the client doesn't allow an action card to be shown
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SHOWNCARDS);
+        when(mockedCurMessage.getMove()).thenReturn(Message.Move.ACTION);
+        when(mockedCurMessage.getType()).thenReturn(Message.Type.ALLSNOOPLEFT);
+        when(mockedCurMessage.getCards()).thenReturn(new Card[] {mockedAction});
+        when(mockedAction.getType()).thenReturn(ActionCard.Type.ALLSNOOPLEFT);
+        when(mockedMessage.getCards()).thenReturn(new Card[] {mockedAction});
+        when(mockedAction.matchesCard(mockedAction, null)).thenReturn(false);
+        
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(10)).invalidInput();
+        
+        //Test that the client does allow a correct card through 
+        //(Showing a female suspect in response to a Super Sleuth FEMALE)
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SHOWNCARDS);
+        when(mockedCurMessage.getMove()).thenReturn(Message.Move.ACTION);
+        when(mockedCurMessage.getType()).thenReturn(Message.Type.SUPERSLEUTH);
+        when(mockedMessage.getCards()).thenReturn(new Card[] {mockedSuspect});
+        when(mockedCurMessage.getCards()).thenReturn(new Card[] {mockedAction});
+        when(mockedSuspect.getGender()).thenReturn(SuspectCard.Gender.GENDER2);
+        when(mockedAction.getType()).thenReturn(ActionCard.Type.SSFEMALE);
+        when(mockedAction.matchesCard(mockedSuspect, null)).thenReturn(true);
+        
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(10)).invalidInput();
+        
+        //Test that the client doesn't allow an incorrect card through 
+        //(Showing a Male in response to a Super Sleuth FEMALE)
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SHOWNCARDS);
+        when(mockedCurMessage.getMove()).thenReturn(Message.Move.ACTION);
+        when(mockedCurMessage.getType()).thenReturn(Message.Type.SUPERSLEUTH);
+        when(mockedMessage.getCards()).thenReturn(new Card[] {mockedSuspect});
+        when(mockedCurMessage.getCards()).thenReturn(new Card[] {mockedAction});
+        when(mockedSuspect.getGender()).thenReturn(SuspectCard.Gender.GENDER1);
+        when(mockedAction.getType()).thenReturn(ActionCard.Type.SSFEMALE);
+        when(mockedAction.matchesCard(mockedSuspect, null)).thenReturn(false);
+        
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(11)).invalidInput();
+        
+        //Test that the client doesn't allow an incorrect card through 
+        //(Showing a Location in response to a Super Sleuth FEMALE)
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SHOWNCARDS);
+        when(mockedCurMessage.getMove()).thenReturn(Message.Move.ACTION);
+        when(mockedCurMessage.getType()).thenReturn(Message.Type.SUPERSLEUTH);
+        when(mockedMessage.getCards()).thenReturn(new Card[] {mockedCard});
+        when(mockedCurMessage.getCards()).thenReturn(new Card[] {mockedAction});
+        when(mockedAction.getType()).thenReturn(ActionCard.Type.SSFEMALE);
+        when(mockedAction.matchesCard(mockedCard, null)).thenReturn(false);
+        
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(12)).invalidInput();
+        
+        //Test that the client doesn't allow an incorrect card through 
+        //(Showing a male suspect in response to a Super Sleuth MALE)
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SHOWNCARDS);
+        when(mockedCurMessage.getMove()).thenReturn(Message.Move.ACTION);
+        when(mockedCurMessage.getType()).thenReturn(Message.Type.SUPERSLEUTH);
+        when(mockedMessage.getCards()).thenReturn(new Card[] {mockedSuspect});
+        when(mockedCurMessage.getCards()).thenReturn(new Card[] {mockedAction});
+        when(mockedSuspect.getGender()).thenReturn(SuspectCard.Gender.GENDER2);
+        when(mockedAction.getType()).thenReturn(ActionCard.Type.SSMALE);
+        when(mockedAction.matchesCard(mockedSuspect, null)).thenReturn(false);
+        
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(13)).invalidInput();
+        
+        //Test that the client does allow a correct card through 
+        //(Showing a female in response to a Super Sleuth MALE)
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SHOWNCARDS);
+        when(mockedCurMessage.getMove()).thenReturn(Message.Move.ACTION);
+        when(mockedCurMessage.getType()).thenReturn(Message.Type.SUPERSLEUTH);
+        when(mockedMessage.getCards()).thenReturn(new Card[] {mockedSuspect});
+        when(mockedCurMessage.getCards()).thenReturn(new Card[] {mockedAction});
+        when(mockedSuspect.getGender()).thenReturn(SuspectCard.Gender.GENDER1);
+        when(mockedAction.getType()).thenReturn(ActionCard.Type.SSMALE);
+        when(mockedAction.matchesCard(mockedSuspect, null)).thenReturn(true);
+        
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(13)).invalidInput();
+        
+        //Test that the client doesn't allow an incorrect card through 
+        //(Showing a Location in response to a Super Sleuth MALE)
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SHOWNCARDS);
+        when(mockedCurMessage.getMove()).thenReturn(Message.Move.ACTION);
+        when(mockedCurMessage.getType()).thenReturn(Message.Type.SUPERSLEUTH);
+        when(mockedMessage.getCards()).thenReturn(new Card[] {mockedCard});
+        when(mockedCurMessage.getCards()).thenReturn(new Card[] {mockedAction});
+        when(mockedAction.getType()).thenReturn(ActionCard.Type.SSMALE);
+        when(mockedAction.matchesCard(mockedCard, null)).thenReturn(false);
+        
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(14)).invalidInput();
+        
+        //Test that the client does allow a correct card through 
+        //(Showing a flying vehicle in response to a Super Sleuth Flying)
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SHOWNCARDS);
+        when(mockedCurMessage.getMove()).thenReturn(Message.Move.ACTION);
+        when(mockedCurMessage.getType()).thenReturn(Message.Type.SUPERSLEUTH);
+        when(mockedMessage.getCards()).thenReturn(new Card[] {mockedVehicle});
+        when(mockedCurMessage.getCards()).thenReturn(new Card[] {mockedAction});
+        when(mockedVehicle.getType()).thenReturn(VehicleCard.Type.TYPE1);
+        when(mockedAction.getType()).thenReturn(ActionCard.Type.SSFLYING);
+        when(mockedAction.matchesCard(mockedVehicle, null)).thenReturn(true);
+        
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(14)).invalidInput();
+        
+        //Test that the client doesn't allow an incorrect card through 
+        //(Showing a ground vehicle in response to a Super Sleuth Flying)
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SHOWNCARDS);
+        when(mockedCurMessage.getMove()).thenReturn(Message.Move.ACTION);
+        when(mockedCurMessage.getType()).thenReturn(Message.Type.SUPERSLEUTH);
+        when(mockedMessage.getCards()).thenReturn(new Card[] {mockedVehicle});
+        when(mockedCurMessage.getCards()).thenReturn(new Card[] {mockedAction});
+        when(mockedVehicle.getType()).thenReturn(VehicleCard.Type.TYPE2);
+        when(mockedAction.getType()).thenReturn(ActionCard.Type.SSFLYING);
+        when(mockedAction.matchesCard(mockedVehicle, null)).thenReturn(false);
+        
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(15)).invalidInput();
+        
+        //Test that the client doesn't allow an incorrect card through 
+        //(Showing a location in response to a Super Sleuth Flying)
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SHOWNCARDS);
+        when(mockedCurMessage.getMove()).thenReturn(Message.Move.ACTION);
+        when(mockedCurMessage.getType()).thenReturn(Message.Type.SUPERSLEUTH);
+        when(mockedMessage.getCards()).thenReturn(new Card[] {mockedCard});
+        when(mockedCurMessage.getCards()).thenReturn(new Card[] {mockedAction});
+        when(mockedAction.getType()).thenReturn(ActionCard.Type.SSFLYING);
+        when(mockedAction.matchesCard(mockedCard, null)).thenReturn(false);
+        
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(16)).invalidInput();
+        
+        //Test that the client does allow a correct card through 
+        //(Showing a blue vehicle in response to a Super Sleuth BLUE)
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SHOWNCARDS);
+        when(mockedCurMessage.getMove()).thenReturn(Message.Move.ACTION);
+        when(mockedCurMessage.getType()).thenReturn(Message.Type.SUPERSLEUTH);
+        when(mockedMessage.getCards()).thenReturn(new Card[] {mockedVehicle});
+        when(mockedCurMessage.getCards()).thenReturn(new Card[] {mockedAction});
+        when(mockedVehicle.getColor()).thenReturn(VehicleCard.Color.COLOR2);
+        when(mockedAction.getType()).thenReturn(ActionCard.Type.SSBLUE);
+        when(mockedAction.matchesCard(mockedVehicle, null)).thenReturn(true);
+        
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(16)).invalidInput();
+        
+        //Test that the client doesn't allow an incorrect card through 
+        //(Showing a ground vehicle in response to a Super Sleuth blue)
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SHOWNCARDS);
+        when(mockedCurMessage.getMove()).thenReturn(Message.Move.ACTION);
+        when(mockedCurMessage.getType()).thenReturn(Message.Type.SUPERSLEUTH);
+        when(mockedMessage.getCards()).thenReturn(new Card[] {mockedVehicle});
+        when(mockedCurMessage.getCards()).thenReturn(new Card[] {mockedAction});
+        when(mockedVehicle.getColor()).thenReturn(VehicleCard.Color.COLOR1);
+        when(mockedAction.getType()).thenReturn(ActionCard.Type.SSBLUE);
+        when(mockedAction.matchesCard(mockedVehicle, null)).thenReturn(false);
+        
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(17)).invalidInput();
+        
+        //Test that the client doesn't allow an incorrect card through 
+        //(Showing a location in response to a Super Sleuth blue)
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SHOWNCARDS);
+        when(mockedCurMessage.getMove()).thenReturn(Message.Move.ACTION);
+        when(mockedCurMessage.getType()).thenReturn(Message.Type.SUPERSLEUTH);
+        when(mockedMessage.getCards()).thenReturn(new Card[] {mockedCard});
+        when(mockedCurMessage.getCards()).thenReturn(new Card[] {mockedAction});
+        when(mockedAction.getType()).thenReturn(ActionCard.Type.SSBLUE);
+        when(mockedAction.matchesCard(mockedCard, null)).thenReturn(false);
+        
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(18)).invalidInput();
+        
+        //Create a list of mocked cards to test for disproving suggestions
+        LocationCard suggestCard1 = mock(LocationCard.class);
+        SuspectCard suggestCard2 = mock(SuspectCard.class);
+        VehicleCard suggestCard3 = mock(VehicleCard.class);
+        ActionCard suggestCard4 = mock(ActionCard.class);
+        Card[] cardList = new Card[] {suggestCard1, suggestCard2, suggestCard3,
+            suggestCard4};
+        //Create a mocked card that will be used as the shown card
+        LocationCard shownCard = mock(LocationCard.class);
+        
+        //Test that the client doesn't let a user show an incorrect card in 
+        //response to an suggestion
+        client.handleMessageFromServer(mockedCurMessage);
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SHOWNCARDS);
+        when(mockedCurMessage.getMove()).thenReturn(Message.Move.DISPROVESUGGESTION);
+        when(mockedCurMessage.getCards()).thenReturn(cardList);
+        when(mockedMessage.getCards()).thenReturn(new Card[] {shownCard});
+        when(mockedAction.matchesCard(shownCard, cardList)).thenReturn(false);
+        
+        client.handleUserInput(mockedMessage);
+        
+        verify(mockedUI, times(19)).invalidInput();
+        
+        //Test that the client does allow a correct card through 
+        //(Showing a southeast in response to a Super Sleuth south)
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SHOWNCARDS);
+        when(mockedCurMessage.getMove()).thenReturn(Message.Move.ACTION);
+        when(mockedCurMessage.getType()).thenReturn(Message.Type.SUPERSLEUTH);
+        when(mockedMessage.getCards()).thenReturn(new Card[] {mockedCard});
+        when(mockedCurMessage.getCards()).thenReturn(new Card[] {mockedAction});
+        when(mockedCard.getDirection()).thenReturn(LocationCard.Direction.DIRECTION4);
+        when(mockedAction.getType()).thenReturn(ActionCard.Type.SSSOUTH);
+        when(mockedAction.matchesCard(mockedCard, null)).thenReturn(true);
+        
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(19)).invalidInput();
+        
+        //Test that the client does allow a correct card through 
+        //(Showing a southwest in response to a Super Sleuth south)
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SHOWNCARDS);
+        when(mockedCurMessage.getMove()).thenReturn(Message.Move.ACTION);
+        when(mockedCurMessage.getType()).thenReturn(Message.Type.SUPERSLEUTH);
+        when(mockedMessage.getCards()).thenReturn(new Card[] {mockedCard});
+        when(mockedCurMessage.getCards()).thenReturn(new Card[] {mockedAction});
+        when(mockedCard.getDirection()).thenReturn(LocationCard.Direction.DIRECTION3);
+        when(mockedAction.getType()).thenReturn(ActionCard.Type.SSSOUTH);
+        when(mockedAction.matchesCard(mockedCard, null)).thenReturn(true);
+        
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(19)).invalidInput();
+        
+        //Test that the client doesn't allow an incorrect card through 
+        //(Showing a northwest in response to a Super Sleuth south)
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SHOWNCARDS);
+        when(mockedCurMessage.getMove()).thenReturn(Message.Move.ACTION);
+        when(mockedCurMessage.getType()).thenReturn(Message.Type.SUPERSLEUTH);
+        when(mockedMessage.getCards()).thenReturn(new Card[] {mockedCard});
+        when(mockedCurMessage.getCards()).thenReturn(new Card[] {mockedAction});
+        when(mockedCard.getDirection()).thenReturn(LocationCard.Direction.DIRECTION2);
+        when(mockedAction.getType()).thenReturn(ActionCard.Type.SSSOUTH);
+        when(mockedAction.matchesCard(mockedCard, null)).thenReturn(false);
+        
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(20)).invalidInput();
+        
+        //Test that the client doesn't allow an incorrect card through 
+        //(Showing a vehicle in response to a Super Sleuth south)
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SHOWNCARDS);
+        when(mockedCurMessage.getMove()).thenReturn(Message.Move.ACTION);
+        when(mockedCurMessage.getType()).thenReturn(Message.Type.SUPERSLEUTH);
+        when(mockedMessage.getCards()).thenReturn(new Card[] {mockedVehicle});
+        when(mockedCurMessage.getCards()).thenReturn(new Card[] {mockedAction});
+        when(mockedAction.getType()).thenReturn(ActionCard.Type.SSSOUTH);
+        when(mockedAction.matchesCard(mockedVehicle, null)).thenReturn(false);
+        
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(21)).invalidInput();
+        
+        //Test that the client does allow a correct card through 
+        //(Showing a southwest in response to a Super Sleuth west)
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SHOWNCARDS);
+        when(mockedCurMessage.getMove()).thenReturn(Message.Move.ACTION);
+        when(mockedCurMessage.getType()).thenReturn(Message.Type.SUPERSLEUTH);
+        when(mockedMessage.getCards()).thenReturn(new Card[] {mockedCard});
+        when(mockedCurMessage.getCards()).thenReturn(new Card[] {mockedAction});
+        when(mockedCard.getDirection()).thenReturn(LocationCard.Direction.DIRECTION3);
+        when(mockedAction.getType()).thenReturn(ActionCard.Type.SSWEST);
+        when(mockedAction.matchesCard(mockedCard, null)).thenReturn(true);
+        
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(21)).invalidInput();
+        
+        //Test that the client does allow a correct card through 
+        //(Showing a northwest in response to a Super Sleuth west)
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SHOWNCARDS);
+        when(mockedCurMessage.getMove()).thenReturn(Message.Move.ACTION);
+        when(mockedCurMessage.getType()).thenReturn(Message.Type.SUPERSLEUTH);
+        when(mockedMessage.getCards()).thenReturn(new Card[] {mockedCard});
+        when(mockedCurMessage.getCards()).thenReturn(new Card[] {mockedAction});
+        when(mockedCard.getDirection()).thenReturn(LocationCard.Direction.DIRECTION2);
+        when(mockedAction.getType()).thenReturn(ActionCard.Type.SSWEST);
+        when(mockedAction.matchesCard(mockedCard, null)).thenReturn(true);
+        
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(21)).invalidInput();
+        
+        //Test that the client doesn't allow an incorrect card through 
+        //(Showing a northeast in response to a Super Sleuth west)
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SHOWNCARDS);
+        when(mockedCurMessage.getMove()).thenReturn(Message.Move.ACTION);
+        when(mockedCurMessage.getType()).thenReturn(Message.Type.SUPERSLEUTH);
+        when(mockedMessage.getCards()).thenReturn(new Card[] {mockedCard});
+        when(mockedCurMessage.getCards()).thenReturn(new Card[] {mockedAction});
+        when(mockedCard.getDirection()).thenReturn(LocationCard.Direction.DIRECTION1);
+        when(mockedAction.getType()).thenReturn(ActionCard.Type.SSWEST);
+        when(mockedAction.matchesCard(mockedCard, null)).thenReturn(false);
+        
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(22)).invalidInput();
+        
+        //Test that the client doesn't allow an incorrect card through 
+        //(Showing a vehicle in response to a Super Sleuth West)
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SHOWNCARDS);
+        when(mockedCurMessage.getMove()).thenReturn(Message.Move.ACTION);
+        when(mockedCurMessage.getType()).thenReturn(Message.Type.SUPERSLEUTH);
+        when(mockedMessage.getCards()).thenReturn(new Card[] {mockedVehicle});
+        when(mockedCurMessage.getCards()).thenReturn(new Card[] {mockedAction});
+        when(mockedAction.getType()).thenReturn(ActionCard.Type.SSWEST);
+        when(mockedAction.matchesCard(mockedVehicle, null)).thenReturn(false);
+        
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(23)).invalidInput();
+        
+        /* bad here */
+        
+        //Test that the client lets the user show a correct card to disprove
+        //the suggestion.
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SHOWNCARDS);
+        when(mockedCurMessage.getMove()).thenReturn(Message.Move.DISPROVESUGGESTION);
+        when(mockedCurMessage.getCards()).thenReturn(cardList);
+        when(mockedMessage.getCards()).thenReturn(new Card[] {suggestCard1});
+        when(suggestCard4.matchesCard(suggestCard1, cardList)).thenReturn(true);
+        
+        
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(23)).invalidInput();
+        
+        //Test that the client lets the user show a correct card to disprove
+        //the suggestion.
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SHOWNCARDS);
+        when(mockedCurMessage.getMove()).thenReturn(Message.Move.DISPROVESUGGESTION);
+        when(mockedCurMessage.getCards()).thenReturn(cardList);
+        when(mockedMessage.getCards()).thenReturn(new Card[] {suggestCard2});
+        when(suggestCard4.matchesCard(suggestCard2, cardList)).thenReturn(true);
+        
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(23)).invalidInput();
+        
+        //Test that the client lets the user show a correct card to disprove
+        //the suggestion.
+        when(mockedMessage.getMove()).thenReturn(Message.Move.SHOWNCARDS);
+        when(mockedCurMessage.getMove()).thenReturn(Message.Move.DISPROVESUGGESTION);
+        when(mockedCurMessage.getCards()).thenReturn(cardList);
+        when(mockedMessage.getCards()).thenReturn(new Card[] {suggestCard3});
+        when(suggestCard4.matchesCard(suggestCard3, cardList)).thenReturn(true);
+        
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(23)).invalidInput();
+        try
+        {
+            Thread.sleep(500);
+        }
+        catch (InterruptedException ex)
+        {
+            
+        }
+        assertEquals(19, testServer.messagesReceived);
+        
+        //Close the server and client
+        try
+        {
+            client.closeConnection();
+            testServer.close();
+        }
+        catch (java.io.IOException ex)
+        {
+            System.out.println(ex);
+        }
+    }
+
+    /**
+     * Test ENDTURN handling of the handleUserInput method of class ClueClient.
+     */
+    @Test
+    public void testHandleUserInputEndTurn() 
+    {
+        //Start the test server
+        testServer = new TestServer(5563);
+        try
+        {
+            testServer.listen();
+        }
+        catch (java.io.IOException ex)
+        {
+            System.out.println(ex);
+        }
+        UserInterface mockedUI = mock(UserInterface.class);
+        Message mockedMessage = mock(Message.class, 
+                withSettings().serializable());
+        
+        //Create the client
+        ClueClient client = new ClueClient("localhost", 5563, mockedUI,
+                UserInterface.class);
+        
+        //Test that the client doesn't let users end their turn before making a
+        // move
+        when(mockedMessage.getMove()).thenReturn(Message.Move.ENDTURN).
+                thenReturn(Message.Move.YOURTURN);
+        
+        client.curMessage = mockedMessage;
+        client.handleUserInput(mockedMessage);
+        verify(mockedUI, times(1)).invalidInput();
+        
+        //Test that the client lets users end their turn after resuming their 
+        // turn
+        when(mockedMessage.getMove()).thenReturn(Message.Move.ENDTURN).
+                thenReturn(Message.Move.RESUMETURN);
+        client.handleUserInput(mockedMessage);
+        
+        //Test that the client lets users end their turn after playing an action 
+        // and being shown a card
+        when(mockedMessage.getMove()).thenReturn(Message.Move.ENDTURN).
+                thenReturn(Message.Move.SHOWNCARDS);
+        client.handleUserInput(mockedMessage);
+        try
+        {
+            Thread.sleep(500);
+        }
+        catch (InterruptedException ex)
+        {
+            
+        }
+        assertEquals(2, testServer.messagesReceived);
+        
+        //Close the server and client
+        try
+        {
+            client.closeConnection();
+            testServer.close();
+        }
+        catch (java.io.IOException ex)
+        {
+            System.out.println(ex);
+        }
+    }
+    
+    /**
+     * Test of handleMessageFromServer method in class ClueClient.
+     */
+    @Test
+    public void testHandleMessageFromServer() 
+    {
+        //Start the test server
+        testServer = new TestServer(5564);
+        try
+        {
+            testServer.listen();
+        }
+        catch (java.io.IOException ex)
+        {
+            System.out.println(ex);
+        }
+        //Create a mock of the UI
+        UserInterface mockedUI = mock(UserInterface.class);
+
+        //Create the ClueClient
+        ClueClient client = new ClueClient("localhost", 5564, mockedUI,
+                UserInterface.class);
+        
+        //Ensure the current Message in ClueClient updates
+        client.handleMessageFromServer(null);
+        assertEquals(null, client.curMessage);
+        
+        Message testMessage = mock(Message.class, 
+                withSettings().serializable());
+        
+        //Ensure the current Message in ClueClient updates to a new Message
+        client.handleMessageFromServer(testMessage);
+        assertEquals(testMessage, client.curMessage);
+        
+        //Close the server and client
+        try
+        {
+            client.closeConnection();
+            testServer.close();
+        }
+        catch (java.io.IOException ex)
+        {
+            System.out.println(ex);
+        }
+    }
+    
+    private class TestServer extends AbstractServer
+    {
+        public int messagesReceived;
+        
+        public TestServer(int port)
+        {
+            super(port);
+            messagesReceived = 0;
+        }
+        
+        protected void handleMessageFromClient(Object message,
+                ConnectionToClient client)
+        {
+            messagesReceived++;
+        }
+        
+        public void resetMessages()
+        {
+            messagesReceived = 0;
+        }
+    }
+}

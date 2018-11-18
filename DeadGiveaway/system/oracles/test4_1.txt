@@ -1,0 +1,7 @@
+Please enter your desired username
+Please select a difficulty
+1 - Easy
+2 - Medium
+3 - Hard
+Successfully connected as billy
+

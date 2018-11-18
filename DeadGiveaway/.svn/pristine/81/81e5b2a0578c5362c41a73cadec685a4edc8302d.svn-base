@@ -1,0 +1,53 @@
+package deadgiveaway.client;
+
+import deadgiveaway.server.*;
+import java.util.*;
+import java.io.*;
+import org.junit.*;
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
+
+/**
+ * Unit Test class for ClientApp
+ * @author Jon Kuzmich
+ */
+public class ClientAppTest 
+{
+    private final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+    private final ByteArrayOutputStream errContent = new ByteArrayOutputStream();
+    
+    @Before
+    public void setUp()
+    {
+        
+    }
+    /**
+     * Test of main method of class ClientApp.
+     * Uses the fake FakeClueClientJKuzmich to test parameters passed to a
+     * ClueClient.
+     */
+    @Test
+    public void testMain() 
+    {
+        String args[] = {"-p", "555", "-h", "AnyNameHere", "-c"};
+        String allFlags = "AnyNameHere 555 deadgiveaway.client.ConsoleUI\n";
+        String noFlags = "cslvm48.csc.calpoly.edu 5557 deadgiveaway.client.GUI\n";
+        
+        PrintStream sysOut = System.out;
+        
+        System.setOut(new PrintStream(outContent));
+        
+        ClientApp.main(args);
+        assertEquals(allFlags, outContent.toString());
+        outContent.reset();
+        
+        ClientApp.main(new String[] {});
+        assertEquals(noFlags, outContent.toString());
+        outContent.reset();
+        
+        ClientApp.main(new String[] {"-p", "unix3.csc.calpoly.edu"});
+        assertEquals(noFlags, outContent.toString());
+        
+        System.setOut(sysOut);
+    }
+}

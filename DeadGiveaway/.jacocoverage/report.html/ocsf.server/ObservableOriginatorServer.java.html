@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ObservableOriginatorServer.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCoverage analysis of project &quot;DeadGiveaway&quot; (powered by JaCoCo from EclEmma)</a> &gt; <a href="index.html" class="el_package">ocsf.server</a> &gt; <span class="el_source">ObservableOriginatorServer.java</span></div><h1>ObservableOriginatorServer.java</h1><pre class="source lang-java linenums">// This file contains material supporting the textbook:
+// &quot;Object Oriented Software Engineering&quot; and is issued under the open-source
+// license found at www.lloseng.com
+
+package ocsf.server;
+
+/**
+* The &lt;code&gt; ObservableOriginatorServer &lt;/code&gt; is a subclass
+* of &lt;code&gt; ObservableServer &lt;/code&gt; that sends
+* &lt;code&gt; OriginatorMessage &lt;/code&gt; instances to its observers.
+* This class should be used when the observers need to know
+* the orginator of the messages received. The originator
+* is null when the message sent concerns the server.
+*
+* Project Name: OCSF (Object Client-Server Framework)&lt;p&gt;
+*
+* @author Dr Robert Lagani&amp;egrave;re
+* @author Dr Timothy C. Lethbridge
+* @author Fran&amp;ccedil;ois B&amp;eacute;langer
+* @author Paul Holden
+* @version February 2001 (2.12)
+*/
+public class ObservableOriginatorServer extends ObservableServer
+{
+  // Constructor ******************************************************
+
+  /**
+   * Constructs a new server.
+   *
+   * @param port the port on which to listen.
+   */
+  public ObservableOriginatorServer(int port)
+  {
+<span class="nc" id="L34">    super(port);</span>
+<span class="nc" id="L35">  }</span>
+
+  // Instance methods ************************************************
+
+  /**
+   * This method is used to handle messages coming from the client.
+   * Observers are notfied by receiveing an instance of OriginatorMessage
+   * that contains both the message received and a reference to the
+   * client who sent the message.
+   *
+   * @param message The message received from the client.
+   * @param client The connection to the client.
+   */
+  protected synchronized void handleMessageFromClient
+    (Object message, ConnectionToClient client)
+  {
+<span class="nc" id="L51">    setChanged();</span>
+<span class="nc" id="L52">    notifyObservers(new OriginatorMessage(client, message));</span>
+<span class="nc" id="L53">  }</span>
+
+  /**
+   * Method called each time a new client connection is
+   * accepted. It notifies observers by sending an
+   * &lt;code&gt; OriginatorMessage &lt;/code&gt; instance
+   * containing a reference to that client and
+   * the message defined by the static variable CLIENT_CONNECTED.
+   *
+   * @param client the connection connected to the client.
+   */
+  protected synchronized void clientConnected(ConnectionToClient client)
+  {
+<span class="nc" id="L66">    setChanged();</span>
+<span class="nc" id="L67">    notifyObservers(new OriginatorMessage(client, CLIENT_CONNECTED));</span>
+<span class="nc" id="L68">  }</span>
+
+  /**
+   * Method called each time a client connection is
+   * disconnected. It notifies observers by sending an
+   * &lt;code&gt; OriginatorMessage &lt;/code&gt; instance
+   * containing a reference to that client and
+   * the message defined by the static variable CLIENT_DISCONNECTED.
+   *
+   * @param client the connection connected to the client.
+   */
+  synchronized protected void clientDisconnected(ConnectionToClient client)
+  {
+<span class="nc" id="L81">    setChanged();</span>
+<span class="nc" id="L82">    notifyObservers(new OriginatorMessage(client, CLIENT_DISCONNECTED));</span>
+<span class="nc" id="L83">  }</span>
+
+
+  /**
+   * Method called each time an exception is raised
+   * by a client connection.
+   * It notifies observers by sending an
+   * &lt;code&gt; OriginatorMessage &lt;/code&gt; instance
+   * containing a reference to that client and
+   * the message defined by the static variable CLIENT_EXCEPTION
+   * to which is appended the exception message.
+   *
+   * @param client the client that raised the exception.
+   * @param exception the exception thrown.
+   */
+  synchronized protected void clientException(
+    ConnectionToClient client, Throwable exception)
+  {
+<span class="nc" id="L101">    setChanged();</span>
+<span class="nc" id="L102">    notifyObservers(</span>
+      new OriginatorMessage(client,
+<span class="nc" id="L104">        CLIENT_EXCEPTION + exception.getMessage()));</span>
+<span class="nc" id="L105">  }</span>
+
+  /**
+   * Method called each time an exception is raised
+   * while listening.
+   * It notifies observers by sending an
+   * &lt;code&gt; OriginatorMessage &lt;/code&gt; instance
+   * containing the message defined by the static variable LISTENING_EXCEPTION
+   * to which is appended the exception message.
+   * The originator is set to null.
+   *
+   * @param exception the exception raised.
+   */
+  protected synchronized void listeningException(Throwable exception)
+  {
+<span class="nc" id="L120">    setChanged();</span>
+<span class="nc" id="L121">    notifyObservers(</span>
+      new OriginatorMessage(null,
+<span class="nc" id="L123">        LISTENING_EXCEPTION + exception.getMessage()));</span>
+<span class="nc" id="L124">  }</span>
+
+  /**
+   * Method called each time the server is started.
+   * It notifies observers by sending an
+   * &lt;code&gt; OriginatorMessage &lt;/code&gt; instance
+   * containing the message defined by the static variable SERVER_STARTED.
+   * The originator is set to null.
+   */
+  protected synchronized void serverStarted()
+  {
+<span class="nc" id="L135">    setChanged();</span>
+<span class="nc" id="L136">    notifyObservers(new OriginatorMessage(null, SERVER_STARTED));</span>
+<span class="nc" id="L137">  }</span>
+
+  /**
+   * Method called each time the server is stopped.
+   * It notifies observers by sending an
+   * &lt;code&gt; OriginatorMessage &lt;/code&gt; instance
+   * containing the message defined by the static variable SERVER_STOPPED.
+   * The originator is set to null.
+   */
+  synchronized protected void serverStopped()
+  {
+<span class="nc" id="L148">    setChanged();</span>
+<span class="nc" id="L149">    notifyObservers(new OriginatorMessage(null, SERVER_STOPPED));</span>
+<span class="nc" id="L150">  }</span>
+
+  /**
+   * Method called each time the server is closed.
+   * It notifies observers by sending an
+   * &lt;code&gt; OriginatorMessage &lt;/code&gt; instance
+   * containing the message defined by the static variable SERVER_CLOSED.
+   * The originator is set to null.
+   */
+  synchronized protected void serverClosed()
+  {
+<span class="nc" id="L161">    setChanged();</span>
+<span class="nc" id="L162">    notifyObservers(new OriginatorMessage(null, SERVER_CLOSED));</span>
+<span class="nc" id="L163">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>

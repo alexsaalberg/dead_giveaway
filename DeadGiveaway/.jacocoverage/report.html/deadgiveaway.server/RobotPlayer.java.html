@@ -1,0 +1,1049 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>RobotPlayer.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCoverage analysis of project &quot;DeadGiveaway&quot; (powered by JaCoCo from EclEmma)</a> &gt; <a href="index.html" class="el_package">deadgiveaway.server</a> &gt; <span class="el_source">RobotPlayer.java</span></div><h1>RobotPlayer.java</h1><pre class="source lang-java linenums">package deadgiveaway.server;
+
+import deadgiveaway.ActionCard;
+import deadgiveaway.Card;
+import deadgiveaway.LocationCard;
+import deadgiveaway.Message;
+import deadgiveaway.SuspectCard;
+import deadgiveaway.VehicleCard;
+import java.util.ArrayList;
+import java.util.Random;
+import deadgiveaway.fake.*;
+import static deadgiveaway.server.Player.kMaxActionCards;
+import java.util.Arrays;
+
+/**
+ * The RobotPlayer class implements the methods declared in the Player
+ * abstract class for use by an AI/robot player.
+ *
+ * @author Steven
+ * @author Jon Kuzmich
+ * @author Cameron Geehr
+ * @version 2.0
+ */
+public class RobotPlayer extends Player
+{
+    //kSuggestionSize - the amount of cards in a suggestion or accusation
+<span class="fc" id="L27">    private final int kSuggestionSize = 4;</span>
+    //kNotesSize - the amount of players to keep notes on
+<span class="fc" id="L29">    private final int kNotesSize = 4;</span>
+    //kMinUnseen - the minimum amount of unseen cards
+<span class="fc" id="L31">    private final int kMinUnseen = 3;</span>
+    //kAccuseSize - the size of an accusation
+<span class="fc" id="L33">    private final int kAccuseSize = 3;</span>
+    //unseenCards - the list of cards this Robot has not seen
+    private ArrayList&lt;Card&gt; unseenCards;
+    //random - a random number generator to make random moves and choices
+    private Random random;
+    
+    /**
+     * Difficulty - the levels of difficulty 
+     */
+<span class="pc" id="L42">    private enum Difficulty </span>
+    {
+        //The easiest difficulty
+<span class="fc" id="L45">        EASY,</span>
+        //The medium difficulty
+<span class="fc" id="L47">        MEDIUM,</span>
+        //The hardest difficulty
+<span class="fc" id="L49">        HARD </span>
+    }
+    
+    /**
+     * CardType - the different types of cards
+     */
+<span class="pc" id="L55">    private enum CardType</span>
+    {
+        //The representation of location
+<span class="fc" id="L58">        LOCATION,</span>
+        //The representation of suspect
+<span class="fc" id="L60">        SUSPECT,</span>
+        //The representation of vehicle
+<span class="fc" id="L62">        VEHICLE,</span>
+        //The representation of action
+<span class="fc" id="L64">        ACTION</span>
+    }
+
+    /**
+     * Constructs a new RobotPlayer.
+     * @param id the ID this player will have
+     * @param name the name this player will have
+     * @param rand random object
+     * @param location the initial location of the robot
+     */
+    public RobotPlayer(int id, String name, Random rand,
+            LocationCard location)
+    {
+        //INITIALIZE the name and ID and location
+<span class="fc" id="L78">        super(name, id, location);</span>
+        //INITIALIZE the kSeed for the random number generator
+<span class="fc" id="L80">        this.random = rand;</span>
+        //INITIALIZE the list of unseen Clue cards
+<span class="fc" id="L82">        initClueCards();</span>
+<span class="fc" id="L83">    }</span>
+
+    /**
+    * Add a card to this user's hand and mark it as seen.
+    * @param card the card to add
+    */
+    @Override
+    public void addCard(Card card)
+    {
+        //IF the card is an action card
+<span class="fc bfc" id="L93" title="All 2 branches covered.">        if (card instanceof ActionCard)</span>
+        {
+<span class="fc" id="L95">            super.addCard(card);</span>
+        }
+        //IF the card is a clue card
+        else
+        {
+<span class="fc" id="L100">            super.addCard(card);</span>
+            //ITERATE through all the cards in unseen cards
+<span class="fc bfc" id="L102" title="All 2 branches covered.">            for (int idx = 0; idx &lt; unseenCards.size(); idx++)</span>
+            {
+                //IF the card is equal to unseen card, remove it from unseen
+<span class="fc bfc" id="L105" title="All 2 branches covered.">                if (card.equals(unseenCards.get(idx)))</span>
+                {
+<span class="fc" id="L107">                    unseenCards.remove(idx);</span>
+                }
+            }
+        }
+<span class="fc" id="L111">    }</span>
+
+    /**
+     * Determines what the robot does to select a move for the turn.
+     * @param msg the message telling the robot what to do
+     * @param server the server to communicate to during the selection
+     */
+    public void selectAction(Message msg, ClueServer server)
+    {
+        //IF there are any players in the message, update players
+<span class="pc bpc" id="L121" title="1 of 2 branches missed.">        if (msg.getPlayers() != null)</span>
+        {
+<span class="nc" id="L123">            players = msg.getPlayers();</span>
+        }
+        //IF called for an action 
+<span class="fc bfc" id="L126" title="All 2 branches covered.">        if (msg.getMove() == Message.Move.YOURTURN)</span>
+        {
+            //ADD the action card to the hand
+            ActionCard card;
+<span class="fc" id="L130">            addCard(msg.getCards()[0]);</span>
+
+            //PICK a random action card
+<span class="fc" id="L133">            card = actionCards[random.nextInt(getNumActions())];</span>
+<span class="fc" id="L134">            this.removeActionCard(card);</span>
+            
+            //CASE on the action type enum
+<span class="fc" id="L137">            pickSuggest(card, server);</span>
+<span class="fc" id="L138">            pickSnoop(card, server);</span>
+<span class="fc" id="L139">            pickPrivateTip(card, server);</span>
+<span class="fc" id="L140">            pickSuperSleuth(card, server);</span>
+<span class="fc" id="L141">        }</span>
+        //ELSE IF called for an accusation
+<span class="pc bpc" id="L143" title="1 of 2 branches missed.">        else if (msg.getMove() == Message.Move.YOURACCUSATION)</span>
+        {
+            //call accuse(action, server);
+<span class="fc" id="L146">            accuse(null, server);</span>
+        }
+        //ENDIF
+<span class="fc" id="L149">    }</span>
+    
+    private void pickSuggest(ActionCard action, ClueServer server)
+    {
+        //PICK the coorresponding action
+<span class="pc bfc" id="L154" title="All 3 branches covered.">        switch (action.getType())</span>
+        {
+            //condition SUGGESTALL: call suggest(action);
+            case SUGGESTALL: 
+<span class="fc" id="L158">                suggest(action, server);</span>
+<span class="fc" id="L159">                break;</span>
+            //condition SUGGESTCUR: call suggest(action);
+            case SUGGESTCUR: 
+<span class="fc" id="L162">                suggest(action, server);</span>
+<span class="fc" id="L163">                break;</span>
+            default:
+        }
+<span class="fc" id="L166">    }</span>
+    
+    private void pickSnoop(ActionCard action, ClueServer server)
+    {
+        //PICK the coorresponding action
+<span class="fc bfc" id="L171" title="All 4 branches covered.">        switch (action.getType())</span>
+        {
+            //condition SNOOP: return call allSnoop(action);
+            case SNOOP: 
+<span class="fc" id="L175">                snoop(action, server);</span>
+<span class="fc" id="L176">                break;</span>
+            //condition ALLSNOOPLEFT: call allSnoop(action);
+            case ALLSNOOPLEFT: 
+<span class="fc" id="L179">                allSnoop(action, server);</span>
+<span class="fc" id="L180">                break;</span>
+            //condition ALLSNOOPRIGHT: call allSnoop(action);
+            case ALLSNOOPRIGHT: 
+<span class="fc" id="L183">                allSnoop(action, server);</span>
+<span class="fc" id="L184">                break;</span>
+            default:
+        }
+<span class="fc" id="L187">    }</span>
+    
+    private void pickSuperSleuth(ActionCard action, ClueServer server)
+    {
+        //PICK the coorresponding action
+<span class="fc bfc" id="L192" title="All 7 branches covered.">        switch (action.getType())</span>
+        {
+            //condition SSFEMALE: call superSleuth(action);
+            case SSFEMALE: 
+<span class="fc" id="L196">                superSleuth(action, server);</span>
+<span class="fc" id="L197">                break;</span>
+            //condition SSMALE: call superSleuth(action);
+            case SSMALE: 
+<span class="fc" id="L200">                superSleuth(action, server);</span>
+<span class="fc" id="L201">                break;</span>
+            //condition SSFLYING: call superSleuth(action);
+            case SSFLYING: 
+<span class="fc" id="L204">                superSleuth(action, server);</span>
+<span class="fc" id="L205">                break;</span>
+            //condition SSBLUE: call superSleuth(action);
+            case SSBLUE: 
+<span class="fc" id="L208">                superSleuth(action, server);</span>
+<span class="fc" id="L209">                break;</span>
+            //condition SSSOUTH: call superSleuth(action);
+            case SSSOUTH: 
+<span class="fc" id="L212">                superSleuth(action, server);</span>
+<span class="fc" id="L213">                break;</span>
+            //condition SSWEST: call superSleuth(action);
+            case SSWEST: 
+<span class="fc" id="L216">                superSleuth(action, server);</span>
+<span class="fc" id="L217">                break;</span>
+            default:
+        }
+
+<span class="fc" id="L221">    }</span>
+    
+    private void pickPrivateTip(ActionCard action, ClueServer server)
+    {
+        //PICK the coorresponding action
+<span class="fc bfc" id="L226" title="All 7 branches covered.">        switch (action.getType())</span>
+        {
+            //condition PTSUSPECT: call privateTip(action);
+            case PTSUSPECT: 
+<span class="fc" id="L230">                privateTip(action, server);</span>
+<span class="fc" id="L231">                break;</span>
+            //condition PTVEHICLE: call privateTip(action);
+            case PTVEHICLE: 
+<span class="fc" id="L234">                privateTip(action, server);</span>
+<span class="fc" id="L235">                break;</span>
+            //condition PTDESTINATION: call privateTip(action);
+            case PTDESTINATION: 
+<span class="fc" id="L238">                privateTip(action, server);</span>
+<span class="fc" id="L239">                break;</span>
+            //condition PTFEMALE: call privateTip(action);
+            case PTFEMALE: 
+<span class="fc" id="L242">                privateTip(action, server);</span>
+<span class="fc" id="L243">                break;</span>
+            //condition PTREDVEHICLE: call privateTip(action);
+            case PTREDVEHICLE: 
+<span class="fc" id="L246">                privateTip(action, server);</span>
+<span class="fc" id="L247">                break;</span>
+            //condition PTNORTHDEST: call privateTip(action);
+            case PTNORTHDEST: 
+<span class="fc" id="L250">                privateTip(action, server);</span>
+<span class="fc" id="L251">                break;</span>
+            default:
+        }
+<span class="fc" id="L254">    }</span>
+
+    /**
+     * Make an accusation.
+     * @param action This will be null
+     * @param server The server to send the results to
+     */
+    public void accuse(ActionCard action, ClueServer server)
+    {
+<span class="fc" id="L263">        Message.Move move = Message.Move.ACCUSATION;</span>
+        //CREATE a new card arraylist
+<span class="fc" id="L265">        Card[] cardList = new Card[kAccuseSize];</span>
+
+        //IF there are only three cards that haven't been seen.
+<span class="fc bfc" id="L268" title="All 2 branches covered.">        if (unseenCards.size() == kAccuseSize)</span>
+        {
+            //SET the cardList to unseenCards
+<span class="fc" id="L271">            cardList[CardType.LOCATION.ordinal()] =</span>
+<span class="fc" id="L272">                    unseenCards.get(CardType.LOCATION.ordinal());</span>
+<span class="fc" id="L273">            cardList[CardType.SUSPECT.ordinal()] =</span>
+<span class="fc" id="L274">                    unseenCards.get(CardType.SUSPECT.ordinal());</span>
+<span class="fc" id="L275">            cardList[CardType.VEHICLE.ordinal()] =</span>
+<span class="fc" id="L276">                    unseenCards.get(CardType.VEHICLE.ordinal());</span>
+        }
+        //ELSE
+        else
+        {
+            //CREATE an empty list of cards
+<span class="fc" id="L282">            cardList = null;</span>
+<span class="fc" id="L283">            move = Message.Move.ENDTURN;</span>
+        }
+        //ENDIF
+        //SEND a message to the server with the arraylist of cards
+<span class="fc" id="L287">        server.handleMessageFromClient(new Message(this, null, null, </span>
+                move, null, cardList), null);
+<span class="fc" id="L289">    }</span>
+
+    /**
+     * Determines what the robot does in order to make a suggestion.
+     * Message used is {robot, null, players, SUGGESTION, &quot;suggestion&quot;,
+     * {locationcard, suspectcard, vehiclecard, actioncard}}
+     * @param action the ActionCard used for the suggestion
+     * @param server the server to send the response to
+     */
+    public void suggest(ActionCard action, ClueServer server)
+    {
+        //An array of cards for the suggestion
+<span class="fc" id="L301">        Card[] suggestion = new Card[kSuggestionSize];</span>
+        //A value representing whether a player has been found
+<span class="fc" id="L303">        boolean playerFound = false;</span>
+        //A value representing whether an unknown card has been found
+<span class="fc" id="L305">        boolean hasUnknown = false;</span>
+        //The type of move to send
+<span class="fc" id="L307">        Message.Move move = Message.Move.ACTION;</span>
+        //The type of type to send
+<span class="fc" id="L309">        Message.Type type = Message.Type.SUGGESTION;</span>
+        //The message to send
+        Message message;
+        //INITIALIZE each index in suggestions[] as null
+<span class="fc bfc" id="L313" title="All 2 branches covered.">        for (int idx = 0; idx &lt; kSuggestionSize ; idx++)</span>
+        {
+<span class="fc" id="L315">            suggestion[idx] = null;</span>
+        }
+        //SET last card in suggestion to action
+<span class="fc" id="L318">        suggestion[CardType.ACTION.ordinal()] = action;</span>
+        //IF difficulty is EASY or MEDIUM
+<span class="fc bfc" id="L320" title="All 2 branches covered.">        if (difficulty == Difficulty.EASY.ordinal() || </span>
+<span class="fc bfc" id="L321" title="All 2 branches covered.">                difficulty == Difficulty.MEDIUM.ordinal())</span>
+        {
+            //IF the action type is SUGGESTCUR
+<span class="fc bfc" id="L324" title="All 2 branches covered.">            if (action.getType() == ActionCard.Type.SUGGESTCUR)</span>
+            {
+                //SET suggestion[LOCATION] to current LocationCard
+<span class="fc" id="L327">                suggestion[CardType.LOCATION.ordinal()] = location;</span>
+            }
+            //FILL suggestion randomly
+<span class="fc" id="L330">            randomSuggest(suggestion);</span>
+        }
+        //ELSE
+        else
+        {
+            //IF the action type is SUGGESTALL
+<span class="fc bfc" id="L336" title="All 2 branches covered.">            if (action.getType() == ActionCard.Type.SUGGESTALL)</span>
+            {
+<span class="fc" id="L338">                hardSuggestAll(suggestion);</span>
+            }
+            //ELSE
+            else
+            {
+<span class="fc" id="L343">                move = hardSuggestCur(suggestion);</span>
+                //IF the player is being moved
+<span class="fc bfc" id="L345" title="All 2 branches covered.">                if (move == Message.Move.PLAYERMOVED)</span>
+                {
+                    //SET the type of the message to null
+<span class="fc" id="L348">                    type = null;</span>
+                }
+            }
+            //ENDIF
+        }
+        //ENDIF
+        //SEND a message to the server with this player, null, a list of
+        //players, the SUGGESTION or PLAYERMOVED type, string,
+        //and the card list.
+<span class="fc" id="L357">        message = new Message(this, null, null, move,</span>
+                type, suggestion);
+<span class="fc" id="L359">        server.handleMessageFromClient(message, null);</span>
+<span class="fc" id="L360">    }</span>
+    
+    private void hardSuggestAll(Card[] suggestion)
+    {
+        //A value representing whether a player has been found
+<span class="fc" id="L365">        boolean playerFound = false;</span>
+        //A value representing whether an unknown card has been found
+<span class="fc" id="L367">        boolean hasUnknown = false;</span>
+        //FOR each player going clockwise and while playerFound == false
+<span class="fc" id="L369">        for (int idx = (id + 1) % players.length; idx % players.length</span>
+<span class="pc bpc" id="L370" title="1 of 4 branches missed.">                != id &amp;&amp; !playerFound; idx++)</span>
+        {
+            //IF the player has an unknown card
+<span class="pc bpc" id="L373" title="1 of 2 branches missed.">            if (findCards(players[idx], suggestion, hasUnknown))</span>
+            {
+                //SET playerFound to true
+<span class="nc" id="L376">                playerFound = true;</span>
+            }
+        }
+        //IF (playerFound == false)
+<span class="pc bpc" id="L380" title="1 of 2 branches missed.">        if (!playerFound)</span>
+        {
+            //MAKE a random suggestion
+<span class="fc" id="L383">            randomSuggest(suggestion);</span>
+        }
+<span class="fc" id="L385">    }</span>
+    
+    private Message.Move hardSuggestCur(Card[] suggestion)
+    {
+        //A value representing whether a player has been found
+<span class="fc" id="L390">        boolean playerFound = false;</span>
+        //A value representing whether an unknown card has been found
+<span class="fc" id="L392">        boolean hasUnknown = false;</span>
+        //The type of action to take
+<span class="fc" id="L394">        Message.Move move = Message.Move.ACTION;</span>
+        //IF location is in next clockwise player's hand
+<span class="fc bfc" id="L396" title="All 2 branches covered.">        if (players[(id + 1) % players.length].hasCard(location)</span>
+<span class="pc bpc" id="L397" title="1 of 2 branches missed.">                &amp;&amp; !unseenCards.contains(location))</span>
+        {
+            //MOVE random unknown location
+<span class="fc" id="L400">            move = Message.Move.PLAYERMOVED;</span>
+<span class="fc" id="L401">            setRandomLocation(suggestion);               </span>
+        }
+        //ELSE
+        else
+        {
+            //IF location is unknown
+<span class="fc bfc" id="L407" title="All 2 branches covered.">            if (unseenCards.contains(location))</span>
+            {
+                //SET hasUnknown to true
+<span class="fc" id="L410">                hasUnknown = true;</span>
+            }
+            //SET suggestion[LOCATION] to current LocationCard
+<span class="fc" id="L413">            suggestion[CardType.LOCATION.ordinal()] = location;</span>
+            //FOR each player going clockwise and while
+            //playerFound == false
+<span class="fc" id="L416">            for (int idx = (id + 1) % players.length; idx % players.length </span>
+<span class="fc bfc" id="L417" title="All 4 branches covered.">                    != id &amp;&amp; !playerFound; idx++)</span>
+            {
+                //IF findCards(player, suggestion)
+<span class="fc bfc" id="L420" title="All 2 branches covered.">                if (findCards(players[idx], suggestion, hasUnknown))</span>
+                {
+                    //SET playerFound to true
+<span class="fc" id="L423">                    playerFound = true;</span>
+                }
+            }
+            //MAKE a random suggestion
+<span class="fc" id="L427">            randomSuggest(suggestion);</span>
+        }
+        //ENDIF
+<span class="fc" id="L430">        return move;</span>
+    }
+
+    /**
+     * A helper method that finds random cards of all types not yet found for
+     * the suggestion routine.
+     * @param suggestion a list of cards of different types to be returned to
+     *                   the caller. The types at each index are
+     *                   [LOCATION]: LocationCard
+     *                   [SUSPECT]: SuspectCard
+     *                   [VEHICLE]: VehicleCard
+     * @pre There is at least one card of each type in unseenCards
+     */
+    private void randomSuggest(Card[] suggestion)
+    {
+        //FIND an unseen suspect
+<span class="fc bfc" id="L446" title="All 2 branches covered.">        while (!(suggestion[CardType.SUSPECT.ordinal()] instanceof SuspectCard))</span>
+        {
+<span class="fc" id="L448">            suggestion[CardType.SUSPECT.ordinal()] = </span>
+<span class="fc" id="L449">                    unseenCards.get(random.nextInt(unseenCards.size()));</span>
+        }
+        //FIND an unseen vehicle
+<span class="fc bfc" id="L452" title="All 2 branches covered.">        while (!(suggestion[CardType.VEHICLE.ordinal()] instanceof VehicleCard))</span>
+        {
+<span class="fc" id="L454">            suggestion[CardType.VEHICLE.ordinal()] = </span>
+<span class="fc" id="L455">                    unseenCards.get(random.nextInt(unseenCards.size()));</span>
+        }
+        //FIND an unseen location
+<span class="fc bfc" id="L458" title="All 2 branches covered.">        while (!(suggestion[CardType.LOCATION.ordinal()] instanceof </span>
+                LocationCard))
+        {
+<span class="fc" id="L461">            suggestion[CardType.LOCATION.ordinal()] = </span>
+<span class="fc" id="L462">                    unseenCards.get(random.nextInt(unseenCards.size()));</span>
+        }
+<span class="fc" id="L464">    }</span>
+    
+    /**
+     * A helper method that finds a random location.
+     * @param suggestion a list of cards of different types to be returned to
+     *                   the caller. The types at each index are
+     *                   [LOCATION]: LocationCard
+     *                   [SUSPECT]: SuspectCard
+     *                   [VEHICLE]: VehicleCard
+     */
+    private void setRandomLocation(Card[] suggestion)
+    {
+        //FIND an unseen location
+<span class="fc bfc" id="L477" title="All 2 branches covered.">        while (!(suggestion[CardType.LOCATION.ordinal()] instanceof </span>
+                LocationCard))
+        {
+<span class="fc" id="L480">            suggestion[CardType.LOCATION.ordinal()] = </span>
+<span class="fc" id="L481">                    unseenCards.get(random.nextInt(unseenCards.size()));</span>
+        }
+<span class="fc" id="L483">    }</span>
+
+    /**
+     * A helper method that finds if a player has any unknown cards, and also
+     * finds known cards to fill the suggestion.
+     * @param player     The player to check if has any unknown cards
+     * @param suggestion A list of cards of different types to be returned to
+     *                   the caller. The types at each index are
+     *                   [LOCATION]: LocationCard
+     *                   [SUSPECT]: SuspectCard
+     *                   [VEHICLE]: VehicleCard
+     * @param hasUnknown A value indicating whether or not an unknown card
+     *                   has been found
+     * @return a value indicating whether the player had an unknown card
+     */
+    private boolean findCards(Player player, Card[] suggestion,
+            boolean hasUnknown)
+    {
+        //An unknown card the player has
+        Card unknownCard;
+        //FIND unknown card
+<span class="fc" id="L504">        unknownCard = findUnknown(player, suggestion, hasUnknown);</span>
+        //IF hasUnknown
+<span class="fc bfc" id="L506" title="All 4 branches covered.">        if (hasUnknown || unknownCard != null)</span>
+        {
+            //IF unknownCard instanceof LocationCard
+<span class="fc bfc" id="L509" title="All 2 branches covered.">            if (unknownCard instanceof LocationCard)</span>
+            {
+                //SET suggestion[LOCATION] to unknownCard
+<span class="fc" id="L512">                suggestion[CardType.LOCATION.ordinal()] = unknownCard;</span>
+            }
+            //ELSEIF unknownCard instanceof SuspectCard
+<span class="fc bfc" id="L515" title="All 2 branches covered.">            else if (unknownCard instanceof SuspectCard)</span>
+            {
+                //SET suggestion[SUSPECT] to unknownCard
+<span class="fc" id="L518">                suggestion[CardType.SUSPECT.ordinal()] = unknownCard;</span>
+            }
+            //ELSE unknownCard instanceof VehicleCard
+<span class="fc bfc" id="L521" title="All 2 branches covered.">            else if (unknownCard instanceof VehicleCard)</span>
+            {
+                //SET suggestion[VEHICLE] to unknownCard
+<span class="fc" id="L524">                suggestion[CardType.VEHICLE.ordinal()] = unknownCard;</span>
+            }
+            //ENDIF
+            //IF (suggestion[LOCATION] == null)
+<span class="fc bfc" id="L528" title="All 2 branches covered.">            if (suggestion[CardType.LOCATION.ordinal()] == null)</span>
+            {
+                //SET suggestion[LOCATION] to findCardOfType(LOCATION)
+<span class="fc" id="L531">                suggestion[CardType.LOCATION.ordinal()] = </span>
+<span class="fc" id="L532">                        findCardOfType(CardType.LOCATION);</span>
+            }
+            //IF (suggestion[SUSPECT] == null)
+<span class="fc bfc" id="L535" title="All 2 branches covered.">            if (suggestion[CardType.SUSPECT.ordinal()] == null)</span>
+            {
+                //SET suggestion[SUSPECT] to findCardOfType(SUSPECT)
+<span class="fc" id="L538">                suggestion[CardType.SUSPECT.ordinal()] = </span>
+<span class="fc" id="L539">                        findCardOfType(CardType.SUSPECT);</span>
+            }
+            //IF (suggestion[VEHICLE] == null)
+<span class="fc bfc" id="L542" title="All 2 branches covered.">            if (suggestion[CardType.VEHICLE.ordinal()] == null)</span>
+            {
+                //SET suggestion[VEHICLE] to findCardOfType(VEHICLE)
+<span class="fc" id="L545">                suggestion[CardType.VEHICLE.ordinal()] = </span>
+<span class="fc" id="L546">                        findCardOfType(CardType.VEHICLE);</span>
+            }
+        }
+        //ENDIF
+        //RETURN hasUnknown
+<span class="fc" id="L551">        return hasUnknown;</span>
+    }
+    
+    private Card findUnknown(Player player, Card[] suggestion, 
+            boolean hasUnknown)
+    {
+        //The unknown card
+<span class="fc" id="L558">        Card unknownCard = null;</span>
+        //The current card
+        Card curCard;
+        //FOR each card in player's hand and while hasUnknown == false
+<span class="fc bfc" id="L562" title="All 4 branches covered.">        for (int idx = 0; idx &lt; player.getNumCards() &amp;&amp; !hasUnknown; idx++)</span>
+        {
+<span class="fc" id="L564">            curCard = player.getClueCards()[idx];  </span>
+            //IF that card is in unseenCards
+<span class="fc bfc" id="L566" title="All 2 branches covered.">            if (unseenCards.contains(curCard))</span>
+            {
+                //IF (suggestion[LOCATION] == null) or that card is not 
+                //instanceof LocationCard
+<span class="fc bfc" id="L570" title="All 4 branches covered.">                if (suggestion[CardType.LOCATION.ordinal()] == null || </span>
+                        !(curCard instanceof LocationCard))
+                {
+                    //SET card to that card
+<span class="fc" id="L574">                    unknownCard = curCard;</span>
+                }
+                //ENDIF
+            }
+        }
+        //ENDIF
+<span class="fc" id="L580">        return unknownCard;</span>
+    }
+    
+    /**
+     * A helper method that finds a known card of a specific type.
+     * @param type The number that corresponds to a card type
+     * @return The card that was found
+     */
+    private Card findCardOfType(CardType type)
+    {
+        //The card of the given type to return
+<span class="fc" id="L591">        Card card = null;</span>
+        //The current card
+        Card curCard;
+        //The current player
+        Player curPlayer;
+        //Whether the robot player has checked itself
+<span class="fc" id="L597">        boolean visitedSelf = false;</span>
+        //FOR each player starting with this RobotPlayer going clockwise and
+        //while card == null
+<span class="fc" id="L600">        for (int pIdx = id % players.length; (pIdx % players.length != id || </span>
+<span class="pc bpc" id="L601" title="1 of 6 branches missed.">                !visitedSelf) &amp;&amp; card == null; pIdx++)</span>
+        {
+<span class="fc" id="L603">            visitedSelf = true;</span>
+<span class="fc" id="L604">            curPlayer = players[pIdx];</span>
+            //FOR each card in their hand and while card == null
+<span class="fc bfc" id="L606" title="All 4 branches covered.">            for (int cIdx = 0; cIdx &lt; curPlayer.getClueCards().length &amp;&amp; </span>
+<span class="fc" id="L607">                    card == null; cIdx++)</span>
+            {
+<span class="fc" id="L609">                card = helpFindCardOfType(curPlayer, type, cIdx);</span>
+            }
+        }
+        //RETURN card
+<span class="fc" id="L613">        return card;</span>
+    }
+    
+    private Card helpFindCardOfType(Player player, CardType type,
+            int index)
+    {
+<span class="fc" id="L619">        Card curCard = player.getClueCards()[index];</span>
+<span class="fc" id="L620">        Card card = null;</span>
+        //IF (type == LOCATION)
+<span class="fc bfc" id="L622" title="All 2 branches covered.">        if (type == CardType.LOCATION)</span>
+        {
+            //IF that card is known and instanceof LocationCard
+<span class="fc bfc" id="L625" title="All 4 branches covered.">            if (!unseenCards.contains(curCard) &amp;&amp;</span>
+                    curCard instanceof LocationCard)
+            {
+                //SET card to that card
+<span class="fc" id="L629">                card = curCard;</span>
+            }
+        }
+        //IF (type == SUSPECT)
+<span class="fc bfc" id="L633" title="All 2 branches covered.">        else if (type == CardType.SUSPECT)</span>
+        {
+            //IF that card is known and instanceof SuspectCard
+<span class="pc bpc" id="L636" title="1 of 4 branches missed.">            if (!unseenCards.contains(curCard) &amp;&amp;</span>
+                    curCard instanceof SuspectCard)
+            {
+                //SET card to that card
+<span class="fc" id="L640">                card = curCard;</span>
+            }
+        }
+        //IF (type == VEHICLE)
+        else
+        {
+            //IF that card is known and instanceof VehicleCard
+<span class="fc bfc" id="L647" title="All 4 branches covered.">            if (!unseenCards.contains(curCard) &amp;&amp;</span>
+                    curCard instanceof VehicleCard)
+            {
+                //SET card to that card
+<span class="fc" id="L651">                card = curCard;</span>
+            }
+        }
+<span class="fc" id="L654">        return card;</span>
+    }
+
+    /**
+     * Determines what the robot does in order to snoop.
+     * Message used is {robot, target, players, ACTION, &quot;snoop&quot;, {snoopcard}}
+     * @param action the ActionCard used for the snoop
+     * @param server the server to send the response to
+     */
+    public void snoop(ActionCard action, ClueServer server)
+    {
+        //The target of the snoop
+        Player player;
+        //The action card
+<span class="fc" id="L668">        Card[] card = { action };</span>
+        //IF difficulty is EASY
+<span class="fc bfc" id="L670" title="All 2 branches covered.">        if (difficulty == Difficulty.EASY.ordinal())</span>
+        {
+            //PICK a random player as the target
+<span class="fc" id="L673">            player = findRandomPlayer();</span>
+        }
+        //ELSE
+        else
+        {
+            //FIND player with highest number of unknown cards
+<span class="fc" id="L679">            player = findMostUnknownCards(players);</span>
+        }
+        //SEND a message to the server with this player, the target, a list of
+        //players, the ACTION type, &quot;snoop&quot; string, and the list of cards.
+<span class="fc" id="L683">        server.handleMessageFromClient(new Message(this, player, null, </span>
+                Message.Move.ACTION, Message.Type.SNOOP, card), null);
+<span class="fc" id="L685">    }</span>
+
+    /**
+     * Finds the player with the most unknown cards.
+     * @param players The list of players in the game
+     * @return The player with the most unknown cards
+     */
+    private Player findMostUnknownCards(Player[] players)
+    {
+        //The player with the most unknown cards
+<span class="fc" id="L695">        Player mostUnknown = (Player) players[(id + 1)</span>
+                % players.length];
+        //The highest number of unknown cards
+<span class="fc" id="L698">        int numUnknown = numUnknownCards(mostUnknown);</span>
+        //GO through each player
+<span class="fc" id="L700">        for (int idx = (mostUnknown.getID() + 1) % players.length;</span>
+<span class="fc bfc" id="L701" title="All 2 branches covered.">                idx % players.length != id; idx++)</span>
+        {
+            //IF the player has more unknowns that the previous most
+<span class="pc bpc" id="L704" title="1 of 2 branches missed.">            if (numUnknownCards((Player) players[idx]) &gt;</span>
+                    numUnknown)
+            {
+                //THAT player becaomes the new most
+<span class="nc" id="L708">                mostUnknown = (Player) players[idx];</span>
+<span class="nc" id="L709">                numUnknown =</span>
+<span class="nc" id="L710">                        numUnknownCards((Player) players[idx]);</span>
+            }
+                
+        }
+<span class="fc" id="L714">        return mostUnknown;</span>
+    }
+    
+    /**
+     * Finds the number of unknown cards the player has.
+     * @param player The player whose cards to search
+     * @return the number of unknown cards the player has
+     */
+    private int numUnknownCards(Player player)
+    {
+        //The number of unknown cards in the player's hand
+<span class="fc" id="L725">        int numUnknown = 0;</span>
+        //GO through each card
+<span class="pc bpc" id="L727" title="1 of 2 branches missed.">        for (int idx = 0; idx &lt; player.getNumCards(); idx++)</span>
+        {
+            //IF the card isn't seen increment the count
+<span class="nc bnc" id="L730" title="All 2 branches missed.">            if (unseenCards.contains(player.getClueCards()[idx]))</span>
+            {
+<span class="nc" id="L732">                numUnknown++;</span>
+            }
+        }
+<span class="fc" id="L735">        return numUnknown;</span>
+    }
+    
+    /**
+     * Determines what the robot does in order to make an &quot;all snoop&quot;.
+     * Message used {robot, target, players, ACTION, &quot;all snoop&quot;, {snoopcard}}
+     * @param action the ActionCard used for the all snoop
+     * @param server the server to send the response to
+     */
+    public void allSnoop(ActionCard action, ClueServer server)
+    {
+        //The player to target
+        Player target;
+        //The card to pass
+<span class="fc" id="L749">        Card[] card = { action };</span>
+        
+<span class="fc" id="L751">        Message.Type type = Message.Type.ALLSNOOPLEFT;</span>
+        //IF the action type is ALLSNOOPLEFT
+<span class="fc bfc" id="L753" title="All 2 branches covered.">        if (action.getType() == ActionCard.Type.ALLSNOOPLEFT)</span>
+        {
+            //PICK the left player as a target
+<span class="fc" id="L756">            target = players[(id + 1) % players.length];</span>
+        }
+        //ELSE it's ALLSNOOPRIGHT
+        else
+        {
+<span class="fc" id="L761">            type = Message.Type.ALLSNOOPRIGHT;</span>
+            //PICK the right player as a target
+<span class="fc" id="L763">            target = players[(id + players.length - 1) % players.length];</span>
+        }
+        //SEND a message to the server with this player, the target, a list of
+        //players, the ACTION type, &quot;allsnoop&quot; string, and the list of cards.
+<span class="fc" id="L767">        server.handleMessageFromClient(new Message(this, target, null, </span>
+                Message.Move.ACTION, type, card), null);
+<span class="fc" id="L769">    }</span>
+
+    /**
+     * Determines what the robot does in order to make a super sleuth.
+     * Message used is {robot, null, players, ACTION, &quot;super sleuth&quot;,
+     * {supersleuthcard}}
+     * @param action the ActionCard used for the super sleuth
+     * @param server the server to communicate the response to
+     */
+    public void superSleuth(ActionCard action, ClueServer server)
+    {
+        //The action to pass
+<span class="fc" id="L781">        Card[] card = { action };</span>
+        //SEND a message to the server with this player, null, a list of
+        //players, ACTION type, &quot;supersleuth&quot; string, and the list of cards.
+<span class="fc" id="L784">        server.handleMessageFromClient(new Message(this, null, null, </span>
+                Message.Move.ACTION, Message.Type.SUPERSLEUTH, card), null);
+<span class="fc" id="L786">    }</span>
+
+    /**
+     * Determines what the robot does in order to make a private tip. Relays
+     * its choice upwards.
+     * Message used is {robot, target, players, ACTION, &quot;private tip&quot;,
+     * {privatetipcard}}
+     * @param action the ActionCard used for the private tip
+     * @param server the server to communicate the response to
+     */
+    public void privateTip(ActionCard action, ClueServer server)
+    {
+        //The action card
+<span class="fc" id="L799">        Card[] card = { action };</span>
+        //The player to be targeted by the PrivateTip
+<span class="fc" id="L801">        Player target = null;</span>
+        //A list of how many unknown cards each player has
+<span class="fc" id="L803">        int[] unknownCards = new int[5];</span>
+        //The index with the most unknown cards
+<span class="fc" id="L805">        int maxIndex = -1;</span>
+        //IF difficulty is EASY
+<span class="fc bfc" id="L807" title="All 2 branches covered.">        if (difficulty == Difficulty.EASY.ordinal())</span>
+        {
+            //SET target to findRandomPlayer()
+<span class="fc" id="L810">            target = findRandomPlayer();</span>
+        }
+        //ELSE
+        else
+        {
+            //FIND the matching amount of cards of everyone
+<span class="fc bfc" id="L816" title="All 2 branches covered.">            for (int idx = 0; idx &lt; players.length; idx++)</span>
+            {
+<span class="fc" id="L818">                unknownCards[idx] = numUnknownCards(players[idx]);</span>
+            }
+            //CHECK each player
+<span class="fc bfc" id="L821" title="All 2 branches covered.">            for (int idx = 0; idx &lt; players.length; idx++)</span>
+            {
+<span class="fc" id="L823">                maxIndex = findMaxIndex(unknownCards);</span>
+<span class="fc" id="L824">                target = players[maxIndex];</span>
+                //CHECK each card
+<span class="fc bfc" id="L826" title="All 2 branches covered.">                for (int cIdx = 0; cIdx &lt; target.getClueCards().length; cIdx++)</span>
+                {
+                    //IF the card matches the tip
+<span class="fc bfc" id="L829" title="All 2 branches covered.">                    if (action.matchesCard(target.getClueCards()[cIdx], null))</span>
+                    {
+                        //SET the unknown amount to 0
+<span class="fc" id="L832">                        unknownCards[maxIndex] = 0;</span>
+                    }
+                }
+            }
+            //IF there are no players without a private tip match
+<span class="pc bpc" id="L837" title="1 of 2 branches missed.">            if (unknownCards[maxIndex] == 0)</span>
+            {
+                //FIND player with highest number of unknown cards
+<span class="fc" id="L840">                target = findMostUnknownCards(players);</span>
+            }
+        }
+        //SEND a message to the server with this player, target, a list of
+        //players, ACTION type, &quot;private tip&quot; string, and the list of cards.
+<span class="fc" id="L845">        server.handleMessageFromClient(new Message(this, target, null, </span>
+                Message.Move.ACTION, Message.Type.PRIVATETIP, card), null);
+        
+<span class="fc" id="L848">    }</span>
+    
+    private int findMaxIndex(int[] arr)
+    {
+<span class="fc" id="L852">        int maxInd = id + 1;</span>
+        //GO through each element
+<span class="fc bfc" id="L854" title="All 2 branches covered.">        for (int ind = (id + 1) % arr.length; ind % arr.length != id; ind++)</span>
+        {
+            //IF the element is greater than the max
+<span class="pc bpc" id="L857" title="1 of 2 branches missed.">            if (arr[maxInd] &lt; arr[ind])</span>
+            {
+                //IT becomes the new max
+<span class="nc" id="L860">                maxInd = ind;</span>
+            }
+        }
+<span class="fc" id="L863">        return maxInd;</span>
+    }
+    
+    private Player findRandomPlayer()
+    {
+        //The index of the random player
+        int randomIndex; 
+        //DO WHILE the randomIndex is equal to id
+        do
+        {
+            //SET randomIndex equal to random*kMaxPlayers
+<span class="fc" id="L874">            randomIndex = random.nextInt(players.length);</span>
+        }
+<span class="pc bpc" id="L876" title="1 of 2 branches missed.">        while(randomIndex == id);</span>
+        //RETURN the player of that index
+<span class="fc" id="L878">        return players[randomIndex];</span>
+        
+    }
+
+    /**
+     * Marks the shown card as seen by removing it from the unseenCards list.
+     * @param card the card to show the robot
+     */
+    public void showCard(Card card)
+    {
+<span class="fc" id="L888">        unseenCards.remove(card);</span>
+<span class="fc" id="L889">    }</span>
+
+    /**
+     * Private helper method to fill unseenCards.
+     */
+    private void initClueCards()
+    {
+<span class="fc" id="L896">        unseenCards = new ArrayList();</span>
+        // ADD each destination by title
+<span class="fc" id="L898">        unseenCards.add(new LocationCard(LocationCard.Title.TITLE1));</span>
+<span class="fc" id="L899">        unseenCards.add(new LocationCard(LocationCard.Title.TITLE2));</span>
+<span class="fc" id="L900">        unseenCards.add(new LocationCard(LocationCard.Title.TITLE3));</span>
+<span class="fc" id="L901">        unseenCards.add(new LocationCard(LocationCard.Title.TITLE4));</span>
+<span class="fc" id="L902">        unseenCards.add(new LocationCard(LocationCard.Title.TITLE5));</span>
+<span class="fc" id="L903">        unseenCards.add(new LocationCard(LocationCard.Title.TITLE6));</span>
+<span class="fc" id="L904">        unseenCards.add(new LocationCard(LocationCard.Title.TITLE7));</span>
+<span class="fc" id="L905">        unseenCards.add(new LocationCard(LocationCard.Title.TITLE8));</span>
+<span class="fc" id="L906">        unseenCards.add(new LocationCard(LocationCard.Title.TITLE9));</span>
+        // ADD each suspect by name
+<span class="fc" id="L908">        unseenCards.add(new SuspectCard(SuspectCard.Name.NAME1));</span>
+<span class="fc" id="L909">        unseenCards.add(new SuspectCard(SuspectCard.Name.NAME2));</span>
+<span class="fc" id="L910">        unseenCards.add(new SuspectCard(SuspectCard.Name.NAME3));</span>
+<span class="fc" id="L911">        unseenCards.add(new SuspectCard(SuspectCard.Name.NAME4));</span>
+<span class="fc" id="L912">        unseenCards.add(new SuspectCard(SuspectCard.Name.NAME5));</span>
+<span class="fc" id="L913">        unseenCards.add(new SuspectCard(SuspectCard.Name.NAME6));</span>
+        // ADD each vehicle by model
+<span class="fc" id="L915">        unseenCards.add(new VehicleCard(VehicleCard.Model.MODEL1));</span>
+<span class="fc" id="L916">        unseenCards.add(new VehicleCard(VehicleCard.Model.MODEL2));</span>
+<span class="fc" id="L917">        unseenCards.add(new VehicleCard(VehicleCard.Model.MODEL3));</span>
+<span class="fc" id="L918">        unseenCards.add(new VehicleCard(VehicleCard.Model.MODEL4));</span>
+<span class="fc" id="L919">        unseenCards.add(new VehicleCard(VehicleCard.Model.MODEL5));</span>
+<span class="fc" id="L920">        unseenCards.add(new VehicleCard(VehicleCard.Model.MODEL6));    </span>
+<span class="fc" id="L921">    }</span>
+
+    /**
+     * Returns a clone of this robot.
+     * @return a clone of this robot
+     */
+    @Override
+    public Object clone() throws CloneNotSupportedException
+    {
+<span class="fc" id="L930">        return deepCopy();</span>
+    }
+
+    /**
+     * Returns a deep copy of the state of this Player.
+     * @return A deep copy of this player.
+     */
+    @Override
+    public RobotPlayer deepCopy()
+    {
+        //Fixes defect #445
+<span class="fc" id="L941">        RobotPlayer clone = new RobotPlayer(id, name, random, location); </span>
+
+<span class="fc" id="L943">        clone.difficulty = difficulty;</span>
+        //Checks every action card
+<span class="fc bfc" id="L945" title="All 2 branches covered.">        for (int idx = 0; idx &lt; numActions; idx++)</span>
+        {
+<span class="fc" id="L947">            clone.actionCards[idx] = new ActionCard(actionCards[idx].getType());</span>
+        }
+<span class="fc" id="L949">        clone.numActions = numActions;</span>
+        
+        //COPY all clue cards into the new player
+<span class="fc bfc" id="L952" title="All 2 branches covered.">        for (int idx = 0; idx &lt; numCards; idx++) </span>
+        {
+            // IF suspect card, clone it
+<span class="fc bfc" id="L955" title="All 2 branches covered.">            if (clueCards[idx] instanceof SuspectCard) </span>
+            {
+<span class="fc" id="L957">                SuspectCard.Name nm = ((SuspectCard)clueCards[idx]).getName();</span>
+<span class="fc" id="L958">                clone.clueCards[idx] = new SuspectCard(nm);</span>
+<span class="fc" id="L959">            }</span>
+            // ELSE IF vehicle card, clone it
+<span class="fc bfc" id="L961" title="All 2 branches covered.">            else if (clueCards[idx] instanceof VehicleCard) </span>
+            {
+                VehicleCard.Model md;
+<span class="fc" id="L964">                md = ((VehicleCard)clueCards[idx]).getModel();</span>
+<span class="fc" id="L965">                clone.clueCards[idx] = new VehicleCard(md);</span>
+<span class="fc" id="L966">            }</span>
+            // ELSE it is a location card
+            else 
+            {
+<span class="fc" id="L970">                LocationCard.Title tl = ((LocationCard)clueCards[idx]).getTitle();</span>
+<span class="fc" id="L971">                clone.clueCards[idx] = new LocationCard(tl);</span>
+            }
+        }
+        
+<span class="fc" id="L975">        clone.numCards = numCards;</span>
+        
+        //COPY all players in the list to the new players list
+<span class="fc bfc" id="L978" title="All 2 branches covered.">        for (int idx = 0; idx &lt; players.length; idx++) </span>
+        {
+            // IF human player, CLONE human
+<span class="pc bpc" id="L981" title="1 of 4 branches missed.">            if (players[idx] != null &amp;&amp; !(players[idx] instanceof RobotPlayer))</span>
+            {
+<span class="nc" id="L983">                clone.players[idx] = new Player(players[idx].getName(),</span>
+<span class="nc" id="L984">                        players[idx].getID(), players[idx].getLocation());</span>
+            }
+            // ELSE CLONE robot
+<span class="fc bfc" id="L987" title="All 2 branches covered.">            else if (players[idx] != null)</span>
+            {
+<span class="fc" id="L989">                clone.players[idx] = new RobotPlayer(players[idx].getID(), </span>
+<span class="fc" id="L990">                        players[idx].getName(),</span>
+<span class="fc" id="L991">                        ((RobotPlayer)players[idx]).getRandom(), </span>
+<span class="fc" id="L992">                        players[idx].getLocation());</span>
+            }
+        }
+       
+        
+<span class="fc" id="L997">        clone.name = name;</span>
+<span class="fc" id="L998">        clone.isOut = isOut;</span>
+<span class="fc" id="L999">        clone.location = new LocationCard(location.getTitle());</span>
+<span class="fc" id="L1000">        clone.id = id;</span>
+<span class="fc" id="L1001">        clone.unseenCards = unseenCards;</span>
+<span class="fc" id="L1002">        return clone;</span>
+    }
+    
+    /**
+     * Returns a copy of the unseen cards ArrayList.
+     * @return a new ArrayList containing the same items as the unseenCards
+     * ArrayList.
+     */
+    public ArrayList&lt;Card&gt; getUnseenCards()
+    {
+        //RETURN unseenCards
+<span class="fc" id="L1013">        return unseenCards;</span>
+    }
+
+    /**
+     * Sets the unseen cards list of this robot.
+     * @param cards The list to set as this robot's unseen card list
+     */
+    public void setUnseenCards(ArrayList&lt;Card&gt; cards)
+    {
+<span class="fc" id="L1022">        unseenCards = new ArrayList();</span>
+        //GO through every element
+<span class="fc bfc" id="L1024" title="All 2 branches covered.">        for (int idx = 0; idx &lt; cards.size(); idx++)</span>
+        {
+<span class="fc" id="L1026">            unseenCards.add(cards.get(idx));</span>
+        }
+<span class="fc" id="L1028">    }</span>
+    
+    /**
+     * Returns the random object for the player.
+     * @return the random object for the player
+     */
+    public Random getRandom()
+    {
+<span class="fc" id="L1036">        return random;</span>
+    }
+    
+    /**
+     * Sets the random object for the player.
+     * @param random The random object for the player
+     */
+    public void setRandom(Random random)
+    {
+<span class="nc" id="L1045">        this.random = random;</span>
+<span class="nc" id="L1046">    }</span>
+    
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>

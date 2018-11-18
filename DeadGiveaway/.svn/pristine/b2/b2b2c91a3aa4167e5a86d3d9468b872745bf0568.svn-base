@@ -1,0 +1,141 @@
+import deadgiveaway.*;
+import deadgiveaway.server.*;
+import deadgiveaway.client.*;
+import deadgiveaway.client.ClientApp;
+import deadgiveaway.client.ClientApp;
+import org.uispec4j.*;
+import java.io.IOException;
+import java.util.*;
+import org.junit.*;
+/**
+ *
+ * @author Steven
+ */
+public class GuiSystemTest
+{
+    private class UISpecTest extends UISpecTestCase
+    {
+        public void testGUI(GUI gui)
+        {
+            waitMS(1000);
+            Panel window = new Panel(gui);        
+            Button createButton = window.getButton("Create Game");
+            assertTrue(createButton.isEnabled());
+            createButton.click();
+            gui.update(null, new Message(null, null, null, Message.Move.LOBBYSTARTED, null, null));
+            waitMS(1000);
+            Button startButton = window.getButton("Start Game");
+            assertTrue(startButton.isEnabled());
+            startButton.click();
+            assertFalse(startButton.isEnabled());
+            Player player1 = new Player("1", 0, new LocationCard(LocationCard.Title.TITLE1));
+            player1.addCard(new LocationCard(LocationCard.Title.TITLE1));
+            player1.addCard(new SuspectCard(SuspectCard.Name.NAME1));
+            player1.addCard(new VehicleCard(VehicleCard.Model.MODEL1));
+            player1.addCard(new VehicleCard(VehicleCard.Model.MODEL2));
+            player1.addCard(new ActionCard(ActionCard.Type.ALLSNOOPLEFT));
+            player1.addCard(new ActionCard(ActionCard.Type.ALLSNOOPRIGHT));
+            Player player2 = new Player("2", 1, new LocationCard(LocationCard.Title.TITLE1));
+            player2.addCard(new LocationCard(LocationCard.Title.TITLE1));
+            player2.addCard(new SuspectCard(SuspectCard.Name.NAME1));
+            player2.addCard(new VehicleCard(VehicleCard.Model.MODEL1));
+            player2.addCard(new VehicleCard(VehicleCard.Model.MODEL2));
+            player1.addCard(new ActionCard(ActionCard.Type.ALLSNOOPLEFT));
+            player1.addCard(new ActionCard(ActionCard.Type.ALLSNOOPRIGHT));
+            Player player3 = new Player("3", 2, new LocationCard(LocationCard.Title.TITLE1));
+            player3.addCard(new LocationCard(LocationCard.Title.TITLE1));
+            player3.addCard(new SuspectCard(SuspectCard.Name.NAME1));
+            player3.addCard(new VehicleCard(VehicleCard.Model.MODEL1));
+            player3.addCard(new VehicleCard(VehicleCard.Model.MODEL2));
+            player1.addCard(new ActionCard(ActionCard.Type.ALLSNOOPLEFT));
+            player1.addCard(new ActionCard(ActionCard.Type.ALLSNOOPRIGHT));
+            Player player4 = new Player("4", 3, new LocationCard(LocationCard.Title.TITLE1));
+            player4.addCard(new LocationCard(LocationCard.Title.TITLE1));
+            player4.addCard(new SuspectCard(SuspectCard.Name.NAME1));
+            player4.addCard(new VehicleCard(VehicleCard.Model.MODEL1));
+            player4.addCard(new VehicleCard(VehicleCard.Model.MODEL2));
+            player1.addCard(new ActionCard(ActionCard.Type.ALLSNOOPLEFT));
+            player1.addCard(new ActionCard(ActionCard.Type.ALLSNOOPRIGHT));
+            Player player5 = new Player("5", 4, new LocationCard(LocationCard.Title.TITLE1));
+            player5.addCard(new LocationCard(LocationCard.Title.TITLE1));
+            player5.addCard(new SuspectCard(SuspectCard.Name.NAME1));
+            player5.addCard(new VehicleCard(VehicleCard.Model.MODEL1));
+            player5.addCard(new VehicleCard(VehicleCard.Model.MODEL2));
+            player1.addCard(new ActionCard(ActionCard.Type.ALLSNOOPLEFT));
+            player1.addCard(new ActionCard(ActionCard.Type.ALLSNOOPRIGHT));
+            Player[] players = {player1, player2, player3, player4, player5};
+            gui.update(null, new Message(player1, null, players, Message.Move.GAMESTARTED, null, null));
+            waitMS(1000);
+            TextBox label = window.getTextBox("Turn Timer");
+            assertTrue(label.getText().equals("3:00"));
+            Button[] clueCards = new Button[] {
+                window.getButton("Clue Card 1"),
+                window.getButton("Clue Card 2"),
+                window.getButton("Clue Card 3"),
+                window.getButton("Clue Card 4")
+            };
+            for (Button button : clueCards) {
+                assertFalse(button.isEnabled());
+            }
+            window.pressKey(Key.R);
+            window.releaseKey(Key.R);
+            window.pressKey(Key.ENTER);
+            window.releaseKey(Key.ENTER);
+            Button deck = window.getButton("Deck");
+            player1 = new Player("1", 0, new LocationCard(LocationCard.Title.TITLE1));
+            player1.addCard(new LocationCard(LocationCard.Title.TITLE1));
+            player1.addCard(new SuspectCard(SuspectCard.Name.NAME1));
+            player1.addCard(new VehicleCard(VehicleCard.Model.MODEL1));
+            player1.addCard(new VehicleCard(VehicleCard.Model.MODEL2));
+            player1.addCard(new ActionCard(ActionCard.Type.ALLSNOOPLEFT));
+            player1.addCard(new ActionCard(ActionCard.Type.ALLSNOOPRIGHT));
+            players = new Player[] {player1, player2, player3, player4, player5};
+            gui.updatePlayers(new ArrayList<Player>(Arrays.asList(players)));
+            gui.update(null, new Message(player1, null, players, Message.Move.YOURTURN, null, new Card[] {new ActionCard(ActionCard.Type.ALLSNOOPLEFT)}));
+            assertTrue(deck.isEnabled());
+            deck.click();
+            assertFalse(deck.isEnabled());
+            Button actioncard1 = window.getButton("Action Card 1");
+            Button actioncard2 = window.getButton("Action Card 2");
+            assertTrue(actioncard1.isEnabled());
+            window.pressKey(Key.NUM5);
+            window.releaseKey(Key.NUM5);
+            gui.actionSelected();
+            assertFalse(actioncard1.isEnabled());
+            assertFalse(actioncard2.isEnabled());
+            window.pressKey(Key.ENTER);
+            window.releaseKey(Key.ENTER);
+            window.pressKey(Key.ENTER);
+            window.releaseKey(Key.ENTER);
+            window.pressKey(Key.ENTER);
+            window.releaseKey(Key.ENTER);
+            window.pressKey(Key.BACKSPACE);
+            window.releaseKey(Key.BACKSPACE);
+        }
+    }
+    
+    @Test
+     public void testGUI()
+     {
+         ServerApp.main(new String[] {"-p", "5555", "-s", "0"});
+         waitMS(2000);
+         
+         ClueClient client = new ClueClient("localhost", 5555, null,
+         GUI.class);
+         
+         UISpecTest specTest = new UISpecTest();
+         specTest.testGUI((GUI)client.getInterface());
+         
+     }
+     
+     private void waitMS(long ms) {
+        long start = System.currentTimeMillis();
+        try
+        {
+            Thread.sleep(ms);
+        }
+        catch (InterruptedException e) {
+            
+        }
+    }
+}

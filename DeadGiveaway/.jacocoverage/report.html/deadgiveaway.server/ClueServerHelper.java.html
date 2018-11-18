@@ -1,0 +1,474 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ClueServerHelper.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCoverage analysis of project &quot;DeadGiveaway&quot; (powered by JaCoCo from EclEmma)</a> &gt; <a href="index.html" class="el_package">deadgiveaway.server</a> &gt; <span class="el_source">ClueServerHelper.java</span></div><h1>ClueServerHelper.java</h1><pre class="source lang-java linenums">package deadgiveaway.server;
+
+import deadgiveaway.ActionCard;
+import deadgiveaway.Card;
+import deadgiveaway.LocationCard;
+import deadgiveaway.SuspectCard;
+import deadgiveaway.VehicleCard;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Random;
+
+/**
+ * Contains helper constants for ClueServer
+ * @author Alex Saalberg
+ * @version 2.0
+ */
+public class ClueServerHelper
+{
+    /**
+     * kMaxPlayers - maximum number of allowed players
+     */
+    protected static final int kMaxPlayers = 5;
+    
+    /**
+     * printTimeStamps - True if the server will print time stamps
+     */
+    private final boolean printTimeStamps;
+    /**
+     * printConsole - True if the server will print to console
+     */
+    private final boolean printConsole;
+    /**
+     * printDebug - True if the server will print to debug
+     */
+    private final boolean printDebug;
+    /**
+     * shuffle - Whether to shuffle or not
+     */
+    protected final boolean shuffle;
+    
+    /**
+     * A helper class for ClueServer. Contains constants and print methods
+     * 
+     * @author Alex Saalberg
+     * @param shuffle Whether to shuffle or not
+     * @param printTimeStamps Whether to print timestamps with messages
+     * @param printConsole Whether to print regular messages
+     * @param printDebug Whether to print debug messages
+     */
+    public ClueServerHelper(boolean shuffle, boolean printTimeStamps,
+            boolean printConsole, boolean printDebug)
+    {
+<span class="fc" id="L53">        //shuffle - Whether to shuffle or not.</span>
+        this.shuffle = shuffle;
+<span class="fc" id="L55">        //printTimeStamps - Whether to print time stamps or not.</span>
+        this.printTimeStamps = printTimeStamps;
+<span class="fc" id="L57">        //printConsole - Whether to print console messages or not.</span>
+        this.printConsole = printConsole;
+<span class="fc" id="L59">        //printDebug - Whether to print debug messages or not.</span>
+        this.printDebug = printDebug;
+<span class="fc" id="L61">    }</span>
+<span class="fc" id="L62">    </span>
+    /**
+     * A helper class for ClueServer. Contains constants and print methods
+     * 
+     * @author Alex Saalberg
+     * @param printTimeStamps Whether to print timestamps with messages
+     * @param printConsole Whether to print regular messages
+     * @param printDebug Whether to print debug messages
+     */
+    public ClueServerHelper(boolean printTimeStamps,
+            boolean printConsole, boolean printDebug)
+    {
+        //Call the full constructor
+        this(true, printTimeStamps, printConsole, printDebug);
+<span class="fc" id="L76">    }</span>
+<span class="fc" id="L77">    </span>
+    /*
+     * Prints a str if printConsole is true
+     * 
+     * @author Alex Saalberg
+     */
+    protected void printToConsole(String str)
+    {
+        //IF printTimeStamps is TRUE
+        if (printTimeStamps)
+<span class="pc bpc" id="L87" title="1 of 2 branches missed.">        {</span>
+            //INITIALIZE a new DATE object called dateObj
+            Date date = new Date();
+<span class="nc" id="L90">            //CONCATENATE dateObj.toString() to the front of str</span>
+            str = date.toString() + &quot; &quot; + str;
+<span class="nc" id="L92">        } //ENDIF</span>
+
+        //IF printConsole is TRUE
+        if (printConsole)
+<span class="fc bfc" id="L96" title="All 2 branches covered.">        {</span>
+            //PRINT using System.out.println(str);
+            System.out.println(str);
+<span class="fc" id="L99">        } //ENDIF</span>
+    }
+<span class="fc" id="L101"></span>
+    /*
+     * Prints a str if printDebug is true
+     * 
+     * @author Alex Saalberg
+     */
+    protected void printToDebug(String str)
+    {
+        //IF printTimeStamps is TRUE
+        if (printTimeStamps)
+<span class="pc bpc" id="L111" title="1 of 2 branches missed.">        {</span>
+            //INITIALIZE a new DATE object called date
+            Date date = new Date();
+<span class="nc" id="L114">            //CONCATENATE dateObj.toString() to the front of str</span>
+            str = date.toString() + &quot; &quot; + str;
+<span class="nc" id="L116">        } //ENDIF</span>
+
+        //IF printDebug is TRUE
+        if (printDebug)
+<span class="fc bfc" id="L120" title="All 2 branches covered.">        {</span>
+            //PRINT using System.out.println(str);
+            System.out.println(str);
+<span class="fc" id="L123">        } //ENDiF</span>
+    }
+<span class="fc" id="L125">    </span>
+    /**
+     * Debugging method to print out each Player in players
+     * @param players list of players in the game
+     * @author Alex Saalberg
+     */
+    protected void printPlayers(ArrayList&lt;Player&gt; players)
+    {
+        //FOR each Player player in players
+        for (Player player : players)
+<span class="fc bfc" id="L135" title="All 2 branches covered.">        {</span>
+            //PRINT using printToDebug
+            printToDebug(&quot;PLIST: &quot; + player);
+<span class="fc" id="L138">        } //ENDFOR</span>
+<span class="fc" id="L139">    }</span>
+<span class="fc" id="L140">    /**</span>
+     * Helper method to sort players
+     * @param players list of players in the game
+     * @return ArrayList sorted list of players in the game
+     */
+    protected static ArrayList&lt;Player&gt; sortPlayers(ArrayList&lt;Player&gt; players)
+    {
+        //FOR idx from 0 to players.size-2
+        for (int idx = 0; idx &lt; players.size() - 1; idx++)
+<span class="fc bfc" id="L149" title="All 2 branches covered.">        {</span>
+            //IF players.get(idx).id &gt; players.get(idx+1).id
+            if (players.get(idx).getID() &gt; players.get(idx + 1).getID())
+<span class="pc bpc" id="L152" title="1 of 2 branches missed.">            {</span>
+                //players.set(idx+1, players.set(idx, players.get(idx+1)))
+                players.set(idx + 1, players.set(idx, players.get(idx + 1)));
+<span class="nc" id="L155">                //IF idx &gt; 0</span>
+                if (idx &gt; 0)
+<span class="nc bnc" id="L157" title="All 2 branches missed.">                {</span>
+                    //DECREMENT idx
+                    idx--;
+<span class="nc" id="L160">                }</span>
+            }
+        }
+        
+        return players;
+<span class="fc" id="L165">    } </span>
+    
+    /**
+     * Moves the player to the new location and swaps with another player
+     * if necessary. Doesn't involve the location marker list.
+     * @return ArrayList new list of players in the game
+     * @param players list of players in the game
+     * @param player the player to move
+     * @param loc The location to move to
+     */
+    protected static ArrayList&lt;Player&gt; movePlayer(ArrayList&lt;Player&gt; players,
+            Player player, LocationCard loc)
+    {
+        //MOVE the player to the location
+        Player moved = null;
+<span class="nc" id="L180">        //The list of players. Null if location stays the same</span>
+        Player[] playerList = null;
+<span class="nc" id="L182">        //CHECK if there are players at that location</span>
+        for (Player player1 : players)
+<span class="nc bnc" id="L184" title="All 2 branches missed.">        {</span>
+            //IF the player is at that location
+            if (player1.getLocation().equals(loc))
+<span class="nc bnc" id="L187" title="All 2 branches missed.">            {</span>
+                moved = player1;
+<span class="nc" id="L189">            }</span>
+        }
+<span class="nc" id="L191">        //IF there was a player at that location</span>
+        if (moved != null)
+<span class="nc bnc" id="L193" title="All 2 branches missed.">        {</span>
+            //SET the other player's location to his own
+            moved.setLocation(player.getLocation());
+<span class="nc" id="L196">        }</span>
+        //SET the location
+        player.setLocation(loc);
+<span class="nc" id="L199">        </span>
+        return players;
+<span class="nc" id="L201">    }</span>
+    
+    protected static ArrayList&lt;Player&gt; populatePlayerInternalLists(
+            ArrayList&lt;Player&gt; players)
+    {
+        //ADD every Player to every other Player using addPlayer()
+        //FOR every player LOOP
+        for (int idx = 0; idx &lt; kMaxPlayers; idx++)
+<span class="fc bfc" id="L209" title="All 2 branches covered.">        {</span>
+            //FOR every player LOOP
+            for (int jdx = 0; jdx &lt; kMaxPlayers; jdx++)
+<span class="fc bfc" id="L212" title="All 2 branches covered.">            {</span>
+                players.get(idx).addPlayer(players.get(jdx));
+<span class="fc" id="L214">            }//ENDFOR</span>
+        } //ENDFOR
+        return players;
+<span class="fc" id="L217">    }</span>
+    
+    protected static ArrayList&lt;Player&gt; replacePlayerWithRobot(
+            ArrayList&lt;Player&gt; players, Player dcer, Random random)
+    {
+        Card[] dcerClueCards;
+        Card[] dcerActionCards;
+        RobotPlayer robotPlayer;
+
+        //INITIALIZE robot to a new RobotPlayer with dcer's location and ID
+        robotPlayer = new RobotPlayer(dcer.getID(), &quot;bot&quot;
+<span class="fc" id="L228">                + (dcer.getID() + 1), random, dcer.getLocation());</span>
+
+        //SET dcerClueCards equal to the dcer's clue cards
+        dcerClueCards = dcer.getClueCards();
+<span class="fc" id="L232">        //SET dcerActionCards equal to the dcer's action cards</span>
+        dcerActionCards = dcer.getActionCards();
+<span class="fc" id="L234"></span>
+        //Fix defect #470: Using getNumCards from dcer instead of length
+        //ADD the clueCards from dcerClueCards to robot
+        for (int idx = 0; idx &lt; dcer.getNumCards(); idx++)
+<span class="fc bfc" id="L238" title="All 2 branches covered.">        {</span>
+            robotPlayer.addCard(dcerClueCards[idx]);
+<span class="fc" id="L240">        }</span>
+        //Fix defect #470: Using getNumCards from dcer instead of length
+        //ADD the actionCards from dcerActionCards to robot
+        for (int idx = 0; idx &lt; dcer.getNumActions(); idx++)
+<span class="fc bfc" id="L244" title="All 2 branches covered.">        {</span>
+            robotPlayer.addCard(dcerActionCards[idx]);
+<span class="fc" id="L246">        }</span>
+        //REMOVE the disconnected player from the player list
+        players.remove(dcer);
+<span class="fc" id="L249">        //ADD the RobotPlayer to the playerlist in the spot of the human</span>
+        players.add(robotPlayer.getID(), robotPlayer);
+<span class="fc" id="L251"></span>
+        //FOR each Player player in players
+        for (Player player : players)
+<span class="fc bfc" id="L254" title="All 2 branches covered.">        {</span>
+            //ADD player to robotPlayer
+            robotPlayer.addPlayer(player);
+<span class="fc" id="L257">        }</span>
+<span class="fc" id="L258">        </span>
+        return players;
+<span class="fc" id="L260">    }</span>
+    
+    /**
+     * 
+     * @param players Player list to copy
+     * @return Copied Player list.
+     */
+    protected static ArrayList&lt;Player&gt; deepCopyPlayers(ArrayList&lt;Player&gt; players)
+    {
+        //newList - the new list of players
+        ArrayList&lt;Player&gt; newList = new ArrayList&lt;Player&gt;();
+<span class="fc" id="L271">        </span>
+        //FOR idx from 0 to players.size()-1
+        for (int idx = 0; idx &lt; players.size(); idx++)
+<span class="fc bfc" id="L274" title="All 2 branches covered.">        {</span>
+            //IF the player at players.idx is null.
+            if(players.get(idx) == null)
+<span class="fc bfc" id="L277" title="All 2 branches covered.">            {</span>
+                System.out.println(&quot;Null at &quot; + idx + &quot; in players.&quot;);
+<span class="fc" id="L279">            }</span>
+            //ELSE
+            else
+            {
+                //ADD a deepcopy of the player in players at idx to newList
+                newList.add(players.get(idx).deepCopy());
+<span class="fc" id="L285">            }</span>
+        }
+
+        //SET players to newList
+        return newList;
+<span class="fc" id="L290">    }</span>
+
+    /**
+     * Fills the empty spots in players with robotPlayers.
+     * @param players Players list to add to.
+     * @param random To pass into each RobotPlayer
+     * @return A modified players.
+     */
+    protected static ArrayList&lt;Player&gt; initRobotPlayers(
+            ArrayList&lt;Player&gt; players, Random random)
+    {
+        //FOR each remaining player slot (players size to kMaxPlayers)
+        for (int id = players.size(); id &lt; kMaxPlayers; id++)
+<span class="fc bfc" id="L303" title="All 2 branches covered.">        {</span>
+            //INIT a new RobotPlayer, robotPlayer
+            RobotPlayer robotPlayer = new RobotPlayer(id, &quot;bot&quot; + (id + 1),
+<span class="fc" id="L306">                    random, null);</span>
+            //ADD robotPlayer to players
+            players.add(robotPlayer);
+<span class="fc" id="L309">            </span>
+            //defect #431 removed.
+        } //ENDFOR
+        return players;
+<span class="fc" id="L313">    }</span>
+    /**
+     * Determines if player can respond to the card. Returns -1 if the player
+     * cannot respond.
+     * @param player to determine if they can respond
+     * @param card the action card the player is responding to
+     * @return The index of applicable clueCard.
+     * @author Alex Saalberg
+     */
+    
+    protected static int canRespondToSuperSleuth(Player player, Card card)
+    {
+        //IF card is not an action card, that's no bueno
+        if (!(card instanceof ActionCard))
+<span class="pc bpc" id="L327" title="1 of 2 branches missed.">        {</span>
+            //THROW IllegalArgumentException
+            throw new IllegalArgumentException(
+<span class="nc" id="L330">                    &quot;Card &quot; + card + &quot; is not an actionCard&quot;);</span>
+        } //ENDIF
+
+        //IF it's not a super sleuth, also not good
+        if (!(&quot;Super Sleuth&quot;.equals(card.toString())))
+<span class="pc bpc" id="L335" title="1 of 2 branches missed.">        {</span>
+            //TROW IllegalARgumentException
+            throw new IllegalArgumentException(
+<span class="nc" id="L338">                    &quot;Card &quot; + card + &quot; is not a superSleuth&quot;);</span>
+        } //ENDIF
+
+        //actionCard - The super sleuth card that the player could 
+        //possibly respond to.
+        ActionCard actionCard = (ActionCard) card;
+<span class="fc" id="L344">        </span>
+        //playerClueCards - local copy of the player's clue cards
+        Card[] playerClueCards = player.getClueCards();
+<span class="fc" id="L347">        </span>
+        //FOR each card in the player's hand
+        for (int idx = 0; idx &lt; player.getNumCards(); idx++)
+<span class="fc bfc" id="L350" title="All 2 branches covered.">        {</span>
+            //IF the card from appList and player's hand match
+            if (actionCard.matchesCard(playerClueCards[idx], null))
+<span class="fc bfc" id="L353" title="All 2 branches covered.">            {</span>
+                //RETURN the index of the card in the players hand.
+                return idx;
+<span class="fc" id="L356">            } //ENDIF</span>
+        } //ENDFOR
+
+        //RETURN -1. (This means the player cannot respond to the superSleuth
+        return -1;
+<span class="fc" id="L361">    }</span>
+
+    /**
+     * Determines if a player can disprove a suggestion
+     *
+     * @author Alex Saalberg
+     * @param player Player we want to know about
+     * @param suggest Suggestion that was given
+     * @return boolean for player can/can't disprove
+     */
+    protected static boolean canDisproveSuggestion(Player player, Card[] suggest)
+    {
+        //canDisprove - whether the player can disprove the suggestion
+        boolean canDisprove = false;
+<span class="fc" id="L375"></span>
+        //GO through all cards in the suggestion, except for the action card
+        //used (thus the -1).
+        for (int idx = 0; idx &lt; suggest.length - 1; idx++)
+<span class="fc bfc" id="L379" title="All 2 branches covered.">        {</span>
+            //SET canDisprove to the OR of itself and the player containing it
+            canDisprove |= player.hasCard(suggest[idx]);
+<span class="fc" id="L382">        }</span>
+
+        //RETURN canDisprove
+        return canDisprove;
+<span class="fc" id="L386">    }</span>
+    
+    /**
+     * Finds a card in hand that can disprove the cards in suggestion.
+     * @param hand the array of cards to search
+     * @param suggestion the three cards suggested
+     * @return Card that disproves the suggestion
+     * @author Alex Saalberg
+     */
+    protected static Card findCardThatDisprovesSuggestion(Card[] hand,
+            Card[] suggestion)
+    {
+        Card card = null;
+<span class="fc" id="L399"></span>
+        //GO through each player's clue cards
+        for (Card playerCard : hand)
+<span class="fc bfc" id="L402" title="All 2 branches covered.">        {</span>
+            //GO through each suggestion
+            for (Card suggest : suggestion)
+<span class="fc bfc" id="L405" title="All 2 branches covered.">            {</span>
+                //IF this is the player's card //Fixes defect #449
+                if (playerCard != null &amp;&amp; playerCard.equals(suggest))
+<span class="pc bpc" id="L408" title="1 of 4 branches missed.">                {</span>
+                    card = playerCard;
+<span class="fc" id="L410">                }</span>
+            }
+        }
+
+        return card;
+<span class="fc" id="L415">    }</span>
+
+    
+    /**
+     * Calculates the number of non-RobotPlayers in players
+     * @param players list of players in the game
+     * @author Alex Saalberg
+     * @return Number of Player objects in players
+     */
+    protected static int getHumanPlayerCount(ArrayList&lt;Player&gt; players)
+    {
+        //count - number of human players
+        int count = 0;
+<span class="fc" id="L428"></span>
+        //FOR each Player player in players
+        for (Player player : players)
+<span class="fc bfc" id="L431" title="All 2 branches covered.">        {</span>
+            //IF player is not an instanceof RobotPlayer
+            if (!(player instanceof RobotPlayer))
+<span class="fc bfc" id="L434" title="All 2 branches covered.">            {</span>
+                //INCREMENT count
+                count++;
+<span class="fc" id="L437">            }</span>
+        }
+<span class="fc" id="L439"></span>
+        //RETURN count
+        return count;
+<span class="fc" id="L442">    }</span>
+    
+    /**
+     * Picks a random card from a player's hand.
+     * @param player the user to take a card from
+     * @param random a random object to choose the card with
+     * @return Card[] a random card from a player
+     * @author Alex Saalberg
+     */
+    protected static Card[] getRandomClueCard(Player player, Random random)
+    {
+        //int randomCardIndex - Index of chosen random card in players hand.
+        int randomCardIndex;
+
+        //Card[] returnCardArray - Array to be returned. Will contain the
+        //random card at index 0 and be of size 1.
+        Card[] returnCardArray = new Card[1];
+<span class="fc" id="L459"></span>
+        //SET randomCardIndex equal to a random int from 0 to the size of
+        //the player's hand.
+        randomCardIndex = random.nextInt(player.getNumCards());
+<span class="fc" id="L463"></span>
+        //SET index 0 of returnCardArray equal the card at randomCardIndex in
+        //the player's hand.
+        returnCardArray[0] = player.getClueCards()[randomCardIndex];
+<span class="fc" id="L467"></span>
+        //RETURN returnCardArray.
+        return returnCardArray;
+<span class="fc" id="L470">    }   </span>
+}
+    
+    
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>

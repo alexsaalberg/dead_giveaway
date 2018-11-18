@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>FakeRobotPlayerAlex.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCoverage analysis of project &quot;DeadGiveaway&quot; (powered by JaCoCo from EclEmma)</a> &gt; <a href="index.html" class="el_package">deadgiveaway.fake</a> &gt; <span class="el_source">FakeRobotPlayerAlex.java</span></div><h1>FakeRobotPlayerAlex.java</h1><pre class="source lang-java linenums">/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package deadgiveaway.fake;
+
+import deadgiveaway.Card;
+import deadgiveaway.LocationCard;
+import deadgiveaway.Message;
+import deadgiveaway.server.ClueServer;
+import deadgiveaway.server.RobotPlayer;
+import java.util.Random;
+
+/**
+ * A fake robot player for testing.
+ * @author Alex
+ */
+public class FakeRobotPlayerAlex extends RobotPlayer
+{
+    /**
+     * Calls super on robotPlayer
+     * @param id The id of the robotPlayer
+     * @param name The name of the robotPlayer
+     * @param rand The Random of the robotPlayer
+     * @param location The location of the robotPlayer
+     */
+    public FakeRobotPlayerAlex(int id, String name, Random rand,
+            deadgiveaway.LocationCard location)
+    {
+<span class="fc" id="L30">        super( id, name, rand, location);</span>
+<span class="fc" id="L31">    }</span>
+    
+    /**
+     * Does nothing
+     * @param msg The Message
+     * @param server The clueServer
+     */
+    @Override
+    public void selectAction(Message msg, ClueServer server)
+    {
+<span class="nc" id="L41">    }</span>
+    
+    /**
+     * Returns 1
+     * @return 1
+     */
+    @Override
+    public int getNumCards()
+    {
+<span class="fc" id="L50">        return 1;</span>
+    }
+    
+    /**
+     * Returns a LocationCard.Title.TITLE1
+     * @return an array with the first location card in it
+     */
+    @Override
+    public Card[] getClueCards()
+    {
+<span class="fc" id="L60">        Card[] cards = {new LocationCard(LocationCard.Title.TITLE1)};</span>
+<span class="fc" id="L61">        return cards;</span>
+    }
+    
+    @Override
+    public RobotPlayer deepCopy()
+    {
+<span class="fc" id="L67">        return this;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>

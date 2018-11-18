@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>TurnTimer.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCoverage analysis of project &quot;DeadGiveaway&quot; (powered by JaCoCo from EclEmma)</a> &gt; <a href="index.html" class="el_package">deadgiveaway.client</a> &gt; <span class="el_source">TurnTimer.java</span></div><h1>TurnTimer.java</h1><pre class="source lang-java linenums">package deadgiveaway.client;
+
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+/**
+* The TurnTimer class reacts to signals sent by the timer. The timer will
+* send a signal every second, and TurnTimer will update the time left.
+*
+* @author Christopher Siu
+* @version 0.2
+* 
+* @author Jon Kuzmich
+* @version 2.0
+*/
+class TurnTimer implements ActionListener
+{
+    /** the number of milliseconds in a second */
+    public static final int kMSinSec = 1000;
+    /** the number of seconds in a minute */
+    public static final int kSecsInMin = 60;
+    /** number of seconds in default time limit*/
+    public static final int kMaxTurnTime = 180;
+    /** the lowest possible maximum time remaining */
+    public static final int kLowestMax = 180;
+    /** the amount of maximum time lost if time runs out */
+    public static final int kPenalty = 0;
+    /** time limit for responses to other actions */
+    public static final int kResponseTime = 30;
+    /** the GUI this timer belongs to */
+    private ClueClient client;
+    /** the amount of time remaining */
+    private int timeRemaining;
+    /** the maximum timer value */
+    private int maxTime;
+
+    /**
+     * Constructs a turn timer.
+     * @param initTime The initial value of the timer in seconds
+     * @param client The ClueClient to which this timer belongs
+     */
+    public TurnTimer(int initTime, ClueClient client)
+<span class="nc" id="L43">    {</span>
+        //SET the initial time.
+<span class="nc" id="L45">        timeRemaining = initTime;</span>
+<span class="nc" id="L46">        maxTime = kMaxTurnTime;</span>
+        //INITIALIZE this timer's reference to its GUI.
+<span class="nc" id="L48">        this.client = client;</span>
+<span class="nc" id="L49">    }  </span>
+
+    /**
+     * Resets the timer to its maximum value
+     */
+    protected void reset()
+    {
+<span class="nc" id="L56">        timeRemaining = maxTime;</span>
+<span class="nc" id="L57">    }  </span>
+
+    /**
+     * Resets the timer to the provided value
+     * @param newTime The new value of the timer in seconds
+     */
+    protected void reset(int newTime)
+    {
+<span class="nc" id="L65">        timeRemaining = newTime;</span>
+<span class="nc" id="L66">    }</span>
+
+    /**
+     * Resets the timer's maximum value to 90 seconds
+     */
+    protected void resetMax()
+    {
+<span class="nc" id="L73">        maxTime = kMaxTurnTime;</span>
+<span class="nc" id="L74">    }</span>
+
+    /**
+     * Gets the maximum time.
+     * @return The maximum time.
+     */
+    protected int getMax()
+    {
+<span class="nc" id="L82">        return maxTime;</span>
+    }
+
+    /**
+     * Sets the timer's maximum value to the provided value in seconds, as
+     * long as that value is above the lowest possible maximum
+     * @param newMax
+     */
+    protected void setMax(int newMax)
+    {
+        //IF the desired maximum is less than the limit:
+<span class="nc bnc" id="L93" title="All 2 branches missed.">        if (newMax &lt; kLowestMax)</span>
+        {
+            //SET the maximum to the limit.
+<span class="nc" id="L96">            maxTime = kLowestMax;</span>
+        }
+        //ELSE:
+        else
+        {
+            //SET the new maximum.
+<span class="nc" id="L102">            maxTime = newMax;</span>
+        }
+        //END IF
+<span class="nc" id="L105">    }</span>
+
+    /**
+     * Decrements the timer when triggered. If the timer has reached 0,
+     * lets its GUI know and decreases the maximum time.
+     * @param e The action (typically a Timer that goes off every second)
+     * to respond to.
+     */
+    @Override
+    public void actionPerformed(ActionEvent e)
+    {
+        //IF there is time remaining:
+<span class="nc bnc" id="L117" title="All 2 branches missed.">        if (timeRemaining &gt; 0)</span>
+        {
+            //DECREMENT the time remaining.
+<span class="nc" id="L120">            timeRemaining--;</span>
+            //UPDATE the turn timer.
+<span class="nc" id="L122">            client.setTimeRemaining(timeRemaining);</span>
+        }
+        //ELSE:
+        else
+        {
+            //CALL the GUI's time expired method.
+<span class="nc" id="L128">            client.timeExpired();</span>
+        }
+        //END IF
+<span class="nc" id="L131">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>

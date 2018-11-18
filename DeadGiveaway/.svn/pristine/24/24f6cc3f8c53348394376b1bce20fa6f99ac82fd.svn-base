@@ -1,0 +1,69 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package deadgiveaway.fake;
+
+import deadgiveaway.Card;
+import deadgiveaway.LocationCard;
+import deadgiveaway.Message;
+import deadgiveaway.server.ClueServer;
+import deadgiveaway.server.RobotPlayer;
+import java.util.Random;
+
+/**
+ * A fake robot player for testing.
+ * @author Alex
+ */
+public class FakeRobotPlayerAlex extends RobotPlayer
+{
+    /**
+     * Calls super on robotPlayer
+     * @param id The id of the robotPlayer
+     * @param name The name of the robotPlayer
+     * @param rand The Random of the robotPlayer
+     * @param location The location of the robotPlayer
+     */
+    public FakeRobotPlayerAlex(int id, String name, Random rand,
+            deadgiveaway.LocationCard location)
+    {
+        super( id, name, rand, location);
+    }
+    
+    /**
+     * Does nothing
+     * @param msg The Message
+     * @param server The clueServer
+     */
+    @Override
+    public void selectAction(Message msg, ClueServer server)
+    {
+    }
+    
+    /**
+     * Returns 1
+     * @return 1
+     */
+    @Override
+    public int getNumCards()
+    {
+        return 1;
+    }
+    
+    /**
+     * Returns a LocationCard.Title.TITLE1
+     * @return an array with the first location card in it
+     */
+    @Override
+    public Card[] getClueCards()
+    {
+        Card[] cards = {new LocationCard(LocationCard.Title.TITLE1)};
+        return cards;
+    }
+    
+    @Override
+    public RobotPlayer deepCopy()
+    {
+        return this;
+    }
+}

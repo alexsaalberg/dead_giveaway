@@ -1,0 +1,169 @@
+package deadgiveaway.client;
+
+import deadgiveaway.LocationCard;
+import deadgiveaway.SuspectCard;
+import deadgiveaway.ActionCard;
+import deadgiveaway.VehicleCard;
+import java.util.*;
+import junit.framework.*;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import static org.junit.Assert.*;
+
+/**
+ * The CardTest class contains methods for verifying the proper functionality of
+ * the various card classes.
+ * @author Austin Sparks
+ * @author Steven Gerick
+ */
+public class CardTest extends TestCase {
+    // Enum collections
+    private List<LocationCard.Direction> locDirs;
+    private List<LocationCard.Title> locNames;
+    private List<SuspectCard.Name> susNames;
+    private List<SuspectCard.Gender> susGenders;
+    private List<VehicleCard.Color> vehColors;
+    private List<VehicleCard.Type> vehTypes;
+    private List<VehicleCard.Model> vehModels;
+    private List<ActionCard.Type> actionTypes;
+    
+    @Before
+    public void setUp() {
+        //INITIALIZE all lists using the arrays of all values of all enums
+        locDirs     = Arrays.asList(LocationCard.Direction.values());
+        locNames    = Arrays.asList(LocationCard.Title.values());
+        susNames    = Arrays.asList(SuspectCard.Name.values());
+        susGenders  = Arrays.asList(SuspectCard.Gender.values());
+        vehColors   = Arrays.asList(VehicleCard.Color.values());
+        vehTypes    = Arrays.asList(VehicleCard.Type.values());
+        vehModels   = Arrays.asList(VehicleCard.Model.values());
+        actionTypes = Arrays.asList(ActionCard.Type.values());
+    }
+    
+    @After
+    public void tearDown() {
+    }
+
+    /**
+     * Test Location Cards
+     */
+    @Test    
+    public void testLocationCards()
+    {
+        //CREATE an array of strings with the expected names of directions
+        String[] dirs = {"Northeast", "Northwest", "Southwest", "Southeast"};
+        //FOR all titles
+          //ASSERT that the direction is equal to the index divided by two
+          //ASSERT that the title is accessed properly
+        //END FOR
+        for (LocationCard.Title title: LocationCard.Title.values())
+        {
+            String[] expectedLocations = {"Northeast", "Northeast", "Northwest",
+                "Northwest", "Southwest", "Southwest", "Southwest",
+                "Southeast", "Southeast"
+            };
+            int index = title.ordinal();
+            LocationCard locCard = new LocationCard(title);
+            
+            assertEquals("Failed on dir " + index, locCard.getDirection().toString(),
+                    expectedLocations[index]);
+            assertEquals("Failed on title " + index, locCard.getTitle(),
+                    LocationCard.Title.values()[index]);
+        }
+        LocationCard card1 = new LocationCard(locNames.get(1));
+        LocationCard card2 = new LocationCard(locNames.get(0));
+        LocationCard card3 = new LocationCard(locNames.get(1));
+        LocationCard card4 = new LocationCard(locNames.get(2));
+        //ASSERT that two different cards with the same constructor are equal
+        assertTrue("Failed on Location equality", card1.equals(card3));
+        //ASSERT that two cards with different constructors and same dirs are not equal
+        assertFalse("Failed on Location inequality", card1.equals(card2));
+        //ASSERT that two cards with different constructors and dirs are not equal
+        assertFalse("Failed on Location inequality", card2.equals(card4));
+    }
+    
+    /**
+     * Test Suspect Cards
+     */
+    @Test
+    public void testSuspectCards()
+    {        
+        SuspectCard card1 = new SuspectCard(susNames.get(0));
+        SuspectCard card2 = new SuspectCard(susNames.get(1));
+        SuspectCard card3 = new SuspectCard(susNames.get(2));
+        SuspectCard card4 = new SuspectCard(susNames.get(0));
+        //ASSERT that the genders return the proper strings
+        assertEquals("Failed on SuspectCard gender toString()", card1.getGender().toString(), "female");
+        assertEquals("Failed on SuspectCard gender toString()", card2.getGender().toString(), "male");
+        //ASSERT that two cards with different constructors and different gender are not equal
+        assertFalse("Failed on SuspectCard inequality", card1.equals(card2));
+        //ASSERT that two cards with different constructors and same gender are not equal
+        assertFalse("Failed on SuspectCard inequality", card1.equals(card3));
+        //ASSERT that two cards with same constructor are equal
+        assertTrue("Failed on SuspectCard equality", card1.equals(card4));
+        //test accessors and association of name with gender
+        for (SuspectCard.Name name : SuspectCard.Name.values()) {
+            int index = name.ordinal();
+            SuspectCard card = new SuspectCard(name);
+            assertEquals("Failed on gender ordering", card.getGender(),
+                    SuspectCard.Gender.values()[(index + 1) % 2]);
+            assertEquals("Failed on name accessor", card.getName(), name);
+        }
+    }
+    
+    /**
+     * Test Vehicle Cards
+     */
+    @Test
+    public void testVehicleCards()
+    {
+        VehicleCard card1 = new VehicleCard(vehModels.get(0));
+        VehicleCard card2 = new VehicleCard(vehModels.get(1));
+        VehicleCard card3 = new VehicleCard(vehModels.get(3));
+        VehicleCard card4 = new VehicleCard(vehModels.get(0));
+        // Check types assigned properly
+        assertEquals("Failed on flying toString()", card1.getType().toString(), "Flying");
+        assertEquals("Failed on ground toString()", card2.getType().toString(), "Ground");
+        // Check colors assigned properly
+        assertEquals("Failed on Blue toString()", card1.getColor().toString(), "Blue");
+        assertEquals("Failed on Red toString()", card3.getColor().toString(), "Red");
+        // Check equality
+        assertTrue("Failed on VehicleCard equality", card1.equals(card4));
+        assertFalse("Failed on VehicleCard inequality", card1.equals(card3));
+        assertFalse("Failed on VehicleCard inequality", card1.equals(card2));
+        // Check accessors and association of model with color and type
+        for (VehicleCard.Model model : VehicleCard.Model.values()) {
+            int index = model.ordinal();
+            VehicleCard card = new VehicleCard(model);
+            assertTrue("Failed on Model accessor", card.getModel().equals(model));
+            assertEquals("Failed on Type accessor", card.getType(),
+                    VehicleCard.Type.values()[index % 2]);
+            assertEquals("Failed on Color accessor", card.getColor(),
+                    VehicleCard.Color.values()[1 - index / 3]);
+        }
+    }
+    
+    /**
+     * Test Action Cards
+     */
+    @Test
+    public void testActionCards()
+    {
+        ActionCard card1 = new ActionCard(actionTypes.get(0));
+        ActionCard card2 = new ActionCard(actionTypes.get(1));
+        ActionCard card3 = new ActionCard(actionTypes.get(2));
+        ActionCard card4 = new ActionCard(actionTypes.get(0));
+        // Test titles
+        assertEquals("Type Suggestion", card1.title(), "Suggestion");
+        assertEquals("Type Suugestion", card2.title(), "Suggestion");
+        assertEquals("Type Snoop", card3.title(), "Snoop");        
+        // Test Equality
+        assertFalse("Failed on Action inequality", card1.equals(card2));
+        assertFalse("Failed on Action inequality", card1.equals(card3));
+        assertTrue("Failed on Action equality", card1.equals(card4));
+    }
+    
+}

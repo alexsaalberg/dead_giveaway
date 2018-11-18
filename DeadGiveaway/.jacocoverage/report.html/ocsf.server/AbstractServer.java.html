@@ -1,0 +1,555 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>AbstractServer.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCoverage analysis of project &quot;DeadGiveaway&quot; (powered by JaCoCo from EclEmma)</a> &gt; <a href="index.html" class="el_package">ocsf.server</a> &gt; <span class="el_source">AbstractServer.java</span></div><h1>AbstractServer.java</h1><pre class="source lang-java linenums">// This file contains material supporting section 3.8 of the textbook:
+// &quot;Object Oriented Software Engineering&quot; and is issued under the open-source
+// license found at www.lloseng.com
+
+package ocsf.server;
+
+import java.net.*;
+import java.util.*;
+import java.io.*;
+
+/**
+* The &lt;code&gt; AbstractServer &lt;/code&gt; class maintains a thread that waits
+* for connection attempts from clients. When a connection attempt occurs
+* it creates a new &lt;code&gt; ConnectionToClient &lt;/code&gt; instance which
+* runs as a thread. When a client is thus connected to the
+* server, the two programs can then exchange &lt;code&gt; Object &lt;/code&gt;
+* instances.&lt;p&gt;
+*
+* Method &lt;code&gt; handleMessageFromClient &lt;/code&gt; must be defined by
+* a concrete subclass. Several other hook methods may also be
+* overriden.&lt;p&gt;
+*
+* Several public service methods are provided to applications that use
+* this framework, and several hook methods are also available&lt;p&gt;
+*
+* The modifications made to this class in version 2.2 are:
+* &lt;ul&gt;
+* &lt;li&gt; The synchronization of the &lt;code&gt;close()&lt;/code&gt; method
+* is now limited to the client threads closing sequence. The
+* call to &lt;code&gt;serverClosed()&lt;/code&gt; is outside the synchronized
+* block and is preceeded by a join that garantees that
+* &lt;code&gt;serverStopped()&lt;/code&gt; is always called before.
+* &lt;li&gt; Method &lt;code&gt;isClosed()&lt;/code&gt; has been added.
+* &lt;li&gt; When a client is accepted, the corresponding
+* connection thread will be created only if the server
+* has not been stopped.
+* &lt;/ul&gt;
+* The modifications made to this class in version 2.3 are:
+* &lt;ul&gt;
+* &lt;li&gt; An instance variable refering to the current connection
+* factory. Refer to null value by default, in this case regular
+* &lt;code&gt;ConnectionToClient&lt;/code&gt; instances are created as in the
+* previous versions. 
+* &lt;li&gt; Method &lt;code&gt;setConnectionFactory()&lt;/code&gt; has been added.
+* &lt;li&gt; In the run method, a call to the connection factory
+* is made if such a factory is available.  
+* &lt;li&gt; Method &lt;code&gt;handleMessageFromClient&lt;/code&gt; is not always
+* called depending on the value returned by the 
+* &lt;code&gt;handleMessageFromClient&lt;/code&gt; of the &lt;code&gt;ConnectionToClient&lt;/code&gt;
+* class.
+* &lt;li&gt; The &lt;code&gt;clientException&lt;/code&gt; method is still the one called when
+* an exception is thrown when handling the connection with one client. However
+* &lt;code&gt;ClassNotFoundException&lt;/code&gt; and &lt;code&gt;RuntimeException&lt;/code&gt; instances
+* can now be received.  
+* &lt;li&gt; The call to &lt;code&gt;serverStopped()&lt;/code&gt; has been moved in 
+* the &lt;code&gt;run&lt;/code&gt; method.
+* &lt;li&gt; Method &lt;code&gt;isListening()&lt;/code&gt; has been modified.
+* &lt;li&gt; Instance variable &lt;code&gt;readToStop&lt;/code&gt; is now initialized to &lt;code&gt;true&lt;/code&gt;
+* &lt;/ul&gt;&lt;p&gt;
+*
+* Project Name: OCSF (Object Client-Server Framework)&lt;p&gt;
+*
+* @author Dr Robert Lagani&amp;egrave;re
+* @author Dr Timothy C. Lethbridge
+* @author Fran&amp;ccedil;ois B&amp;eacute;langer
+* @author Paul Holden
+* @version December 2003 (2.31)
+*/
+public abstract class AbstractServer implements Runnable
+{
+  // INSTANCE VARIABLES *********************************************
+
+  /**
+   * The server socket: listens for clients who want to connect.
+   */
+<span class="fc" id="L76">  private ServerSocket serverSocket = null;</span>
+
+  /**
+   * The connection listener thread.
+   */
+<span class="fc" id="L81">  private Thread connectionListener = null;</span>
+
+  /**
+   * The port number
+   */
+  private int port;
+
+  /**
+   * The server timeout while for accepting connections.
+   * After timing out, the server will check to see if a command to
+   * stop the server has been issued; it not it will resume accepting
+   * connections.
+   * Set to half a second by default.
+   */
+<span class="fc" id="L95">  private int timeout = 500;</span>
+
+  /**
+   * The maximum queue length; i.e. the maximum number of clients that
+   * can be waiting to connect.
+   * Set to 10 by default.
+   */
+<span class="fc" id="L102">  private int backlog = 10;</span>
+
+  /**
+   * The thread group associated with client threads. Each member of the
+   * thread group is a &lt;code&gt; ConnectionToClient &lt;/code&gt;.
+   */
+  private ThreadGroup clientThreadGroup;
+
+  /**
+   * Indicates if the listening thread is ready to stop.  Set to
+   * false by default.
+   */
+<span class="fc" id="L114">  private boolean readyToStop = true; // modified in version 2.31</span>
+
+  /**
+   * The factory used to create new connections to clients.
+   * Is null by default, meaning that regular &lt;code&gt;ConnectionToClient&lt;/code&gt;
+   * instances will be created. Added in version 2.3
+   */
+<span class="fc" id="L121">  private AbstractConnectionFactory connectionFactory = null;</span>
+  
+// CONSTRUCTOR ******************************************************
+
+  /**
+   * Constructs a new server.
+   *
+   * @param port the port number on which to listen.
+   */
+  public AbstractServer(int port)
+<span class="fc" id="L131">  {</span>
+<span class="fc" id="L132">    this.port = port;</span>
+
+<span class="fc" id="L134">    this.clientThreadGroup =</span>
+      new ThreadGroup(&quot;ConnectionToClient threads&quot;)
+<span class="fc" id="L136">      {</span>
+        // All uncaught exceptions in connection threads will
+        // be sent to the clientException callback method.
+        public void uncaughtException(
+          Thread thread, Throwable exception)
+        {
+<span class="nc" id="L142">          clientException((ConnectionToClient)thread, exception);</span>
+<span class="nc" id="L143">        }</span>
+      };
+<span class="fc" id="L145">  }</span>
+
+
+// INSTANCE METHODS *************************************************
+
+  /**
+   * Begins the thread that waits for new clients.
+   * If the server is already in listening mode, this
+   * call has no effect.
+   *
+   * @exception IOException if an I/O error occurs
+   * when creating the server socket.
+   */
+  final public void listen() throws IOException
+  {
+<span class="pc bpc" id="L160" title="1 of 2 branches missed.">    if (!isListening())</span>
+    {
+<span class="pc bpc" id="L162" title="1 of 2 branches missed.">      if (serverSocket == null)</span>
+      {
+<span class="fc" id="L164">        serverSocket = new ServerSocket(getPort(), backlog);</span>
+      }
+
+<span class="fc" id="L167">      serverSocket.setSoTimeout(timeout);</span>
+      
+<span class="fc" id="L169">      connectionListener = new Thread(this);</span>
+<span class="fc" id="L170">      connectionListener.start();</span>
+    }
+<span class="fc" id="L172">  }</span>
+
+  /**
+   * Causes the server to stop accepting new connections.
+   */
+  final public void stopListening()
+  {
+<span class="fc" id="L179">    readyToStop = true;</span>
+<span class="fc" id="L180">  }</span>
+
+  /**
+   * Closes the server socket and the connections with all clients.
+   * Any exception thrown while closing a client is ignored.
+   * If one wishes to catch these exceptions, then clients
+   * should be individually closed before calling this method.
+   * The method also stops listening if this thread is running.
+   * If the server is already closed, this
+   * call has no effect.
+   *
+   * @exception IOException if an I/O error occurs while
+   * closing the server socket.
+   */
+  final public void close() throws IOException
+  {
+<span class="fc bfc" id="L196" title="All 2 branches covered.">    if (serverSocket == null)</span>
+<span class="fc" id="L197">      return;</span>
+<span class="fc" id="L198">    stopListening();</span>
+
+    try
+    {
+<span class="fc" id="L202">      serverSocket.close();</span>
+    }
+    finally
+    {
+<span class="pc" id="L206">      synchronized (this)</span>
+      {
+        // Close the client sockets of the already connected clients
+<span class="pc" id="L209">        Thread[] clientThreadList = getClientConnections();</span>
+<span class="pc bpc" id="L210" title="3 of 4 branches missed.">        for (int i=0; i&lt;clientThreadList.length; i++)</span>
+        {
+          try
+          {
+<span class="nc" id="L214">            ((ConnectionToClient)clientThreadList[i]).close();</span>
+          }
+          // Ignore all exceptions when closing clients.
+<span class="nc" id="L217">          catch(Exception ex) {}</span>
+        }
+<span class="pc" id="L219">        serverSocket = null;</span>
+<span class="pc" id="L220">      }</span>
+
+      try
+      {
+<span class="pc" id="L224">        connectionListener.join(); // Wait for the end of listening thread.</span>
+      }
+<span class="nc" id="L226">      catch(InterruptedException ex) {}</span>
+<span class="pc" id="L227">      catch(NullPointerException ex) {} // When thread already dead.</span>
+
+<span class="pc" id="L229">      serverClosed();</span>
+<span class="fc" id="L230">    }</span>
+<span class="fc" id="L231">  }</span>
+
+  /**
+   * Sends a message to every client connected to the server.
+   * This is merely a utility; a subclass may want to do some checks
+   * before actually sending messages to all clients.
+   * This method can be overriden, but if so it should still perform
+   * the general function of sending to all clients, perhaps after some kind
+   * of filtering is done. Any exception thrown while
+   * sending the message to a particular client is ignored.
+   *
+   * @param msg   Object The message to be sent
+   */
+  public void sendToAllClients(Object msg)
+  {
+<span class="nc" id="L246">    Thread[] clientThreadList = getClientConnections();</span>
+
+<span class="nc bnc" id="L248" title="All 2 branches missed.">    for (int i=0; i&lt;clientThreadList.length; i++)</span>
+    {
+      try
+      {
+<span class="nc" id="L252">        ((ConnectionToClient)clientThreadList[i]).sendToClient(msg);</span>
+      }
+<span class="nc" id="L254">      catch (Exception ex) {}</span>
+    }
+<span class="nc" id="L256">  }</span>
+
+
+// ACCESSING METHODS ------------------------------------------------
+
+  /**
+   * Returns true if the server is ready to accept new clients.
+   *
+   * @return true if the server is listening.
+   */
+  final public boolean isListening()
+  {
+<span class="pc bpc" id="L268" title="1 of 4 branches missed.">    return connectionListener!=null &amp;&amp; connectionListener.isAlive(); // modified in version 2.31</span>
+  }
+
+  /**
+   * Returns true if the server is closed.
+   *
+   * @return true if the server is closed.
+   * @since version 2.2
+   */
+  final public boolean isClosed()
+  {
+<span class="fc bfc" id="L279" title="All 2 branches covered.">    return (serverSocket == null);</span>
+  }
+
+  /**
+   * Returns an array containing the existing
+   * client connections. This can be used by
+   * concrete subclasses to implement messages that do something with
+   * each connection (e.g. kill it, send a message to it etc.).
+   * Remember that after this array is obtained, some clients
+   * in this migth disconnect. New clients can also connect,
+   * these later will not appear in the array.
+   *
+   * @return an array of &lt;code&gt;Thread&lt;/code&gt; containing
+   * &lt;code&gt;ConnectionToClient&lt;/code&gt; instances.
+   */
+  synchronized final public Thread[] getClientConnections()
+  {
+<span class="fc" id="L296">    Thread[] clientThreadList = new</span>
+<span class="fc" id="L297">      Thread[clientThreadGroup.activeCount()];</span>
+
+<span class="fc" id="L299">    clientThreadGroup.enumerate(clientThreadList);</span>
+
+<span class="fc" id="L301">    return clientThreadList;</span>
+  }
+
+  /**
+   * Counts the number of clients currently connected.
+   *
+   * @return the number of clients currently connected.
+   */
+  final public int getNumberOfClients()
+  {
+<span class="fc" id="L311">    return clientThreadGroup.activeCount();</span>
+  }
+
+  /**
+   * Returns the port number.
+   *
+   * @return the port number.
+   */
+  final public int getPort()
+  {
+<span class="fc" id="L321">    return port;</span>
+  }
+
+  /**
+   * Sets the port number for the next connection.
+   * The server must be closed and restarted for the port
+   * change to be in effect.
+   *
+   * @param port the port number.
+   */
+  final public void setPort(int port)
+  {
+<span class="nc" id="L333">    this.port = port;</span>
+<span class="nc" id="L334">  }</span>
+
+  /**
+   * Sets the timeout time when accepting connections.
+   * The default is half a second. This means that stopping the
+   * server may take up to timeout duration to actually stop.
+   * The server must be stopped and restarted for the timeout
+   * change to be effective.
+   *
+   * @param timeout the timeout time in ms.
+   */
+  final public void setTimeout(int timeout)
+  {
+<span class="nc" id="L347">    this.timeout = timeout;</span>
+<span class="nc" id="L348">  }</span>
+
+  /**
+   * Sets the maximum number of waiting connections accepted by the
+   * operating system. The default is 20.
+   * The server must be closed and restarted for the backlog
+   * change to be in effect.
+   *
+   * @param backlog the maximum number of connections.
+   */
+  final public void setBacklog(int backlog)
+  {
+<span class="nc" id="L360">    this.backlog = backlog;</span>
+<span class="nc" id="L361">  }</span>
+
+  /**
+   * Sets the connection factory.
+   * Once set, this one will be used in the creation
+   * of new &lt;code&gt;ConnectionToClient&lt;/code&gt; instances.
+   * The call to this method is optional; if not called
+   * Then regular &lt;code&gt;ConnectionToClient&lt;/code&gt; instances
+   * are created. Added in version 2.3
+   *
+   * @param factory the connection factory.
+   */
+  final public void setConnectionFactory(AbstractConnectionFactory factory)
+  {
+<span class="nc" id="L375">    this.connectionFactory = factory;</span>
+<span class="nc" id="L376">  }</span>
+
+// RUN METHOD -------------------------------------------------------
+
+  /**
+   * Runs the listening thread that allows clients to connect.
+   * Not to be called.
+   */
+  final public void run()
+  {
+    // call the hook method to notify that the server is starting
+<span class="fc" id="L387">    readyToStop= false;  // added in version 2.31</span>
+<span class="fc" id="L388">    serverStarted();</span>
+
+    try
+    {
+      // Repeatedly waits for a new client connection, accepts it, and
+      // starts a new thread to handle data exchange.
+<span class="pc bpc" id="L394" title="1 of 2 branches missed.">      while(!readyToStop)</span>
+      {
+        try
+        {
+          // Wait here for new connection attempts, or a timeout
+<span class="nc" id="L399">          Socket clientSocket = serverSocket.accept();</span>
+
+          // When a client is accepted, create a thread to handle
+          // the data exchange, then add it to thread group
+
+<span class="nc" id="L404">          synchronized(this)</span>
+          {
+<span class="nc bnc" id="L406" title="All 2 branches missed.">            if (!readyToStop)  // added in version 2.2</span>
+            {
+<span class="nc bnc" id="L408" title="All 2 branches missed.">              if (connectionFactory == null) {</span>
+
+<span class="nc" id="L410">                new ConnectionToClient(</span>
+                  this.clientThreadGroup, clientSocket, this);
+                  
+              } else {        // added in version 2.3
+
+<span class="nc" id="L415">                connectionFactory.createConnection(</span>
+                  this.clientThreadGroup, clientSocket, this);
+              }
+            }
+<span class="nc" id="L419">          }</span>
+        }
+<span class="fc" id="L421">        catch (InterruptedIOException exception)</span>
+        {
+          // This will be thrown when a timeout occurs.
+          // The server will continue to listen if not ready to stop.
+<span class="pc" id="L425">        }</span>
+      }
+    }
+<span class="fc" id="L428">    catch (IOException exception)</span>
+    {
+<span class="pc bpc" id="L430" title="1 of 2 branches missed.">      if (!readyToStop)</span>
+      {
+        // Closing the socket must have thrown a SocketException
+<span class="nc" id="L433">        listeningException(exception);</span>
+      }
+    }
+    finally
+    {
+<span class="pc" id="L438">      readyToStop = true;</span>
+<span class="pc" id="L439">      connectionListener = null;</span>
+
+      // call the hook method to notify that the server has stopped
+<span class="pc" id="L442">      serverStopped(); // moved in version 2.31</span>
+<span class="pc" id="L443">    }</span>
+<span class="fc" id="L444">  }</span>
+
+
+// METHODS DESIGNED TO BE OVERRIDDEN BY CONCRETE SUBCLASSES ---------
+
+  /**
+   * Hook method called each time a new client connection is
+   * accepted. The default implementation does nothing.
+   * This method does not have to be synchronized since only
+   * one client can be accepted at a time.
+   *
+   * @param client the connection connected to the client.
+   */
+<span class="nc" id="L457">  protected void clientConnected(ConnectionToClient client) {}</span>
+
+  /**
+   * Hook method called each time a client disconnects.
+   * The client is garantee to be disconnected but the thread
+   * is still active until it is asynchronously removed from the thread group. 
+   * The default implementation does nothing. The method
+   * may be overridden by subclasses but should remains synchronized.
+   *
+   * @param client the connection with the client.
+   */
+  synchronized protected void clientDisconnected(
+<span class="nc" id="L469">    ConnectionToClient client) {}</span>
+
+  /**
+   * Hook method called each time an exception is thrown in a
+   * ConnectionToClient thread.
+   * The method may be overridden by subclasses but should remains
+   * synchronized. 
+   * Most exceptions will cause the end of the client's thread except for
+   * ClassNotFoundExceptions received when an object of
+   * unknown class is received and for the RuntimeExceptions
+   * that can be thrown by the message handling method implemented by the user.
+   *
+   * @param client the client that raised the exception.
+   * @param exception the exception thrown.
+   */
+  synchronized protected void clientException(
+<span class="nc" id="L485">    ConnectionToClient client, Throwable exception) {}</span>
+
+  /**
+   * Hook method called when the server stops accepting
+   * connections because an exception has been raised.
+   * The default implementation does nothing.
+   * This method may be overriden by subclasses.
+   *
+   * @param exception the exception raised.
+   */
+<span class="nc" id="L495">  protected void listeningException(Throwable exception) {}</span>
+
+  /**
+   * Hook method called when the server starts listening for
+   * connections.  The default implementation does nothing.
+   * The method may be overridden by subclasses.
+   */
+<span class="fc" id="L502">  protected void serverStarted() {}</span>
+
+  /**
+   * Hook method called when the server stops accepting
+   * connections.  The default implementation
+   * does nothing. This method may be overriden by subclasses.
+   */
+<span class="fc" id="L509">  protected void serverStopped() {}</span>
+
+  /**
+   * Hook method called when the server is clased.
+   * The default implementation does nothing. This method may be
+   * overriden by subclasses. When the server is closed while still
+   * listening, serverStopped() will also be called.
+   */
+<span class="fc" id="L517">  protected void serverClosed() {}</span>
+
+  /**
+   * Handles a command sent from one client to the server.
+   * This MUST be implemented by subclasses, who should respond to
+   * messages.
+   * This method is called by a synchronized method so it is also
+   * implcitly synchronized.
+   *
+   * @param msg   the message sent.
+   * @param client the connection connected to the client that
+   *  sent the message.
+   */
+  protected abstract void handleMessageFromClient(
+    Object msg, ConnectionToClient client);
+
+
+// METHODS TO BE USED FROM WITHIN THE FRAMEWORK ONLY ----------------
+
+  /**
+   * Receives a command sent from the client to the server.
+   * Called by the run method of &lt;code&gt;ConnectionToClient&lt;/code&gt;
+   * instances that are watching for messages coming from the server
+   * This method is synchronized to ensure that whatever effects it has
+   * do not conflict with work being done by other threads. The method
+   * simply calls the &lt;code&gt;handleMessageFromClient&lt;/code&gt; slot method.
+   *
+   * @param msg   the message sent.
+   * @param client the connection connected to the client that
+   *  sent the message.
+   */
+  final synchronized void receiveMessageFromClient(
+    Object msg, ConnectionToClient client)
+  {
+<span class="nc" id="L551">    this.handleMessageFromClient(msg, client);</span>
+<span class="nc" id="L552">  }</span>
+}
+// End of AbstractServer Class
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>

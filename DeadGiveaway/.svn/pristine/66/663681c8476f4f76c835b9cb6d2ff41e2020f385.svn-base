@@ -1,0 +1,82 @@
+import deadgiveaway.*;
+import deadgiveaway.server.*;
+import deadgiveaway.client.*;
+import deadgiveaway.client.ClientApp;
+import deadgiveaway.client.ClientApp;
+import org.uispec4j.*;
+import java.io.IOException;
+import org.junit.*;
+/**
+ *
+ * @author Steven
+ */
+public class GuiSystemTest extends UISpecTestCase
+{
+     public void testGUI()
+     {
+         ServerApp.main(new String[] {"-p", "5555", "-s", "0"});
+         waitMS(2000);
+         
+         ClueClient client = new ClueClient("localhost", 5555, null,
+         GUI.class);
+         Window window = getMainWindow();         
+         Button createButton = window.getButton("Create Game");
+         assertTrue(createButton.isEnabled());
+         createButton.click();
+         assertFalse(createButton.isEnabled());
+         waitMS(1000);
+         window = getMainWindow();
+         Button startButton = window.getButton("Start Game");
+         assertTrue(startButton.isEnabled());
+         startButton.click();
+         assertFalse(startButton.isEnabled());
+         waitMS(1000);
+         TextBox label = window.getTextBox("Turn Timer");
+         assertTrue(label.getText().equals("3:00"));
+         Button[] clueCards = new Button[] {
+             window.getButton("Clue Card 1"),
+             window.getButton("Clue Card 2"),
+             window.getButton("Clue Card 3"),
+             window.getButton("Clue Card 4")
+         };
+         for (Button button : clueCards) {
+             assertFalse(button.isEnabled());
+         }
+         window.pressKey(Key.R);
+         window.releaseKey(Key.R);
+         window.pressKey(Key.ENTER);
+         window.releaseKey(Key.ENTER);
+         Button deck = window.getButton("Deck");
+         assertTrue(deck.isEnabled());
+         window.pressKey(Key.D);
+         window.releaseKey(Key.D);
+         assertFalse(deck.isEnabled());
+         Button actioncard1 = window.getButton("Action Card 1");
+         Button actioncard2 = window.getButton("Action Card 2");
+         assertTrue(actioncard1.isEnabled());
+         assertTrue(actioncard2.isEnabled());
+         window.pressKey(Key.NUM6);
+         window.releaseKey(Key.NUM6);
+         assertFalse(actioncard1.isEnabled());
+         assertFalse(actioncard2.isEnabled());
+         window.pressKey(Key.ENTER);
+         window.releaseKey(Key.ENTER);
+         window.pressKey(Key.ENTER);
+         window.releaseKey(Key.ENTER);
+         window.pressKey(Key.ENTER);
+         window.releaseKey(Key.ENTER);
+         window.pressKey(Key.BACKSPACE);
+         window.releaseKey(Key.BACKSPACE);
+     }
+     
+     private void waitMS(long ms) {
+        long start = System.currentTimeMillis();
+        try
+        {
+            Thread.sleep(ms);
+        }
+        catch (InterruptedException e) {
+            
+        }
+    }
+}

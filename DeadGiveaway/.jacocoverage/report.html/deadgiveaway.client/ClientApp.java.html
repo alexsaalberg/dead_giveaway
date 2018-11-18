@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ClientApp.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="right"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">JaCoCoverage analysis of project &quot;DeadGiveaway&quot; (powered by JaCoCo from EclEmma)</a> &gt; <a href="index.html" class="el_package">deadgiveaway.client</a> &gt; <span class="el_source">ClientApp.java</span></div><h1>ClientApp.java</h1><pre class="source lang-java linenums">package deadgiveaway.client;
+import deadgiveaway.fake.FakeClueClientJon;
+
+/**
+ * ClientApp is the main class intended to be run to initialize a client.
+ * @author Steven Gerick
+ * @author Alex Saalberg
+ * @version 1.0
+ * 
+ * @author Jon Kuzmich
+ * @version 2.0
+ */
+<span class="nc" id="L13">public class ClientApp </span>
+{
+    //kDefaultPort - default port of the server. (5557)
+    private static final int kDefaultPort = 5557;
+    
+    //Hostname of our virtual machine is &quot;cslvm48.csc.calpoly.edu&quot;
+    //Hostname of local machine is &quot;localhost&quot;
+    //kDefaultHostName - default host name of the server. 
+    //private static final String kDefaultHostName = &quot;cslvm48.csc.calpoly.edu&quot;;
+    private static final String kDefaultHostName = &quot;cslvm48.csc.calpoly.edu&quot;;
+    /**
+     * Initializes the client and GUI, using the hostname and port. Starts the
+     * client and then waits for the child thread to finish before terminating.
+     * @param args Arguments given to the program : 
+     *      '-p [natural number]' = port number
+     *      '-h [host name string]' = host name
+     *      '-c' to set the program in console mode
+     */
+    public static void main(String[] args) 
+    {
+        //CREATE a new variable for the port number
+<span class="nc" id="L34">        int port = kDefaultPort;</span>
+        //CREATE a new variable for the host name
+<span class="nc" id="L36">        String host = kDefaultHostName;</span>
+        //CREATE a new variable for the user interface mode
+<span class="nc" id="L38">        boolean consoleInterface = false;</span>
+        
+        try
+        {
+            //FOR all the commandline arguments
+<span class="nc bnc" id="L43" title="All 2 branches missed.">            for (int index = 0; index &lt; args.length; index++)</span>
+            {
+                //CHECK for the '-p' flag
+                //IF there is a '-p' flag
+<span class="nc bnc" id="L47" title="All 2 branches missed.">                if (args[index].equals(&quot;-p&quot;))</span>
+                {
+                    //SET the port number to the number that follows
+<span class="nc" id="L50">                    port = Integer.parseInt(args[++index]);</span>
+                }
+                //ENDIF
+
+                //CHECK for the '-h' flag
+                //IF there is a '-h' flag
+<span class="nc bnc" id="L56" title="All 2 branches missed.">                if (args[index].equals(&quot;-h&quot;))</span>
+                {
+                    //SET the host name to the string that follows if it is not
+                    //flag
+<span class="nc" id="L60">                    host = args[++index];</span>
+                }
+                //ENDIF
+
+                //CHECK for the '-c' flag
+                //IF there is a '-c' flag
+<span class="nc bnc" id="L66" title="All 2 branches missed.">                if (args[index].equals(&quot;-c&quot;))</span>
+                {
+                    //SET the user interface to be a console interface
+<span class="nc" id="L69">                    consoleInterface = true;</span>
+                }
+                //ENDIF
+            }
+        }
+<span class="nc" id="L74">        catch (java.lang.NumberFormatException ex)</span>
+        {
+            //PRINT out the corect usage for commandline arguments
+<span class="nc" id="L77">            System.err.println(&quot;Usage : &quot; +</span>
+<span class="nc" id="L78">                    System.getProperty(&quot;sun.java.command&quot;)</span>
+                    + &quot; [ -p portNumber ] [ -h hostName ] [ -c ]&quot;);
+<span class="nc" id="L80">            System.err.println(&quot;Options:&quot;);</span>
+<span class="nc" id="L81">            System.err.println(&quot;    -p    ---&quot; +</span>
+                    &quot;    Specify a port number to connect to.&quot;);
+<span class="nc" id="L83">            System.err.println(&quot;    -h    ---&quot; +</span>
+                    &quot;    Specify the name of the host machine.&quot;);
+<span class="nc" id="L85">            System.err.println(&quot;    -c    ---    Use a console interface.&quot;);</span>
+            
+<span class="nc" id="L87">        }</span>
+        
+        //IF the user interface is set to be a console interface
+<span class="nc bnc" id="L90" title="All 2 branches missed.">        if (consoleInterface)</span>
+        {
+            //INITIALIZE a new ClueClient with the port number, host name, 
+            //  and console interface
+<span class="nc" id="L94">            FakeClueClientJon client = new FakeClueClientJon(host,</span>
+                port, null, ConsoleUI.class);
+<span class="nc" id="L96">        }</span>
+        else
+        {
+            //INITIALIZE a new ClueClient with the port number, host name, 
+            //  and GUI
+<span class="nc" id="L101">            FakeClueClientJon client = new FakeClueClientJon(host,</span>
+                port, null, GUI.class);
+        }
+<span class="nc" id="L104">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.3.201306030806</span></div></body></html>
