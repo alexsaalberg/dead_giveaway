@@ -4,12 +4,21 @@
 
 ## Description
 
+![Image of gameplay](Media/screen2.png)
+
+*"Use your detective skills to solve the mystery and make an accusation. Who did it, with what and where? First person to solve the crime wins!"*
+
+Based upon the *"Clue Suspect Card Game."*
 
 ## Downloads
 
-[DeadGiveawayServer_2.1.jar](files/DeadGiveawayServer_2.1.jar)
+[DeadGiveawayServer_2.1.jar](Files/DeadGiveawayServer_2.1.jar)
 
-[DeadGiveawayClient_2.1.jar](files/DeadGiveawayClient_2.1.jar)
+[DeadGiveawayClient_2.1.jar](Files/DeadGiveawayClient_2.1.jar)
+
+[DeadGiveawayServer_2.2.jar](Files/DeadGiveawayServer_2.1.jar)
+
+[DeadGiveawayClient_2.2.jar](Files/DeadGiveawayClient_2.1.jar)
 
 ## Source Instructions
 
@@ -21,7 +30,7 @@ The folder `DeadGiveaway` is a netbeans project with all the source files, so if
 
 #### Starting a server
 
-1. Download the [Dead Giveaway Server](files/DeadGiveawayServer_2.1.jar)
+1. Download the [Dead Giveaway Server](Files/DeadGiveawayServer_2.2.jar)
 2. Run this command in the folder containing the jar file
 ```
 java -jar DeadGiveawayServer_2.1.jar
@@ -30,7 +39,7 @@ java -jar DeadGiveawayServer_2.1.jar
 
 #### Connecting a client
 
-1. Download the [Dead Giveaway Client](files/DeadGiveawayClient_2.1.jar)
+1. Download the [Dead Giveaway Client](Files/DeadGiveawayClient_2.2.jar)
 2. Run this command in the folder containing the jar file
 ```
 java -jar DeadGiveawayClient_2.1.jar -h <IP_ADDRESS>
@@ -52,6 +61,8 @@ Plays pass to the left. On your turn, you:
 
 #### Playing Action Cards
 There are six different types of Action cards. To play an Action card (except a Private Tip), simply select the card from your hand when you are able to do so.
+
+![Image of card hand](Media/screen8.png)
 
 1 Make a Suggestion (from any destination)
   * Decide which Destination will be part of your Suggestion (see *Making a Suggestion*). If the destination is different than the one you are in, your current Destination Marker will be exchanged for the desired destination. If another player has this Destination Marker, that player takes yours in return.
